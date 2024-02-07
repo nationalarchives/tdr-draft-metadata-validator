@@ -1,0 +1,18 @@
+name: TDR Run Lambda Tests
+on:
+  push:
+    branches-ignore:
+      - main
+      - release-*
+permissions:
+  id-token: write
+  contents: read
+jobs:
+  test:
+    uses: nationalarchives/tdr-github-actions/.github/workflows/tdr_test.yml@main
+    with:
+      repo-name: tdr-export-status-update
+      test-command: |
+        sbt scalastyle test:scalastyle test
+    secrets:
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
