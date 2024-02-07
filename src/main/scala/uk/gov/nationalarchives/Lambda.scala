@@ -62,15 +62,15 @@ class Lambda extends RequestStreamHandler {
     }
 
     val csvHandler = new CSVHandler()
+    val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     val res = for {
       cm <- customMetadata
       metadataValidation = MetadataValidationUtils.createMetadataValidation(cm.customMetadata)
-      fileRows = csvHandler.loadCSV("TDR-2024.csv")
     } yield {
+      s3Files.downloadFiles("TDR-2024.csv", bucket)
+      val fileRows = csvHandler.loadCSV("TDR-2024.csv")
       val error = metadataValidation.validateMetadata(fileRows)
       val updatedFileRows = fileRows.map(file => file.metadata.map(_.value) :+ error(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString("|"))
-      val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
-      s3Files.downloadFiles("TDR-2024.csv", bucket)
       csvHandler.writeCsv(updatedFileRows ++ updatedFileRows, "TDR-2024.csv")
       s3Files.uploadFiles(bucket, "TDR-2024.csv", "/tmp/")
     }
