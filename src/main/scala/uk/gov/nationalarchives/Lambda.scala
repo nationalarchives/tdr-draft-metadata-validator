@@ -67,10 +67,11 @@ class Lambda extends RequestStreamHandler {
       cm <- customMetadata
       metadataValidation = MetadataValidationUtils.createMetadataValidation(cm.customMetadata)
     } yield {
-      s3Files.downloadFiles("TDR-2024.csv", bucket)
-      val fileRows = csvHandler.loadCSV("TDR-2024.csv")
-      val error = metadataValidation.validateMetadata(fileRows)
-      val updatedFileRows = fileRows.map(file => file.metadata.map(_.value) :+ error(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString("|"))
+//      s3Files.downloadFiles("TDR-2024.csv", bucket)
+//      val fileRows = csvHandler.loadCSV("TDR-2024.csv")
+//      val error = metadataValidation.validateMetadata(fileRows)
+//      val updatedFileRows = fileRows.map(file => file.metadata.map(_.value) :+ error(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString("|"))
+      val updatedFileRows = List(List("ABC", "EEEEE"))
       csvHandler.writeCsv(updatedFileRows ++ updatedFileRows, "TDR-2024.csv")
       s3Files.uploadFiles(bucket, "TDR-2024.csv", "/tmp/")
     }
