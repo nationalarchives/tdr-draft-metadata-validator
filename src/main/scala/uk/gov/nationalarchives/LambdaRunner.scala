@@ -16,7 +16,7 @@ object LambdaRunner extends App {
 
   private val baos = new ByteArrayInputStream(body.getBytes())
   val output = new ByteArrayOutputStream()
-  new Lambda().handleRequest(baos, output, null)
+  new Lambda().handleRequest(baos, output)
   val res = output.toByteArray.map(_.toChar).mkString
   println(res)
 }
