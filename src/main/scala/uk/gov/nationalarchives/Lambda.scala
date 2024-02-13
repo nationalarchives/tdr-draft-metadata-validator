@@ -12,7 +12,7 @@ import org.typelevel.log4cats.slf4j.Slf4jLogger
 import software.amazon.awssdk.http.apache.ApacheHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.s3.{S3AsyncClient, S3Client}
-import software.amazon.awssdk.services.s3.model.GetObjectRequest
+import software.amazon.awssdk.services.s3.model.{GetObjectRequest, PutObjectRequest}
 import software.amazon.awssdk.services.ssm.SsmClient
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest
 import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend}
@@ -79,8 +79,8 @@ class Lambda {
       val error = metadataValidation.validateMetadata(fileRows)
       val updatedFileRows = fileRows.map(file => file.metadata.map(_.value) :+ error(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString("|"))
       csvHandler.writeCsv(updatedFileRows ++ updatedFileRows, "TDR-2024.csv")
-      s3Files.uploadFiles(bucket, "TDR-2024.csv", "/tmp/")
     }
+    client.putObject(PutObjectRequest.builder.bucket(bucket).key("TDR-2024.csv").build, Paths.get("/tmp/TDR-2024.csv"))
 
     Await.result(res, 10.seconds)
   }
