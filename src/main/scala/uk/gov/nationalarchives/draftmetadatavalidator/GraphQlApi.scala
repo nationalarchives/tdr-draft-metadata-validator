@@ -1,4 +1,4 @@
-package uk.gov.nationalarchives
+package uk.gov.nationalarchives.draftmetadatavalidator
 
 import com.typesafe.config.ConfigFactory
 import com.typesafe.scalalogging.Logger

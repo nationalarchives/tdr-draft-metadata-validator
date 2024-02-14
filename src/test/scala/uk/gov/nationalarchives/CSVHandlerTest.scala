@@ -2,6 +2,7 @@ package uk.gov.nationalarchives
 
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
+import uk.gov.nationalarchives.draftmetadatavalidator.CSVHandler
 
 class CSVHandlerTest extends AnyFlatSpec with BeforeAndAfterEach {
 

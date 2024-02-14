@@ -1,4 +1,4 @@
-package uk.gov.nationalarchives
+package uk.gov.nationalarchives.draftmetadatavalidator
 
 import com.github.tototoshi.csv.{CSVReader, CSVWriter}
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
@@ -8,10 +8,10 @@ import java.nio.file.{Files, Paths}
 
 class CSVHandler {
 
-  def loadCSV(fileName: String): List[FileRow] = {
-    val reader = CSVReader.open(s"/tmp/$fileName")
+  def loadCSV(filePath: String): FileData = {
+    val reader = CSVReader.open(filePath)
     val allRowsWithHeader = reader.all()
-    allRowsWithHeader match {
+    val fileRows = allRowsWithHeader match {
       case _ :: tail =>
         tail.map(row => {
           FileRow(
@@ -35,14 +35,15 @@ class CSVHandler {
           )
         })
     }
+    FileData(allRowsWithHeader.head, fileRows)
   }
 
-  def writeCsv(rows: List[List[String]], fileName: String): Unit = {
+  def writeCsv(rows: List[List[String]], filePath: String): Unit = {
     val bas = new ByteArrayOutputStream()
     val writer = CSVWriter.open(bas)
     writer.writeAll(rows)
-
-    Files.writeString(Paths.get(s"/tmp/$fileName"), bas.toString("UTF-8"))
-
+    Files.writeString(Paths.get(filePath), bas.toString("UTF-8"))
   }
 }
+
+case class FileData(header: List[String], fileRows: List[FileRow])

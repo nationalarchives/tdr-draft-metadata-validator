@@ -1,9 +1,9 @@
-package uk.gov.nationalarchives
+package uk.gov.nationalarchives.draftmetadatavalidator
 
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.types.DataType
-import uk.gov.nationalarchives.tdr.validation.{MetadataCriteria, MetadataValidation}
 import uk.gov.nationalarchives.tdr.validation
+import uk.gov.nationalarchives.tdr.validation.{MetadataCriteria, MetadataValidation}
 
 object MetadataValidationUtils {
 
@@ -20,12 +20,16 @@ object MetadataValidationUtils {
   private def createCriteria(customMetadata: List[CustomMetadata], allCustomMetadata: List[CustomMetadata]): List[MetadataCriteria] = {
     customMetadata.map(cm => {
       val (definedValues, defaultValue) = cm.dataType match {
-        case DataType.Boolean => (List("Yes", "No"), Some(cm.defaultValue match {
-          case Some("true") => "Yes"
-          case _ => "No"
-        }))
-        case DataType.Text    => (cm.values.map(_.value), cm.defaultValue)
-        case _                            => (List(), cm.defaultValue)
+        case DataType.Boolean =>
+          (
+            List("Yes", "No"),
+            Some(cm.defaultValue match {
+              case Some("true") => "Yes"
+              case _            => "No"
+            })
+          )
+        case DataType.Text => (cm.values.map(_.value), cm.defaultValue)
+        case _             => (List(), cm.defaultValue)
       }
       val requiredField: Boolean = cm.propertyGroup.contains("MandatoryClosure") || cm.propertyGroup.contains("MandatoryMetadata")
       MetadataCriteria(
