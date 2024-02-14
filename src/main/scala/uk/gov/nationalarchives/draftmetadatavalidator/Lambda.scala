@@ -59,7 +59,9 @@ class Lambda {
       if (error.isEmpty) {
         IO.unit
       } else {
-        val updatedFileRows = fileData.fileRows.map(file => file.metadata.map(_.value) :+ error(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString("|"))
+        val updatedFileRows = fileData.fileRows.map(file => {
+          List(file.fileName) ++ file.metadata.map(_.value) ++ List(error(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | "))
+        })
         csvHandler.writeCsv((fileData.header :+ "Error") :: updatedFileRows, filePath)
       }
     }
