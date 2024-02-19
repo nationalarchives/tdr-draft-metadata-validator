@@ -5,8 +5,7 @@ import java.io.{ByteArrayInputStream, ByteArrayOutputStream}
 object LambdaRunner extends App {
   private val body =
     """{
-      |  "consignmentId": "f82af3bf-b742-454c-9771-bfd6c5eae749",
-      |  "fileName": "TDR-2024.csv"
+      |  "consignmentId": "f82af3bf-b742-454c-9771-bfd6c5eae749"
       |}
       |""".stripMargin
 

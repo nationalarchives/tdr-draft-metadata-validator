@@ -26,7 +26,7 @@ class S3Files(s3Utils: S3Utils)(implicit val logger: SelfAwareStructuredLogger[I
     }
   }
 
-  def uploadFiles(bucket: String, draftMetadata: DraftMetadata): IO[Unit] = for {
+  def uploadFile(bucket: String, draftMetadata: DraftMetadata): IO[Unit] = for {
     _ <- s3Utils.upload(bucket, key(draftMetadata), Paths.get(getFilePath(draftMetadata)))
   } yield ()
 }

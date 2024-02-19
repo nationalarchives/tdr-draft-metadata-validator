@@ -1,7 +1,10 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
+import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
+import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
+import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import org.typelevel.log4cats.SelfAwareStructuredLogger
@@ -22,18 +25,18 @@ import java.io.{InputStream, OutputStream}
 import java.net.URI
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.concurrent.Future
 import scala.io.Source
 
 class Lambda {
 
   implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
-  implicit val keycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment(authUrl, "tdr", timeToLiveInSecs)
+  implicit val keycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment(authUrl, "tdr", timeToLiveSecs)
   implicit def logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
 
   val keycloakUtils = new KeycloakUtils()
-  val customMetadataStatusClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
-  val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataStatusClient)
+  val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
+  val displayPropertiesClient = new GraphQLClient[dp.Data, dp.Variables](apiUrl)
+  val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, displayPropertiesClient)
 
   def handleRequest(input: InputStream, output: OutputStream): Unit = {
     val body: String = Source.fromInputStream(input).mkString
@@ -43,24 +46,26 @@ class Lambda {
       draftMetadata <- IO.fromEither(decode[DraftMetadata](body))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
       _ <- validateMetadata(draftMetadata)
-      output <- s3Files.uploadFiles(bucket, draftMetadata)
+      output <- s3Files.uploadFile(bucket, draftMetadata)
     } yield output
   }.unsafeRunSync()(cats.effect.unsafe.implicits.global)
 
   private def validateMetadata(draftMetadata: DraftMetadata): IO[Unit] = {
     for {
-      cm <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, getClientSecret(clientSecretPath, endpoint)).toIO
-      metadataValidation = MetadataValidationUtils.createMetadataValidation(cm.customMetadata)
+      customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, getClientSecret(clientSecretPath, endpoint))
+      displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, getClientSecret(clientSecretPath, endpoint))
+      metadataValidator = MetadataValidationUtils.createMetadataValidation(customMetadata)
     } yield {
       val csvHandler = new CSVHandler()
       val filePath = getFilePath(draftMetadata)
-      val fileData = csvHandler.loadCSV(filePath)
-      val error = metadataValidation.validateMetadata(fileData.fileRows)
-      if (error.isEmpty) {
+      val fileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
+      val errors = metadataValidator.validateMetadata(fileData.fileRows)
+      if (errors.isEmpty) {
+        // This would be where the valid metadata would be saved to the DB
         IO.unit
       } else {
         val updatedFileRows = fileData.fileRows.map(file => {
-          List(file.fileName) ++ file.metadata.map(_.value) ++ List(error(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | "))
+          List(file.fileName) ++ file.metadata.map(_.value) ++ List(errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | "))
         })
         csvHandler.writeCsv((fileData.header :+ "Error") :: updatedFileRows, filePath)
       }
@@ -79,9 +84,28 @@ class Lambda {
     ssmClient.getParameter(getParameterRequest).parameter().value()
   }
 
-  implicit class FutureUtils[T](f: Future[T]) {
-    def toIO: IO[T] = IO.fromFuture(IO(f))
+  private def getMetadataNames(displayProperties: List[DisplayProperties], customMetadata: List[CustomMetadata]): List[String] = {
+    val nameMap = displayProperties.filter(dp => dp.attributes.find(_.attribute == "Active").getBoolean).map(_.propertyName)
+    val filteredMetadata: List[CustomMetadata] = customMetadata.filter(cm => nameMap.contains(cm.name) && cm.allowExport).sortBy(_.exportOrdinal.getOrElse(Int.MaxValue))
+    filteredMetadata.map(_.name)
   }
+
+  implicit class AttributeHelper(attribute: Option[DisplayProperties.Attributes]) {
+    def getStringValue: String = {
+      attribute match {
+        case Some(a) => a.value.getOrElse("")
+        case _       => ""
+      }
+    }
+
+    def getBoolean: Boolean = {
+      attribute match {
+        case Some(a) => a.value.contains("true")
+        case _       => false
+      }
+    }
+  }
+
 }
 
 object Lambda {

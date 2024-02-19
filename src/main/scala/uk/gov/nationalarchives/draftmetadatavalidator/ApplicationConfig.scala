@@ -8,11 +8,11 @@ object ApplicationConfig {
   val authUrl: String = configFactory.getString("auth.url")
   val apiUrl: String = configFactory.getString("api.url")
   val clientSecretPath: String = configFactory.getString("auth.clientSecretPath")
+  val clientId: String = configFactory.getString("auth.clientId")
   val endpoint: String = configFactory.getString("ssm.endpoint")
   val s3Endpoint: String = configFactory.getString("s3.endpoint")
   val bucket: String = configFactory.getString("s3.draftMetadataBucket")
   val rootDirectory: String = configFactory.getString("root.directory")
   val fileName: String = configFactory.getString("draftMetadata.fileName")
-  val timeToLiveInSecs: Int = 60
-
+  val timeToLiveSecs: Int = 60
 }

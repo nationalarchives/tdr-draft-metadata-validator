@@ -8,32 +8,17 @@ import java.nio.file.{Files, Paths}
 
 class CSVHandler {
 
-  def loadCSV(filePath: String): FileData = {
+  def loadCSV(filePath: String, metadataNames: List[String]): FileData = {
     val reader = CSVReader.open(filePath)
     val allRowsWithHeader = reader.all()
     val fileRows = allRowsWithHeader match {
-      case _ :: tail =>
-        tail.map(row => {
+      case _ :: rows =>
+        rows.map { case fileName :: data =>
           FileRow(
-            row.head,
-            List(
-              Metadata("ClosureType", row(1)),
-              Metadata("ClosureStartDate", row(2)),
-              Metadata("ClosurePeriod", row(3)),
-              Metadata("FoiExemptionCode", row(4)),
-              Metadata("FoiExemptionAsserted", row(5)),
-              Metadata("TitleClosed", row(6)),
-              Metadata("TitleAlternate", row(7)),
-              Metadata("description", row(8)),
-              Metadata("DescriptionClosed", row(9)),
-              Metadata("DescriptionAlternate", row(10)),
-              Metadata("Language", row(11)),
-              Metadata("end_date", row(12)),
-              Metadata("file_name_translation", row(13)),
-              Metadata("former_reference_department", row(14))
-            )
+            fileName,
+            metadataNames.zipWithIndex.map { case (name, index) => Metadata(name, data(index)) }
           )
-        })
+        }
     }
     FileData(allRowsWithHeader.head, fileRows)
   }
