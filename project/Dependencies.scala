@@ -16,5 +16,4 @@ object Dependencies {
   lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % "0.1.105"
   lazy val log4catsSlf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
 
-
 }

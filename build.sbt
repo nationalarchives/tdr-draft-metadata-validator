@@ -19,6 +19,7 @@ lazy val root = (project in file("."))
       s3Utils,
       log4catsSlf4j,
       scalaTest % Test,
+
     ),
     assembly / assemblyJarName := "draft-metadata-validator.jar"
   )
@@ -27,6 +28,9 @@ lazy val root = (project in file("."))
   case PathList("META-INF", xs@_*) => MergeStrategy.discard
   case _ => MergeStrategy.first
 }
+libraryDependencies += "org.apache.pekko" %% "pekko-actor-typed" % "1.0.2"
+libraryDependencies += "org.apache.pekko" %% "pekko-connectors-csv" % "1.0.2"
+libraryDependencies += "org.apache.pekko" %% "pekko-stream" % "1.0.2"
 
 (Test / fork) := true
 (Test / javaOptions) += s"-Dconfig.file=${sourceDirectory.value}/test/resources/application.conf"
