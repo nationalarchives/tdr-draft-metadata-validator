@@ -3,6 +3,7 @@ on:
   push:
     branches:
       - main
+      - deploy_to_aws
 jobs:
   pre-deploy:
     uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@main
