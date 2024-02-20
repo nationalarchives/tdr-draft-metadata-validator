@@ -32,10 +32,10 @@ class PekkoSpec extends AnyFlatSpec {
 
  private val future =
     Source
-      .single(ByteString(input)) //: HttpRequest
-      .via(CsvParsing.lineScanner()) //: List[ByteString]
+      .single(ByteString(input))
+      .via(CsvParsing.lineScanner())
       .via(CsvToMap.toMapAsStrings())
-      .map(mapToLineRow)//: Map[String, ByteString]
+      .map(mapToLineRow)
       .runWith(Sink.fold(List[FileRow]())(_ :+ _))
 
   future.onComplete { a =>
