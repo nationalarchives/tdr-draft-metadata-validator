@@ -3,6 +3,7 @@ import sbt._
 object Dependencies {
 
   private val log4CatsVersion = "2.6.0"
+  private val mockitoScalaVersion = "1.17.27"
 
   lazy val scalaCsv = "com.github.tototoshi" %% "scala-csv" % "1.3.10"
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.15"
@@ -15,6 +16,6 @@ object Dependencies {
   lazy val awsSsm = "software.amazon.awssdk" % "ssm" % "2.23.17"
   lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % "0.1.105"
   lazy val log4catsSlf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
-
-
+  lazy val mockitoScala = "org.mockito" %% "mockito-scala" % mockitoScalaVersion
+  lazy val mockitoScalaTest = "org.mockito" %% "mockito-scala-scalatest" % mockitoScalaVersion
 }

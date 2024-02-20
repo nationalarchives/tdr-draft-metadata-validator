@@ -19,6 +19,8 @@ lazy val root = (project in file("."))
       s3Utils,
       log4catsSlf4j,
       scalaTest % Test,
+      mockitoScala % Test,
+      mockitoScalaTest % Test
     ),
     assembly / assemblyJarName := "draft-metadata-validator.jar"
   )
@@ -30,4 +32,4 @@ lazy val root = (project in file("."))
 
 (Test / fork) := true
 (Test / javaOptions) += s"-Dconfig.file=${sourceDirectory.value}/test/resources/application.conf"
-(Test / envVars) := Map("AWS_ACCESS_KEY_ID" -> "test", "AWS_SECRET_ACCESS_KEY" -> "test", "S3_ENDPOINT" -> "http://localhost:9005")
+(Test / envVars) := Map("AWS_ACCESS_KEY_ID" -> "test", "AWS_SECRET_ACCESS_KEY" -> "test")

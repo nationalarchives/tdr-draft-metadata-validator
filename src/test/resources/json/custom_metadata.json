@@ -1,0 +1,47 @@
+{
+  "data": {
+    "customMetadata": [
+      {
+        "name": "ClosureType",
+        "multiValue": false,
+        "description": null,
+        "fullName": "closure_type",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [
+          {
+            "dependencies": [],
+            "value": "Closed",
+            "uiOrdinal": 2147483647
+          },
+          {
+            "dependencies": [],
+            "value": "Open",
+            "uiOrdinal": 2147483647
+          }
+        ],
+        "dataType": "Text",
+        "defaultValue": "Open",
+        "propertyType": "Defined",
+        "propertyGroup": "MandatoryClosure",
+        "editable": true,
+        "exportOrdinal": 45
+      },
+      {
+        "name": "ClosurePeriod",
+        "multiValue": false,
+        "description": "Number of years the record is closed from the closure start date",
+        "fullName": "closure_period",
+        "uiOrdinal": 3,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Integer",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "MandatoryClosure",
+        "editable": true,
+        "exportOrdinal": 55
+      }
+    ]
+  }
+}

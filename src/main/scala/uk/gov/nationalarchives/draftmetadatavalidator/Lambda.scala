@@ -45,12 +45,12 @@ class Lambda {
     for {
       draftMetadata <- IO.fromEither(decode[DraftMetadata](body))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
-      _ <- validateMetadata(draftMetadata)
-      output <- s3Files.uploadFile(bucket, draftMetadata)
-    } yield output
+      hasErrors <- validateMetadata(draftMetadata)
+      _ <- if (hasErrors) s3Files.uploadFile(bucket, draftMetadata) else IO.unit
+    } yield ()
   }.unsafeRunSync()(cats.effect.unsafe.implicits.global)
 
-  private def validateMetadata(draftMetadata: DraftMetadata): IO[Unit] = {
+  private def validateMetadata(draftMetadata: DraftMetadata): IO[Boolean] = {
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, getClientSecret(clientSecretPath, endpoint))
       displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, getClientSecret(clientSecretPath, endpoint))
@@ -60,14 +60,15 @@ class Lambda {
       val filePath = getFilePath(draftMetadata)
       val fileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
       val errors = metadataValidator.validateMetadata(fileData.fileRows)
-      if (errors.isEmpty) {
+      if (errors.values.flatten.isEmpty) {
         // This would be where the valid metadata would be saved to the DB
-        IO.unit
+        false
       } else {
         val updatedFileRows = fileData.fileRows.map(file => {
           List(file.fileName) ++ file.metadata.map(_.value) ++ List(errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | "))
         })
         csvHandler.writeCsv((fileData.header :+ "Error") :: updatedFileRows, filePath)
+        true
       }
     }
   }
