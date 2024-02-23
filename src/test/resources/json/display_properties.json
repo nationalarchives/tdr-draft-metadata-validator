@@ -1,0 +1,146 @@
+{
+  "data": {
+    "displayProperties": [
+      {
+        "propertyName": "ClosureType",
+        "attributes": [
+          {
+            "attribute": "Description",
+            "value": "Has this closure been approved by the Advisory Council?",
+            "type": "Text"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "10",
+            "type": "Integer"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "checkbox",
+            "type": "Text"
+          },
+          {
+            "attribute": "Group",
+            "value": "1",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Closure",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Label",
+            "value": "Yes, I confirm",
+            "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Name",
+            "value": "Closure status",
+            "type": "Text"
+          },
+          {
+            "attribute": "Required",
+            "value": "true",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "ClosurePeriod",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "Closure Period",
+            "type": "Text"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "15",
+            "type": "Integer"
+          },
+          {
+            "attribute": "UnitType",
+            "value": "Years",
+            "type": "Text"
+          },
+          {
+            "attribute": "Group",
+            "value": "2",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Closure",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Guidance",
+            "value": "Years",
+            "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "integer",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "small text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Summary",
+            "value": "Closure period",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "This is the number of years the record is closed from the closure start date. If your file has multiple closure periods, enter the longest.",
+            "type": "Text"
+          },
+          {
+            "attribute": "Required",
+            "value": "true",
+            "type": "Boolean"
+          }
+        ]
+      }
+    ]
+  }
+}
