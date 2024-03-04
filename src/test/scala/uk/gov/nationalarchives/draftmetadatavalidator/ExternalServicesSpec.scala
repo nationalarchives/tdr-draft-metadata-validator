@@ -45,6 +45,12 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
         .withRequestBody(containing("displayProperties"))
         .willReturn(okJson(fromResource(s"json/display_properties.json").mkString))
     )
+
+    wiremockGraphqlServer.stubFor(
+      post(urlEqualTo(graphQlPath))
+        .withRequestBody(containing("updateConsignmentStatus"))
+        .willReturn(ok("""{"data": {"updateConsignmentStatus": 1}}""".stripMargin))
+    )
   }
 
   def authOkJson(): StubMapping = wiremockAuthServer.stubFor(

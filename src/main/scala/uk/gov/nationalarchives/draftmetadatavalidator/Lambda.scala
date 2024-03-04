@@ -5,6 +5,7 @@ import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
 import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
+import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import org.typelevel.log4cats.SelfAwareStructuredLogger
@@ -36,7 +37,8 @@ class Lambda {
   val keycloakUtils = new KeycloakUtils()
   val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
   val displayPropertiesClient = new GraphQLClient[dp.Data, dp.Variables](apiUrl)
-  val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, displayPropertiesClient)
+  val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
+  val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, displayPropertiesClient)
 
   def handleRequest(input: InputStream, output: OutputStream): Unit = {
     val body: String = Source.fromInputStream(input).mkString
@@ -51,25 +53,31 @@ class Lambda {
   }.unsafeRunSync()(cats.effect.unsafe.implicits.global)
 
   private def validateMetadata(draftMetadata: DraftMetadata): IO[Boolean] = {
+    val clientSecret = getClientSecret(clientSecretPath, endpoint)
     for {
-      customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, getClientSecret(clientSecretPath, endpoint))
-      displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, getClientSecret(clientSecretPath, endpoint))
+      customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
+      displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, clientSecret)
       metadataValidator = MetadataValidationUtils.createMetadataValidation(customMetadata)
-    } yield {
-      val csvHandler = new CSVHandler()
-      val filePath = getFilePath(draftMetadata)
-      val fileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
-      val errors = metadataValidator.validateMetadata(fileData.fileRows)
-      if (errors.values.flatten.isEmpty) {
-        // This would be where the valid metadata would be saved to the DB
-        false
-      } else {
-        val updatedFileRows = fileData.fileRows.map(file => {
-          List(file.fileName) ++ file.metadata.map(_.value) ++ List(errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | "))
-        })
-        csvHandler.writeCsv((fileData.header :+ "Error") :: updatedFileRows, filePath)
-        true
+      result <- {
+        val csvHandler = new CSVHandler()
+        val filePath = getFilePath(draftMetadata)
+        val fileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
+        val errors = metadataValidator.validateMetadata(fileData.fileRows)
+        if (errors.values.exists(_.nonEmpty)) {
+          val updatedFileRows = fileData.fileRows.map(file => {
+            List(file.fileName) ++ file.metadata.map(_.value) ++ List(errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | "))
+          })
+          csvHandler.writeCsv((fileData.header :+ "Error") :: updatedFileRows, filePath)
+          graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "CompletedWithIssues")
+            .map(_ => true)
+        } else {
+          // This would be where the valid metadata would be saved to the DB
+          graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
+            .map(_ => false)
+        }
       }
+    } yield {
+      result
     }
   }
 
