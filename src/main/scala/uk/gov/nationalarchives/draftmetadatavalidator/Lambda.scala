@@ -68,11 +68,13 @@ class Lambda {
             List(file.fileName) ++ file.metadata.map(_.value) ++ List(errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | "))
           })
           csvHandler.writeCsv((fileData.header :+ "Error") :: updatedFileRows, filePath)
-          graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "CompletedWithIssues")
+          graphQlApi
+            .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "CompletedWithIssues")
             .map(_ => true)
         } else {
           // This would be where the valid metadata would be saved to the DB
-          graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
+          graphQlApi
+            .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
             .map(_ => false)
         }
       }
