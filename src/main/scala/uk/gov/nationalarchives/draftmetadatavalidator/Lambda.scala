@@ -1,13 +1,13 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
+import com.amazonaws.services.lambda.runtime.Context
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
 import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import io.circe.generic.auto._
-import io.circe.parser.decode
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import software.amazon.awssdk.http.apache.ApacheHttpClient
@@ -22,11 +22,9 @@ import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, get
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 
-import java.io.{InputStream, OutputStream}
 import java.net.URI
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
-import scala.io.Source
 
 class Lambda {
 
@@ -40,12 +38,13 @@ class Lambda {
   val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
   val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, displayPropertiesClient)
 
-  def handleRequest(input: InputStream, output: OutputStream): Unit = {
-    val body: String = Source.fromInputStream(input).mkString
+  def handleRequest(event: APIGatewayProxyRequestEvent, context: Context): Unit = {
+    val queryParams = event.getQueryStringParameters
+
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
 
     for {
-      draftMetadata <- IO.fromEither(decode[DraftMetadata](body))
+      draftMetadata <- IO(DraftMetadata(UUID.fromString(queryParams.get("consignmentId"))))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
       hasErrors <- validateMetadata(draftMetadata)
       _ <- if (hasErrors) s3Files.uploadFile(bucket, draftMetadata) else IO.unit
