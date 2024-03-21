@@ -11,6 +11,7 @@ lazy val root = (project in file("."))
       scalaCsv,
       typeSafeConfig,
       awsLambda,
+      awsLambdaJavaEvents,
       awsSsm,
       metadataValidation,
       generatedGraphql,
