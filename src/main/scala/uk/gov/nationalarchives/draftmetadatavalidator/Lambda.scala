@@ -42,6 +42,7 @@ class Lambda {
 
   def handleRequest(input: InputStream, output: OutputStream): Unit = {
     val body: String = Source.fromInputStream(input).mkString
+    println("body --- " + body)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
 
     for {
