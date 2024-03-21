@@ -39,8 +39,9 @@ class Lambda {
   val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, displayPropertiesClient)
 
   def handleRequest(event: APIGatewayProxyRequestEvent, context: Context): Unit = {
-    val queryParams = event.getQueryStringParameters
-
+    val queryParams = event.getPathParameters
+    println("getPathParameters ===> " + queryParams)
+    println("getQueryStringParameters ===> " + event.getQueryStringParameters)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
 
     for {
@@ -95,18 +96,13 @@ class Lambda {
   }
 
   private def getMetadataNames(displayProperties: List[DisplayProperties], customMetadata: List[CustomMetadata]): List[String] = {
-    val nameMap = displayProperties.filter(dp => dp.attributes.find(_.attribute == "Active").getBoolean).map(_.propertyName)
+    val systemValues = List("UUID", "Filename", "ClientSideOriginalFilepath", "ClientSideFileLastModifiedDate")
+    val nameMap = displayProperties.filter(dp => dp.attributes.find(_.attribute == "Active").getBoolean || systemValues.contains(dp.propertyName)).map(_.propertyName)
     val filteredMetadata: List[CustomMetadata] = customMetadata.filter(cm => nameMap.contains(cm.name) && cm.allowExport).sortBy(_.exportOrdinal.getOrElse(Int.MaxValue))
     filteredMetadata.map(_.name)
   }
 
   implicit class AttributeHelper(attribute: Option[DisplayProperties.Attributes]) {
-    def getStringValue: String = {
-      attribute match {
-        case Some(a) => a.value.getOrElse("")
-        case _       => ""
-      }
-    }
 
     def getBoolean: Boolean = {
       attribute match {
