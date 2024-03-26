@@ -13,14 +13,14 @@ class CSVHandler {
     val allRowsWithHeader = reader.all()
     val fileRows = allRowsWithHeader match {
       case _ :: rows =>
-        rows.map { case fileName :: data =>
+        rows.map { case _ :: _ :: _ :: data =>
           FileRow(
-            fileName,
+            data.last,
             metadataNames.zipWithIndex.map { case (name, index) => Metadata(name, data(index)) }
           )
         }
     }
-    FileData(allRowsWithHeader.head, fileRows)
+    FileData(allRowsWithHeader, fileRows)
   }
 
   def writeCsv(rows: List[List[String]], filePath: String): Unit = {
@@ -31,4 +31,4 @@ class CSVHandler {
   }
 }
 
-case class FileData(header: List[String], fileRows: List[FileRow])
+case class FileData(allRowsWithHeader: List[List[String]], fileRows: List[FileRow])

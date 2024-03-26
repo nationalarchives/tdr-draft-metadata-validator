@@ -32,11 +32,11 @@ class Lambda {
   implicit val keycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment(authUrl, "tdr", timeToLiveSecs)
   implicit def logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
 
-  val keycloakUtils = new KeycloakUtils()
-  val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
-  val displayPropertiesClient = new GraphQLClient[dp.Data, dp.Variables](apiUrl)
-  val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
-  val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, displayPropertiesClient)
+  private val keycloakUtils = new KeycloakUtils()
+  private val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
+  private val displayPropertiesClient = new GraphQLClient[dp.Data, dp.Variables](apiUrl)
+  private val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
+  private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, displayPropertiesClient)
 
   def handleRequest(event: APIGatewayProxyRequestEvent, context: Context): Unit = {
     val pathParam = event.getPathParameters
@@ -63,10 +63,10 @@ class Lambda {
         val fileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
         val errors = metadataValidator.validateMetadata(fileData.fileRows)
         if (errors.values.exists(_.nonEmpty)) {
-          val updatedFileRows = fileData.fileRows.map(file => {
-            List(file.fileName) ++ file.metadata.map(_.value) ++ List(errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | "))
+          val updatedFileRows = "Error" :: fileData.fileRows.map(file => {
+            errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | ")
           })
-          csvHandler.writeCsv((fileData.header :+ "Error") :: updatedFileRows, filePath)
+          csvHandler.writeCsv(fileData.allRowsWithHeader.zip(updatedFileRows).map(p => p._1 :+ p._2), filePath)
           graphQlApi
             .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "CompletedWithIssues")
             .map(_ => true)
@@ -101,12 +101,6 @@ class Lambda {
   }
 
   implicit class AttributeHelper(attribute: Option[DisplayProperties.Attributes]) {
-    def getStringValue: String = {
-      attribute match {
-        case Some(a) => a.value.getOrElse("")
-        case _       => ""
-      }
-    }
 
     def getBoolean: Boolean = {
       attribute match {
