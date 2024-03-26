@@ -5,6 +5,7 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, put, urlEqualTo}
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import org.mockito.MockitoSugar.mock
+import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
 
 import java.nio.file.{Files, Paths}
 import scala.jdk.CollectionConverters.MapHasAsJava
@@ -44,7 +45,8 @@ class LambdaSpec extends ExternalServicesSpec {
     val pathParams = Map("consignmentId" -> consignmentId).asJava
     val event = new APIGatewayProxyRequestEvent()
     event.setPathParameters(pathParams)
-    new Lambda().handleRequest(createEvent, mockContext)
+    val response = new Lambda().handleRequest(createEvent, mockContext)
+    response.getStatusCode should equal(200)
   }
 
   "handleRequest" should "download the draft metadata csv file, validate it and re-upload to s3 bucket if it has any errors" in {
@@ -55,6 +57,7 @@ class LambdaSpec extends ExternalServicesSpec {
     val pathParams = Map("consignmentId" -> consignmentId).asJava
     val event = new APIGatewayProxyRequestEvent()
     event.setPathParameters(pathParams)
-    new Lambda().handleRequest(createEvent, mockContext)
+    val response = new Lambda().handleRequest(createEvent, mockContext)
+    response.getStatusCode should equal(200)
   }
 }
