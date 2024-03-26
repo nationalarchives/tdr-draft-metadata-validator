@@ -18,11 +18,16 @@ class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
     val fileData = csvHandler.loadCSV(filePath, metadataNames)
 
     val expected = FileData(
-      List("Filename", "Closure status", "Closure Period"),
       List(
-        FileRow("file1.jpg", List(Metadata("ClosureStatus", "Open"), Metadata("ClosurePeriod", "10"))),
-        FileRow("file2.jpg", List(Metadata("ClosureStatus", "Open"), Metadata("ClosurePeriod", ""))),
-        FileRow("file3.jpg", List(Metadata("ClosureStatus", "Open"), Metadata("ClosurePeriod", "")))
+        List("Filename", "Filepath", "Date last modified", "Closure status", "Closure Period", "UUID"),
+        List("file1.jpg", "aa/file.jpg", "2020-05-29", "Closed", "10", "16b2f65c-ec50-494b-824b-f8c08e6b575c"),
+        List("file2.jpg", "aa/file.jpg", "2020-05-29", "Open", "", "18449d9b-6a86-40b4-8855-b872a79bebad"),
+        List("file3.jpg", "aa/file.jpg", "2020-05-29", "Open", "", "61b49923-daf7-4140-98f1-58ba6cbed61f")
+      ),
+      List(
+        FileRow("16b2f65c-ec50-494b-824b-f8c08e6b575c", List(Metadata("ClosureStatus", "Closed"), Metadata("ClosurePeriod", "10"))),
+        FileRow("18449d9b-6a86-40b4-8855-b872a79bebad", List(Metadata("ClosureStatus", "Open"), Metadata("ClosurePeriod", ""))),
+        FileRow("61b49923-daf7-4140-98f1-58ba6cbed61f", List(Metadata("ClosureStatus", "Open"), Metadata("ClosurePeriod", "")))
       )
     )
 
