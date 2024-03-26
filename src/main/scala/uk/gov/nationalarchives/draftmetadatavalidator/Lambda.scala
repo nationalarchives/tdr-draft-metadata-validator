@@ -2,7 +2,7 @@ package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
 import com.amazonaws.services.lambda.runtime.Context
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent
+import com.amazonaws.services.lambda.runtime.events.{APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent}
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
@@ -41,7 +41,7 @@ class Lambda {
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
   private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
 
-  def handleRequest(event: APIGatewayProxyRequestEvent, context: Context): Unit = {
+  def handleRequest(event: APIGatewayProxyRequestEvent, context: Context): APIGatewayProxyResponseEvent = {
     val pathParam = event.getPathParameters
 
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
@@ -51,7 +51,11 @@ class Lambda {
       _ <- s3Files.downloadFile(bucket, draftMetadata)
       hasErrors <- validateMetadata(draftMetadata)
       _ <- if (hasErrors) s3Files.uploadFile(bucket, draftMetadata) else IO.unit
-    } yield ()
+    } yield {
+      val response = new APIGatewayProxyResponseEvent()
+      response.setStatusCode(200)
+      response
+    }
   }.unsafeRunSync()(cats.effect.unsafe.implicits.global)
 
   private def validateMetadata(draftMetadata: DraftMetadata): IO[Boolean] = {
