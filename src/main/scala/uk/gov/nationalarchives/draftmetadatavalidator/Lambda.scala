@@ -8,6 +8,8 @@ import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
 import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
+import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
+import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata}
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import software.amazon.awssdk.http.apache.ApacheHttpClient
@@ -36,7 +38,8 @@ class Lambda {
   private val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
   private val displayPropertiesClient = new GraphQLClient[dp.Data, dp.Variables](apiUrl)
   private val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
-  private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, displayPropertiesClient)
+  private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
+  private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
 
   def handleRequest(event: APIGatewayProxyRequestEvent, context: Context): Unit = {
     val pathParam = event.getPathParameters
@@ -71,7 +74,8 @@ class Lambda {
             .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "CompletedWithIssues")
             .map(_ => true)
         } else {
-          // This would be where the valid metadata would be saved to the DB
+          val addOrUpdateBulkFileMetadata = convertDataToBulkFileMetadataInput(fileData)
+          graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
           graphQlApi
             .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
             .map(_ => false)
@@ -79,6 +83,13 @@ class Lambda {
       }
     } yield {
       result
+    }
+  }
+
+  private def convertDataToBulkFileMetadataInput(fileData: FileData): List[AddOrUpdateFileMetadata] = {
+    fileData.fileRows.collect {
+      case fileRow if fileRow.metadata.exists(_.value.nonEmpty) =>
+        AddOrUpdateFileMetadata(UUID.fromString(fileRow.fileName), fileRow.metadata.collect { case m if m.value.nonEmpty => AddOrUpdateMetadata(m.name, m.value) })
     }
   }
 
