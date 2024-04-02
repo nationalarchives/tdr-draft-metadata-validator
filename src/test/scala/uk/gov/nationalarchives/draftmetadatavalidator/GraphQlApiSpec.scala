@@ -187,7 +187,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
       .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
 
     val expected = List(AddOrUpdateBulkFileMetadata("ClosureStatus", fileId, "Open"))
-    doAnswer(() => {Future(GraphQlResponse[afm.Data](Option(afm.Data(expected)), Nil))})
+    doAnswer(() => { Future(GraphQlResponse[afm.Data](Option(afm.Data(expected)), Nil)) })
       .when(addOrUpdateBulkFileMetadataClient)
       .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[afm.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
 
