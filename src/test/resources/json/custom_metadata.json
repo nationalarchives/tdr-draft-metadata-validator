@@ -10,7 +10,19 @@
         "allowExport": true,
         "values": [
           {
-            "dependencies": [],
+            "dependencies": [
+              {
+                "name": "ClosurePeriod",
+                "fullName": "closure_period",
+                "description": "Number of years the record is closed from the closure start date",
+                "propertyGroup": "MandatoryClosure",
+                "editable": false,
+                "multiValue": false,
+                "propertyType": "Supplied",
+                "dataType": "Integer",
+                "defaultValue": null
+              }
+            ],
             "value": "Closed",
             "uiOrdinal": 2147483647
           },
