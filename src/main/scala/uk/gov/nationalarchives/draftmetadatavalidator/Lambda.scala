@@ -79,10 +79,10 @@ class Lambda {
             .map(_ => true)
         } else {
           val addOrUpdateBulkFileMetadata = convertDataToBulkFileMetadataInput(fileData)
-          graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
-          graphQlApi
-            .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
-            .map(_ => false)
+          for {
+            _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
+            - <- graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
+          } yield false
         }
       }
     } yield {

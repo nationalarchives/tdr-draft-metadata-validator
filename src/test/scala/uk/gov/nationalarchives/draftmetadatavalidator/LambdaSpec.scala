@@ -40,7 +40,7 @@ class LambdaSpec extends ExternalServicesSpec {
 
   "handleRequest" should "download the draft metadata csv file, validate and save to db if it has no errors" in {
     authOkJson()
-    graphqlOkJson()
+    graphqlOkJson(true)
     mockS3GetResponse("sample.csv")
     val pathParams = Map("consignmentId" -> consignmentId).asJava
     val event = new APIGatewayProxyRequestEvent()
