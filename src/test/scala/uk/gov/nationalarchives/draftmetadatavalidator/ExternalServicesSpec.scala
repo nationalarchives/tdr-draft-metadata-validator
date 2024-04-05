@@ -33,7 +33,7 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
 
   def graphQlUrl: String = wiremockGraphqlServer.url(graphQlPath)
 
-  def graphqlOkJson(): StubMapping = {
+  def graphqlOkJson(saveMetadata: Boolean = false): Unit = {
     wiremockGraphqlServer.stubFor(
       post(urlEqualTo(graphQlPath))
         .withRequestBody(containing("customMetadata"))
@@ -51,6 +51,13 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
         .withRequestBody(containing("updateConsignmentStatus"))
         .willReturn(ok("""{"data": {"updateConsignmentStatus": 1}}""".stripMargin))
     )
+    if (saveMetadata) {
+      wiremockGraphqlServer.stubFor(
+        post(urlEqualTo(graphQlPath))
+          .withRequestBody(containing("addOrUpdateBulkFileMetadata"))
+          .willReturn(ok("""{"data": {"addOrUpdateBulkFileMetadata": []}}""".stripMargin))
+      )
+    }
   }
 
   def authOkJson(): StubMapping = wiremockAuthServer.stubFor(
