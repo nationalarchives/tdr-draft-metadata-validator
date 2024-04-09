@@ -2,26 +2,16 @@
   "data": {
     "displayProperties": [
       {
-        "propertyName": "ClosureType",
+        "propertyName": "DescriptionClosed",
         "attributes": [
           {
-            "attribute": "Description",
-            "value": "Has this closure been approved by the Advisory Council?",
-            "type": "Text"
-          },
-          {
-            "attribute": "Ordinal",
-            "value": "10",
-            "type": "Integer"
-          },
-          {
             "attribute": "ComponentType",
-            "value": "checkbox",
+            "value": "radial",
             "type": "Text"
           },
           {
             "attribute": "Group",
-            "value": "1",
+            "value": "2",
             "type": "Text"
           },
           {
@@ -36,8 +26,118 @@
           },
           {
             "attribute": "Label",
-            "value": "Yes, I confirm",
+            "value": "Yes|No, this description can be made public",
             "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "boolean",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "35",
+            "type": "Integer"
+          },
+          {
+            "attribute": "Name",
+            "value": "Is the description sensitive for the public?",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "The current description of your record is below. You can edit it in the Descriptive metadata step.",
+            "type": "Text"
+          },
+          {
+            "attribute": "Required",
+            "value": "false",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "start_date",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "Start date of range (optional)",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "Enter the start date of the range. The date above will be used as the end date of the range.",
+            "type": "Text"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "date",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Descriptive",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Guidance",
+            "value": "dd|mm|yyyy",
+            "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "datetime",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Required",
+            "value": "false",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "date_range",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "Date range",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Descriptive",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "false",
+            "type": "Boolean"
           },
           {
             "attribute": "Datatype",
@@ -55,13 +155,8 @@
             "type": "Boolean"
           },
           {
-            "attribute": "Name",
-            "value": "Closure status",
-            "type": "Text"
-          },
-          {
             "attribute": "Required",
-            "value": "true",
+            "value": "false",
             "type": "Boolean"
           }
         ]
@@ -133,6 +228,1136 @@
             "attribute": "Description",
             "value": "This is the number of years the record is closed from the closure start date. If your file has multiple closure periods, enter the longest.",
             "type": "Text"
+          },
+          {
+            "attribute": "Required",
+            "value": "true",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "ClosureStartDate",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "Closure Start Date",
+            "type": "Text"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "10",
+            "type": "Integer"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "date",
+            "type": "Text"
+          },
+          {
+            "attribute": "Group",
+            "value": "2",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Closure",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Guidance",
+            "value": "dd|mm|yyyy",
+            "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "datetime",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Required",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Description",
+            "value": "Enter the date of the last change to this record, which is when the closure period will start.",
+            "type": "Text"
+          },
+          {
+            "attribute": "Summary",
+            "value": "Closure start date, this is the date of the last change to this record",
+            "type": "Text"
+          }
+        ]
+      },
+      {
+        "propertyName": "Filename",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "Filename",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "The title of the file",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Descriptive",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Required",
+            "value": "true",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "file_name_translation_language",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "File name translation language",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Descriptive",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Guidance",
+            "value": "Search for a language",
+            "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Required",
+            "value": "false",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "TitleClosed",
+        "attributes": [
+          {
+            "attribute": "Ordinal",
+            "value": "25",
+            "type": "Integer"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "radial",
+            "type": "Text"
+          },
+          {
+            "attribute": "Group",
+            "value": "2",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Closure",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Label",
+            "value": "Yes|No, this title can be made public",
+            "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "boolean",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Name",
+            "value": "Is the title sensitive for the public?",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "",
+            "type": "Text"
+          },
+          {
+            "attribute": "Required",
+            "value": "true",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "file_name_translation",
+        "attributes": [
+          {
+            "attribute": "Description",
+            "value": "If the title is not in English you can provide a translation.",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Descriptive",
+            "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Name",
+            "value": "Translated title of record",
+            "type": "Text"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "small text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Summary",
+            "value": "Translated title of record",
+            "type": "Text"
+          },
+          {
+            "attribute": "Required",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "25",
+            "type": "Integer"
+          }
+        ]
+      },
+      {
+        "propertyName": "creating_body",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "Creating body",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "Add where the record is inherited from if it is different to the transferring body.",
+            "type": "Text"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "select",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Descriptive",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "35",
+            "type": "Integer"
+          },
+          {
+            "attribute": "Summary",
+            "value": "Creating body",
+            "type": "Text"
+          }
+        ]
+      },
+      {
+        "propertyName": "UUID",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "UUID",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "FiledID value for the record",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "System",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Required",
+            "value": "true",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "file_name_language",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "File name language",
+            "type": "Text"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "small text",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Descriptive",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Guidance",
+            "value": "Search for a language",
+            "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Required",
+            "value": "false",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "description",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "Description",
+            "type": "Text"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "10",
+            "type": "Integer"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "large text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Group",
+            "value": "1",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Descriptive",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Description",
+            "value": "The description will be visible to the public to help explain the content of your file.",
+            "type": "Text"
+          },
+          {
+            "attribute": "Summary",
+            "value": "Description",
+            "type": "Text"
+          },
+          {
+            "attribute": "Required",
+            "value": "false",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "ClosureType",
+        "attributes": [
+          {
+            "attribute": "Description",
+            "value": "Has this closure been approved by the Advisory Council?",
+            "type": "Text"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "10",
+            "type": "Integer"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "checkbox",
+            "type": "Text"
+          },
+          {
+            "attribute": "Group",
+            "value": "1",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Closure",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Label",
+            "value": "Yes, I confirm",
+            "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Name",
+            "value": "Closure status",
+            "type": "Text"
+          },
+          {
+            "attribute": "Required",
+            "value": "true",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "former_reference_department",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "Former reference",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "Add the reference provided by the department for when it was holding the record.",
+            "type": "Text"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "small text",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Descriptive",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "30",
+            "type": "Integer"
+          },
+          {
+            "attribute": "Summary",
+            "value": "Former reference",
+            "type": "Text"
+          }
+        ]
+      },
+      {
+        "propertyName": "TitleAlternate",
+        "attributes": [
+          {
+            "attribute": "ComponentType",
+            "value": "small text",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Closure",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Group",
+            "value": "3",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "This title will be visible to the public during the closure period.",
+            "type": "Text"
+          },
+          {
+            "attribute": "Summary",
+            "value": "Alternative title",
+            "type": "Text"
+          },
+          {
+            "attribute": "AlternativeName",
+            "value": "Alternative title",
+            "type": "Text"
+          },
+          {
+            "attribute": "Name",
+            "value": "Add alternative title without the file extension",
+            "type": "Text"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "30",
+            "type": "Integer"
+          },
+          {
+            "attribute": "Required",
+            "value": "false",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "end_date",
+        "attributes": [
+          {
+            "attribute": "ComponentType",
+            "value": "date",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Descriptive",
+            "type": "Text"
+          },
+          {
+            "attribute": "Guidance",
+            "value": "dd|mm|yyyy",
+            "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "datetime",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Name",
+            "value": "Date of the record",
+            "type": "Text"
+          },
+          {
+            "attribute": "Group",
+            "value": "1",
+            "type": "Text"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "15",
+            "type": "Integer"
+          },
+          {
+            "attribute": "Description",
+            "value": "The date that the most recent change was made to this record.",
+            "type": "Text"
+          },
+          {
+            "attribute": "Required",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Summary",
+            "value": "Date of the record",
+            "type": "Text"
+          }
+        ]
+      },
+      {
+        "propertyName": "FoiExemptionAsserted",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "FOI decision asserted",
+            "type": "Text"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "5",
+            "type": "Integer"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "date",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "Date that the closure schedule was agreed by the Advisory Council and/or The National Archives.",
+            "type": "Text"
+          },
+          {
+            "attribute": "Group",
+            "value": "2",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Closure",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Guidance",
+            "value": "dd|mm|yyyy",
+            "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "datetime",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "AlternativeName",
+            "value": "Advisory Council approval",
+            "type": "Text"
+          },
+          {
+            "attribute": "Required",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Summary",
+            "value": "FOI decision asserted, this is the date that the closure schedule was agreed by the Advisory Council and/or The National Archives.",
+            "type": "Text"
+          }
+        ]
+      },
+      {
+        "propertyName": "ClientSideFileLastModifiedDate",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "Date last modified",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "Date last modified extracted from client side",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "System",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "datetime",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Required",
+            "value": "true",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "DescriptionAlternate",
+        "attributes": [
+          {
+            "attribute": "PropertyType",
+            "value": "Closure",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Group",
+            "value": "3",
+            "type": "Text"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "large text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Summary",
+            "value": "Alternative description",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "This description will be visible to the public during the closure period.",
+            "type": "Text"
+          },
+          {
+            "attribute": "Name",
+            "value": "Alternative description",
+            "type": "Text"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "40",
+            "type": "Integer"
+          },
+          {
+            "attribute": "Required",
+            "value": "false",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "Language",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "Language",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "Choose one or more languages used in this record.",
+            "type": "Text"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "20",
+            "type": "Integer"
+          },
+          {
+            "attribute": "Group",
+            "value": "1",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Descriptive",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Guidance",
+            "value": "Search for languages",
+            "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "select",
+            "type": "Text"
+          },
+          {
+            "attribute": "Summary",
+            "value": "Language",
+            "type": "Text"
+          },
+          {
+            "attribute": "Required",
+            "value": "true",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "FoiExemptionCode",
+        "attributes": [
+          {
+            "attribute": "Description",
+            "value": "Add one or more exemption code to this closure. Here is a <a target=\"_blank\" href=\"https://www.legislation.gov.uk/ukpga/2000/36/contents\">full list of FOI codes and their designated exemptions</a>",
+            "type": "Text"
+          },
+          {
+            "attribute": "Ordinal",
+            "value": "20",
+            "type": "Integer"
+          },
+          {
+            "attribute": "Group",
+            "value": "2",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "Closure",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Guidance",
+            "value": "Search for FOI Exemption codes",
+            "type": "Text"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "true",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Name",
+            "value": "FOI exemption code",
+            "type": "Text"
+          },
+          {
+            "attribute": "ComponentType",
+            "value": "select",
+            "type": "Text"
+          },
+          {
+            "attribute": "Summary",
+            "value": "FOI exemption code",
+            "type": "Text"
+          },
+          {
+            "attribute": "Required",
+            "value": "true",
+            "type": "Boolean"
+          }
+        ]
+      },
+      {
+        "propertyName": "ClientSideOriginalFilepath",
+        "attributes": [
+          {
+            "attribute": "Name",
+            "value": "Filepath",
+            "type": "Text"
+          },
+          {
+            "attribute": "Description",
+            "value": "Filepath of the record extracted from client side",
+            "type": "Text"
+          },
+          {
+            "attribute": "PropertyType",
+            "value": "System",
+            "type": "Text"
+          },
+          {
+            "attribute": "Active",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "Datatype",
+            "value": "text",
+            "type": "Text"
+          },
+          {
+            "attribute": "Editable",
+            "value": "false",
+            "type": "Boolean"
+          },
+          {
+            "attribute": "MultiValue",
+            "value": "false",
+            "type": "Boolean"
           },
           {
             "attribute": "Required",

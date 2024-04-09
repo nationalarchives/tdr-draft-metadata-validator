@@ -10,7 +10,7 @@ import java.nio.file.{Files, Path}
 
 class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
 
-  val filePath: String = getClass.getResource("/sample.csv").getPath
+  val filePath: String = getClass.getResource("/sample-for-csv-handler.csv").getPath
   val metadataNames: List[String] = List("ClosureStatus", "ClosurePeriod")
 
   "loadCSV" should "read the file and return FileData with all the rows" in {
