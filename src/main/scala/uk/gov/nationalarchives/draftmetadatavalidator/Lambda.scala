@@ -26,12 +26,14 @@ import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.validation.Metadata
 
+import java.io.File
 import java.net.URI
 import java.sql.Timestamp
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.reflect.io.Directory
 
 class Lambda {
 
@@ -49,8 +51,8 @@ class Lambda {
   def handleRequest(event: APIGatewayProxyRequestEvent, context: Context): APIGatewayProxyResponseEvent = {
     val pathParam = event.getPathParameters
 
+    cleanupRootDirectory()
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
-
     for {
       draftMetadata <- IO(DraftMetadata(UUID.fromString(pathParam.get("consignmentId"))))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
@@ -75,6 +77,7 @@ class Lambda {
         val fileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
         val errors = metadataValidator.validateMetadata(fileData.fileRows)
         if (errors.values.exists(_.nonEmpty)) {
+          logger.info(s"Errors found on ${draftMetadata.consignmentId}/$fileName")
           val updatedFileRows = "Error" :: fileData.fileRows.map(file => {
             errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | ")
           })
@@ -83,6 +86,7 @@ class Lambda {
             .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "CompletedWithIssues")
             .map(_ => true)
         } else {
+          logger.info(s"No errors found on ${draftMetadata.consignmentId}/$fileName")
           val addOrUpdateBulkFileMetadata = convertDataToBulkFileMetadataInput(fileData, customMetadata)
           for {
             _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
@@ -136,6 +140,11 @@ class Lambda {
     val nameMap = displayProperties.filter(dp => dp.attributes.find(_.attribute == "Active").getBoolean).map(_.propertyName)
     val filteredMetadata: List[CustomMetadata] = customMetadata.filter(cm => nameMap.contains(cm.name) && cm.allowExport).sortBy(_.exportOrdinal.getOrElse(Int.MaxValue))
     filteredMetadata.map(_.name)
+  }
+
+  private def cleanupRootDirectory() = {
+    val directory = new Directory(new File(rootDirectory))
+    directory.deleteRecursively()
   }
 
   implicit class AttributeHelper(attribute: Option[DisplayProperties.Attributes]) {

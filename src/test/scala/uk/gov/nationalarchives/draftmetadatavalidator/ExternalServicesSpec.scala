@@ -94,7 +94,7 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
     wiremockS3.resetAll()
     val runningFiles = new File(s"./src/test/resources/testfiles/running-files/")
     if (runningFiles.exists()) {
-      new Directory(runningFiles).deleteRecursively()
+//      new Directory(runningFiles).deleteRecursively()
     }
   }
 }
