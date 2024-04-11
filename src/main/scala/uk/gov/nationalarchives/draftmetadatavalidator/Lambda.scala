@@ -50,7 +50,6 @@ class Lambda {
     val pathParam = event.getPathParameters
 
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
-
     for {
       draftMetadata <- IO(DraftMetadata(UUID.fromString(pathParam.get("consignmentId"))))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
@@ -152,4 +151,6 @@ class Lambda {
 object Lambda {
   case class DraftMetadata(consignmentId: UUID)
   def getFilePath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}/$fileName"""
+
+  def getFolderPath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}"""
 }
