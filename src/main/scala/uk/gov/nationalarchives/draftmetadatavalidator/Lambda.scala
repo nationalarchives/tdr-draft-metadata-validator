@@ -51,7 +51,6 @@ class Lambda {
   def handleRequest(event: APIGatewayProxyRequestEvent, context: Context): APIGatewayProxyResponseEvent = {
     val pathParam = event.getPathParameters
 
-    cleanupRootDirectory()
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     for {
       draftMetadata <- IO(DraftMetadata(UUID.fromString(pathParam.get("consignmentId"))))
@@ -140,11 +139,6 @@ class Lambda {
     filteredMetadata.map(_.name)
   }
 
-  private def cleanupRootDirectory() = {
-    val directory = new Directory(new File(rootDirectory))
-    directory.deleteRecursively()
-  }
-
   implicit class AttributeHelper(attribute: Option[DisplayProperties.Attributes]) {
 
     def getBoolean: Boolean = {
@@ -159,4 +153,6 @@ class Lambda {
 object Lambda {
   case class DraftMetadata(consignmentId: UUID)
   def getFilePath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}/$fileName"""
+
+  def getFolderPath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}"""
 }
