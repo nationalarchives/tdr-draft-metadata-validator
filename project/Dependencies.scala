@@ -6,7 +6,7 @@ object Dependencies {
   private val mockitoScalaVersion = "1.17.27"
 
   lazy val scalaCsv = "com.github.tototoshi" %% "scala-csv" % "1.3.10"
-  lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.15"
+  lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.18"
   lazy val metadataValidation = "uk.gov.nationalarchives" %% "tdr-metadata-validation" % "0.0.21"
   lazy val generatedGraphql = "uk.gov.nationalarchives" %% "tdr-generated-graphql" % "0.0.372"
   lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.144"
