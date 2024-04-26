@@ -64,8 +64,8 @@ class Lambda[Input] extends RequestHandler[Input, APIGatewayProxyResponseEvent] 
   private def extractConsignmentId(lambdaInput: Input): String = {
     lambdaInput match {
       case api: APIGatewayProxyRequestEvent => api.getPathParameters.get("consignmentId")
-      case json: Map[String, Any] => json("consignmentId").asInstanceOf[String]
-      case _ => throw new IllegalArgumentException("Unexpected lambda input type")
+      case json: Map[String, Any]           => json("consignmentId").asInstanceOf[String]
+      case _                                => throw new IllegalArgumentException("Unexpected lambda input type")
     }
   }
   private def validateMetadata(draftMetadata: DraftMetadata): IO[Boolean] = {
