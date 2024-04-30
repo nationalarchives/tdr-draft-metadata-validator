@@ -33,7 +33,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class Lambda extends RequestHandler[ConsignmentInput, APIGatewayProxyResponseEvent] {
+class Lambda extends RequestHandler[String, APIGatewayProxyResponseEvent] {
 
   implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
   implicit val keycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment(authUrl, "tdr", timeToLiveSecs)
