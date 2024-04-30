@@ -33,7 +33,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class Lambda[Input] extends RequestHandler[Input, APIGatewayProxyResponseEvent] {
+class Lambda extends RequestHandler[ConsignmentInput, APIGatewayProxyResponseEvent] {
 
   implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
   implicit val keycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment(authUrl, "tdr", timeToLiveSecs)
@@ -46,11 +46,10 @@ class Lambda[Input] extends RequestHandler[Input, APIGatewayProxyResponseEvent] 
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
   private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
 
-  def handleRequest(input: Input, context: Context): APIGatewayProxyResponseEvent = {
-    val consignmentId = extractConsignmentId(input)
+  def handleRequest(input: ConsignmentInput, context: Context): APIGatewayProxyResponseEvent = {
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     for {
-      draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId)))
+      draftMetadata <- IO(DraftMetadata(UUID.fromString(input.consignmentId)))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
       hasErrors <- validateMetadata(draftMetadata)
       _ <- if (hasErrors) s3Files.uploadFile(bucket, draftMetadata) else IO.unit
@@ -60,14 +59,7 @@ class Lambda[Input] extends RequestHandler[Input, APIGatewayProxyResponseEvent] 
       response
     }
   }.unsafeRunSync()(cats.effect.unsafe.implicits.global)
-
-  private def extractConsignmentId(lambdaInput: Input): String = {
-    lambdaInput match {
-      case api: APIGatewayProxyRequestEvent => api.getPathParameters.get("consignmentId")
-      case json: Map[String, Any]           => json("consignmentId").asInstanceOf[String]
-      case _                                => throw new IllegalArgumentException("Unexpected lambda input type")
-    }
-  }
+  
   private def validateMetadata(draftMetadata: DraftMetadata): IO[Boolean] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     for {
@@ -160,3 +152,5 @@ object Lambda {
 
   def getFolderPath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}"""
 }
+
+case class ConsignmentInput(consignmentId: String)
