@@ -8,5 +8,5 @@ object LambdaRunner extends App {
   val pathParams = Map("consignmentId" -> "f82af3bf-b742-454c-9771-bfd6c5eae749").asJava
   val event = new APIGatewayProxyRequestEvent()
   event.setPathParameters(pathParams)
-  new Lambda().handleRequest(event, null)
+  // new Lambda().handleRequest(event, null)
 }
