@@ -46,10 +46,11 @@ class Lambda extends RequestHandler[ConsignmentInput, APIGatewayProxyResponseEve
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
   private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
 
-  def handleRequest(input: ConsignmentInput, context: Context): APIGatewayProxyResponseEvent = {
+  def handleRequest(input: String, context: Context): APIGatewayProxyResponseEvent = {
+    println(s"Input: Input")
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     for {
-      draftMetadata <- IO(DraftMetadata(UUID.fromString(input.consignmentId)))
+      draftMetadata <- IO(DraftMetadata(UUID.fromString("03175df5-3f61-4036-af05-e2ad9ae6364d")))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
       hasErrors <- validateMetadata(draftMetadata)
       _ <- if (hasErrors) s3Files.uploadFile(bucket, draftMetadata) else IO.unit
