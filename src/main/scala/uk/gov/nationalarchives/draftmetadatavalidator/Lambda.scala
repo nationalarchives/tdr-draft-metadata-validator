@@ -30,6 +30,7 @@ import java.net.URI
 import java.sql.Timestamp
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 
@@ -47,10 +48,10 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
-    println(s"Input: $input")
+    val consignmentId = extractConsignmentId(input)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     for {
-      draftMetadata <- IO(DraftMetadata(UUID.fromString("03175df5-3f61-4036-af05-e2ad9ae6364d")))
+      draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId)))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
       hasErrors <- validateMetadata(draftMetadata)
       _ <- if (hasErrors) s3Files.uploadFile(bucket, draftMetadata) else IO.unit
@@ -60,7 +61,16 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       response
     }
   }.unsafeRunSync()(cats.effect.unsafe.implicits.global)
-  
+
+  private def extractConsignmentId(input: util.Map[String, Object]): String = {
+    val inputParameters = input match {
+      case stepFunctionInput if stepFunctionInput.containsKey("consignmentId") => stepFunctionInput
+      case apiProxyRequestInput if apiProxyRequestInput.containsKey("pathParameters") =>
+        apiProxyRequestInput.get("pathParameters").asInstanceOf[util.Map[String, Object]]
+    }
+    inputParameters.get("consignmentId").toString
+  }
+
   private def validateMetadata(draftMetadata: DraftMetadata): IO[Boolean] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     for {
