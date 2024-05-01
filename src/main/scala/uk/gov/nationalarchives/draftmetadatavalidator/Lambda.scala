@@ -2,7 +2,7 @@ package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
 import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
-import com.amazonaws.services.lambda.runtime.events.{APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent}
+import com.amazonaws.services.lambda.runtime.events.{APIGatewayProxyResponseEvent}
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
@@ -163,5 +163,3 @@ object Lambda {
 
   def getFolderPath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}"""
 }
-
-case class ConsignmentInput(consignmentId: String)
