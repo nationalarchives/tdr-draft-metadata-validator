@@ -33,7 +33,7 @@ import java.time.format.DateTimeFormatter
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class Lambda extends RequestHandler[String, APIGatewayProxyResponseEvent] {
+class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayProxyResponseEvent] {
 
   implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
   implicit val keycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment(authUrl, "tdr", timeToLiveSecs)
@@ -46,8 +46,8 @@ class Lambda extends RequestHandler[String, APIGatewayProxyResponseEvent] {
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
   private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
 
-  def handleRequest(input: String, context: Context): APIGatewayProxyResponseEvent = {
-    println(s"Input: Input")
+  def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
+    println(s"Input: $input")
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     for {
       draftMetadata <- IO(DraftMetadata(UUID.fromString("03175df5-3f61-4036-af05-e2ad9ae6364d")))
