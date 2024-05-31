@@ -23,7 +23,15 @@ class CSVHandler {
     FileData(allRowsWithHeader, fileRows)
   }
 
+  def loadCSV(filePath: String): List[FileRow] = {
+    val reader = CSVReader.open(filePath)
+    val all: Seq[Map[String, String]] = reader.allWithHeaders()
+    val fileRows = all.map(a => FileRow(a("UUID"), a.map(b => Metadata(b._1, b._2)).toList))
+    fileRows.toList
+  }
+
   def writeCsv(rows: List[List[String]], filePath: String): Unit = {
+    rows.foreach(println)
     val bas = new ByteArrayOutputStream()
     val writer = CSVWriter.open(bas)
     writer.writeAll(rows)

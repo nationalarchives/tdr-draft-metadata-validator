@@ -2,7 +2,7 @@ package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
 import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
-import com.amazonaws.services.lambda.runtime.events.{APIGatewayProxyResponseEvent}
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
@@ -25,6 +25,7 @@ import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, get
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.validation.Metadata
+import uk.gov.nationalarchives.tdr.validation.schema.MetadataValidationJsonSchema
 
 import java.net.URI
 import java.sql.Timestamp
@@ -81,7 +82,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
         val csvHandler = new CSVHandler()
         val filePath = getFilePath(draftMetadata)
         val fileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
-        val errors = metadataValidator.validateMetadata(fileData.fileRows)
+        val fileRows = csvHandler.loadCSV(filePath)
+        val errors = MetadataValidationJsonSchema.validate(fileRows)
         if (errors.values.exists(_.nonEmpty)) {
           val updatedFileRows = "Error" :: fileData.fileRows.map(file => {
             errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | ")
