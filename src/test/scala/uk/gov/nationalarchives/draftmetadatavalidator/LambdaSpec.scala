@@ -2,13 +2,32 @@ package uk.gov.nationalarchives.draftmetadatavalidator
 
 import com.amazonaws.services.lambda.runtime.Context
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, put, urlEqualTo}
-import com.github.tomakehurst.wiremock.stubbing.StubMapping
+import com.github.tomakehurst.wiremock.client.WireMock
+import com.github.tomakehurst.wiremock.client.WireMock.{
+  aResponse,
+  anyUrl,
+  findAll,
+  get,
+  getAllServeEvents,
+  lessThan,
+  postRequestedFor,
+  put,
+  urlEqualTo,
+  urlMatching,
+  urlPathEqualTo,
+  verify
+}
+import com.github.tomakehurst.wiremock.http.RequestMethod
+import com.github.tomakehurst.wiremock.matching.{RequestPattern, RequestPatternBuilder, StringValuePattern, UrlPathPattern, UrlPathTemplatePattern, UrlPattern}
+import com.github.tomakehurst.wiremock.stubbing.{ServeEvent, StubMapping}
 import org.mockito.MockitoSugar.mock
+import org.scalatest.matchers.must.Matchers.{contain, include}
 import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
+import sttp.model.Method.PUT
 
 import java.nio.file.{Files, Paths}
-import scala.jdk.CollectionConverters.MapHasAsJava
+import java.util
+import scala.jdk.CollectionConverters.{CollectionHasAsScala, MapHasAsJava}
 
 class LambdaSpec extends ExternalServicesSpec {
 
@@ -48,5 +67,12 @@ class LambdaSpec extends ExternalServicesSpec {
     val input = Map("consignmentId" -> consignmentId).asJava
     val response = new Lambda().handleRequest(input, mockContext)
     response.getStatusCode should equal(200)
+
+    val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala.filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT).toList
+    s3Interactions.size shouldBe 1
+    val csvWriteEvent = s3Interactions.head
+    val csvLines = csvWriteEvent.getRequest.getBodyAsString.split("\\n")
+    csvLines(0) should include("Error")
+    csvLines(1) should include("date_last_modified: format.date")
   }
 }

@@ -23,15 +23,21 @@ class CSVHandler {
     FileData(allRowsWithHeader, fileRows)
   }
 
+  /** Reads a CSV file into a list of FileRows The FileRow.fileName is the identifier and has been used to store the UUID in above, expecting the UUID to be in the last column.
+    * What the identifier is, is TBD with the metadata key(header) unaltered and the value as a String
+    * @param filePath
+    *   path to csv
+    * @return
+    *   List of FileRows
+    */
   def loadCSV(filePath: String): List[FileRow] = {
     val reader = CSVReader.open(filePath)
     val all: Seq[Map[String, String]] = reader.allWithHeaders()
-    val fileRows = all.map(a => FileRow(a("UUID"), a.map(b => Metadata(b._1, b._2)).toList))
+    val fileRows = all.map(metadataMap => FileRow(metadataMap("UUID"), metadataMap.map(b => Metadata(b._1, b._2)).toList))
     fileRows.toList
   }
 
   def writeCsv(rows: List[List[String]], filePath: String): Unit = {
-    rows.foreach(println)
     val bas = new ByteArrayOutputStream()
     val writer = CSVWriter.open(bas)
     writer.writeAll(rows)
