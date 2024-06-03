@@ -80,10 +80,10 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       result <- {
         val csvHandler = new CSVHandler()
         val filePath = getFilePath(draftMetadata)
-        //Loading CSV twice as validation and writing of CSV currently done using different style
-        //The important fact is the .fileName that is used to match errors to rows written.
-        //Currently using last column UUID. If it is decided to use the UUID the 'fileName' attribute
-        //should be renamed
+        // Loading CSV twice as validation and writing of CSV currently done using different style
+        // The important fact is the .fileName that is used to match errors to rows written.
+        // Currently using last column UUID. If it is decided to use the UUID the 'fileName' attribute
+        // should be renamed
         val fileData: FileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
         val fileRows: List[FileRow] = csvHandler.loadCSV(filePath)
         val errors = MetadataValidationJsonSchema.validate(fileRows)

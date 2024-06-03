@@ -39,27 +39,40 @@ class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
     val fileRows = csvHandler.loadCSV(filePath)
 
     val expected = List(
-      FileRow("16b2f65c-ec50-494b-824b-f8c08e6b575c", List(
-        Metadata("Closure status", "Closed"),
-        Metadata("UUID", "16b2f65c-ec50-494b-824b-f8c08e6b575c"),
-        Metadata("Closure Period", "10"),
-        Metadata("Filename", "file1.jpg"),
-        Metadata("Date last modified", "2020-05-29"),
-        Metadata("Filepath", "aa/file.jpg"))),
-      FileRow("18449d9b-6a86-40b4-8855-b872a79bebad", List(
-        Metadata("Closure status", "Open"),
-        Metadata("UUID", "18449d9b-6a86-40b4-8855-b872a79bebad"),
-        Metadata("Closure Period", ""),
-        Metadata("Filename", "file2.jpg"),
-        Metadata("Date last modified", "2020-05-29"),
-        Metadata("Filepath", "aa/file.jpg"))),
-      FileRow("61b49923-daf7-4140-98f1-58ba6cbed61f", List(
-        Metadata("Closure status", "Open"),
-        Metadata("UUID", "61b49923-daf7-4140-98f1-58ba6cbed61f"),
-        Metadata("Closure Period", ""),
-        Metadata("Filename", "file3.jpg"),
-        Metadata("Date last modified", "2020-05-29"),
-        Metadata("Filepath", "aa/file.jpg"))))
+      FileRow(
+        "16b2f65c-ec50-494b-824b-f8c08e6b575c",
+        List(
+          Metadata("Closure status", "Closed"),
+          Metadata("UUID", "16b2f65c-ec50-494b-824b-f8c08e6b575c"),
+          Metadata("Closure Period", "10"),
+          Metadata("Filename", "file1.jpg"),
+          Metadata("Date last modified", "2020-05-29"),
+          Metadata("Filepath", "aa/file.jpg")
+        )
+      ),
+      FileRow(
+        "18449d9b-6a86-40b4-8855-b872a79bebad",
+        List(
+          Metadata("Closure status", "Open"),
+          Metadata("UUID", "18449d9b-6a86-40b4-8855-b872a79bebad"),
+          Metadata("Closure Period", ""),
+          Metadata("Filename", "file2.jpg"),
+          Metadata("Date last modified", "2020-05-29"),
+          Metadata("Filepath", "aa/file.jpg")
+        )
+      ),
+      FileRow(
+        "61b49923-daf7-4140-98f1-58ba6cbed61f",
+        List(
+          Metadata("Closure status", "Open"),
+          Metadata("UUID", "61b49923-daf7-4140-98f1-58ba6cbed61f"),
+          Metadata("Closure Period", ""),
+          Metadata("Filename", "file3.jpg"),
+          Metadata("Date last modified", "2020-05-29"),
+          Metadata("Filepath", "aa/file.jpg")
+        )
+      )
+    )
 
     fileRows should be(expected)
   }
