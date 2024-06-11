@@ -9,6 +9,7 @@ import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
 import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
+import graphql.codegen.AddFilesAndMetadata.{addFilesAndMetadata => af}
 import graphql.codegen.types.DataType._
 import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata}
 import org.typelevel.log4cats.SelfAwareStructuredLogger
@@ -48,19 +49,49 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
+    //Need something on the input to indicate data load metadata
+    val dataLoad = true
     val consignmentId = extractConsignmentId(input)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     for {
       draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId)))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
-      hasErrors <- validateMetadata(draftMetadata)
-      _ <- if (hasErrors) s3Files.uploadFile(bucket, draftMetadata) else IO.unit
+      hasErrors <- if (dataLoad) validateDataLoadMetadata(draftMetadata) else validateMetadata(draftMetadata)
+      _ <- if (hasErrors && !dataLoad) s3Files.uploadFile(bucket, draftMetadata) else IO.unit
     } yield {
       val response = new APIGatewayProxyResponseEvent()
       response.setStatusCode(200)
       response
     }
   }.unsafeRunSync()(cats.effect.unsafe.implicits.global)
+
+  private def validateDataLoadMetadata(draftMetadata: DraftMetadata): IO[Boolean] = {
+    val clientSecret = getClientSecret(clientSecretPath, endpoint)
+    for {
+      customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
+      displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, clientSecret)
+      metadataValidator = MetadataValidationUtils.createMetadataValidation(customMetadata)
+      result <- {
+        val csvHandler = new CSVHandler()
+        val filePath = getFilePath(draftMetadata)
+        val fileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
+        val errors = metadataValidator.validateMetadata(fileData.fileRows)
+        if (errors.values.exists(_.nonEmpty)) {
+          graphQlApi
+            .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DataLoadMetadata", "CompletedWithIssues")
+            .map(_ => true)
+        } else {
+          val addOrUpdateBulkFileMetadata = convertDataToBulkFileMetadataInput(fileData, customMetadata)
+          for {
+            _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
+            - <- graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
+          } yield false
+        }
+      }
+    } yield {
+      result
+    }
+  }
 
   private def extractConsignmentId(input: util.Map[String, Object]): String = {
     val inputParameters = input match {
@@ -113,6 +144,10 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
   }
 
+  private def convertDataToFileEntriesInput(fileData: FileData): List[AddOrUpdateFileMetadata] = {
+
+  }
+
   private def createAddOrUpdateMetadata(metadata: Metadata, customMetadata: CustomMetadata): List[AddOrUpdateMetadata] = {
     val format = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val values = customMetadata.dataType match {
@@ -158,8 +193,11 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 }
 
 object Lambda {
-  case class DraftMetadata(consignmentId: UUID)
-  def getFilePath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}/$fileName"""
+  case class DraftMetadata(consignmentId: UUID, otherFile: Option[String] = None)
+  def getFilePath(draftMetadata: DraftMetadata) = {
+    val nameOfFile = draftMetadata.otherFile.getOrElse(fileName)
+    s"""${rootDirectory}/${draftMetadata.consignmentId}/$nameOfFile"""
+  }
 
   def getFolderPath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}"""
 }
