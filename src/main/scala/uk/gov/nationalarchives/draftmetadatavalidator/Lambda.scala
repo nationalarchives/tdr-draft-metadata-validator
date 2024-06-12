@@ -109,12 +109,14 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   }
 
   private def convertDataToBulkFileMetadataInput(fileData: FileData, customMetadata: List[CustomMetadata]): List[AddOrUpdateFileMetadata] = {
-    fileData.fileRows.collect {
-      case fileRow if fileRow.metadata.exists(_.value.nonEmpty) =>
-        AddOrUpdateFileMetadata(
-          UUID.fromString(fileRow.fileName),
-          fileRow.metadata.collect { case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get) }.flatten
-        )
+    fileData.fileRows.collect { case fileRow =>
+      AddOrUpdateFileMetadata(
+        UUID.fromString(fileRow.fileName),
+        fileRow.metadata.collect {
+          case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get)
+          case m                     => List(AddOrUpdateMetadata(m.name, ""))
+        }.flatten
+      )
     }
   }
 
