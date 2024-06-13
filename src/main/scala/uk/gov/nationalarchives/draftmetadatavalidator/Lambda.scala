@@ -2,7 +2,7 @@ package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
 import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
-import com.amazonaws.services.lambda.runtime.events.{APIGatewayProxyResponseEvent}
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
@@ -25,7 +25,8 @@ import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getFilePath}
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
-import uk.gov.nationalarchives.tdr.validation.Metadata
+import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
+import uk.gov.nationalarchives.tdr.validation.schema.MetadataValidationJsonSchema
 
 import java.net.URI
 import java.sql.Timestamp
@@ -107,12 +108,16 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
       displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, clientSecret)
-      metadataValidator = MetadataValidationUtils.createMetadataValidation(customMetadata)
       result <- {
         val csvHandler = new CSVHandler()
         val filePath = getFilePath(draftMetadata)
-        val fileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
-        val errors = metadataValidator.validateMetadata(fileData.fileRows)
+        // Loading CSV twice as validation and writing of CSV currently done using different style
+        // The important fact is the .fileName that is used to match errors to rows written.
+        // Currently using last column UUID. If it is decided to use the UUID the 'fileName' attribute
+        // should be renamed
+        val fileData: FileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
+        val fileRows: List[FileRow] = csvHandler.loadCSV(filePath)
+        val errors = MetadataValidationJsonSchema.validate(fileRows)
         if (errors.values.exists(_.nonEmpty)) {
           val updatedFileRows = "Error" :: fileData.fileRows.map(file => {
             errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | ")
