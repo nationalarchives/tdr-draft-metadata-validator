@@ -41,8 +41,8 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   val keycloak = mock[KeycloakUtils]
 
   val customMetadata: List[CustomMetadata] = List(
-    createCustomMetadata("ClosureType", "Closure status", 1, DataType.Text),
-    createCustomMetadata("ClosurePeriod", "Closure period", 2, DataType.Integer)
+    createCustomMetadata("ClosureType", "Closure status", 1, DataType.Text, isProtected = false),
+    createCustomMetadata("ClosurePeriod", "Closure period", 2, DataType.Integer, isProtected = false)
   )
   val displayProperties: List[dp.DisplayProperties] = List(
     dp.DisplayProperties(
@@ -198,12 +198,13 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
     response should equal(expected)
   }
 
-  def createCustomMetadata(name: String, fullName: String, exportOrdinal: Int, dataType: DataType = Text, allowExport: Boolean = true): CustomMetadata = CustomMetadata(
+  def createCustomMetadata(name: String, fullName: String, exportOrdinal: Int, dataType: DataType = Text, allowExport: Boolean = true, isProtected: Boolean): CustomMetadata = CustomMetadata(
     name,
     None,
     Some(fullName),
     Defined,
     Some("MandatoryClosure"),
+    isProtected,
     dataType,
     editable = true,
     multiValue = false,

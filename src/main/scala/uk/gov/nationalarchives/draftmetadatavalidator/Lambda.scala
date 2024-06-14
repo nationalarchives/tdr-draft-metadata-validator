@@ -96,7 +96,13 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
             .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "CompletedWithIssues")
             .map(_ => true)
         } else {
-          val addOrUpdateBulkFileMetadata = convertDataToBulkFileMetadataInput(fileData, customMetadata)
+          // Filter out all protected properties
+          val filterProtectedMetadata = customMetadata.filter(_.propertyProtected).map(_.name)
+          val updatedFileRows = fileData.fileRows.map{ fileMetadata =>
+            val filteredMetadata = fileMetadata.metadata.filterNot(metadata => filterProtectedMetadata.contains(metadata.name))
+            fileMetadata.copy(metadata = filteredMetadata)
+          }
+          val addOrUpdateBulkFileMetadata = convertDataToBulkFileMetadataInput(updatedFileRows, customMetadata)
           for {
             _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
             - <- graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
@@ -108,15 +114,16 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
   }
 
-  private def convertDataToBulkFileMetadataInput(fileData: FileData, customMetadata: List[CustomMetadata]): List[AddOrUpdateFileMetadata] = {
-    fileData.fileRows.collect { case fileRow =>
-      AddOrUpdateFileMetadata(
-        UUID.fromString(fileRow.fileName),
-        fileRow.metadata.collect {
-          case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get)
-          case m                     => List(AddOrUpdateMetadata(m.name, ""))
-        }.flatten
-      )
+  private def convertDataToBulkFileMetadataInput(fileRows: List[FileRow], customMetadata: List[CustomMetadata]): List[AddOrUpdateFileMetadata] = {
+    fileRows.collect {
+      case fileRow =>
+        AddOrUpdateFileMetadata(
+          UUID.fromString(fileRow.fileName),
+          fileRow.metadata.collect {
+            case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get)
+            case m                     => List(AddOrUpdateMetadata(m.name, ""))
+          }.flatten
+        )
     }
   }
 

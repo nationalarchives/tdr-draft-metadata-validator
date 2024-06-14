@@ -13,6 +13,7 @@
         "defaultValue": null,
         "propertyType": "System",
         "propertyGroup": "System",
+        "propertyProtected": true,
         "editable": false,
         "exportOrdinal": 1
       },
@@ -28,6 +29,7 @@
         "defaultValue": null,
         "propertyType": "System",
         "propertyGroup": "System",
+        "propertyProtected": true,
         "editable": false,
         "exportOrdinal": 150
       },
@@ -43,6 +45,7 @@
         "defaultValue": null,
         "propertyType": "System",
         "propertyGroup": "MandatoryMetadata",
+        "propertyProtected": true,
         "editable": false,
         "exportOrdinal": 40
       },
@@ -58,6 +61,7 @@
         "defaultValue": null,
         "propertyType": "System",
         "propertyGroup": "System",
+        "propertyProtected": true,
         "editable": false,
         "exportOrdinal": 15
       },
@@ -73,6 +77,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "OptionalMetadata",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 100
       },
@@ -88,6 +93,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "OptionalMetadata",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 105
       },
@@ -103,6 +109,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "OptionalMetadata",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 80
       },
@@ -118,6 +125,7 @@
         "defaultValue": null,
         "propertyType": "System",
         "propertyGroup": "MandatoryMetadata",
+        "propertyProtected": true,
         "editable": false,
         "exportOrdinal": null
       },
@@ -133,6 +141,7 @@
         "defaultValue": null,
         "propertyType": "System",
         "propertyGroup": "System",
+        "propertyProtected": true,
         "editable": false,
         "exportOrdinal": null
       },
@@ -148,6 +157,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "OptionalMetadata",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 110
       },
@@ -163,6 +173,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "OptionalMetadata",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 120
       },
@@ -178,6 +189,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "OptionalMetadata",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 125
       },
@@ -193,6 +205,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "OptionalMetadata",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 130
       },
@@ -208,6 +221,7 @@
         "defaultValue": null,
         "propertyType": "System",
         "propertyGroup": "MandatoryMetadata",
+        "propertyProtected": true,
         "editable": false,
         "exportOrdinal": 5
       },
@@ -229,6 +243,7 @@
         "defaultValue": "The National Archives, Kew",
         "propertyType": "Defined",
         "propertyGroup": "MandatoryMetadata",
+        "propertyProtected": true,
         "editable": false,
         "exportOrdinal": 35
       },
@@ -255,6 +270,7 @@
         "defaultValue": "English",
         "propertyType": "Defined",
         "propertyGroup": "OptionalMetadata",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 95
       },
@@ -286,6 +302,7 @@
         "defaultValue": "Public Record(s)",
         "propertyType": "Defined",
         "propertyGroup": "MandatoryMetadata",
+        "propertyProtected": true,
         "editable": true,
         "exportOrdinal": 30
       },
@@ -312,6 +329,7 @@
         "defaultValue": "Crown Copyright",
         "propertyType": "Defined",
         "propertyGroup": "MandatoryMetadata",
+        "propertyProtected": true,
         "editable": true,
         "exportOrdinal": 25
       },
@@ -327,6 +345,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "OptionalMetadata",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 115
       },
@@ -342,6 +361,7 @@
         "defaultValue": null,
         "propertyType": "System",
         "propertyGroup": "System",
+        "propertyProtected": true,
         "editable": false,
         "exportOrdinal": 137
       },
@@ -357,6 +377,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "MandatoryClosure",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 55
       },
@@ -372,6 +393,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "OptionalClosure",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 50
       },
@@ -396,6 +418,7 @@
                 "defaultValue": null,
                 "propertyType": "Supplied",
                 "propertyGroup": "MandatoryClosure",
+                "propertyProtected": false,
                 "editable": true,
                 "exportOrdinal": 65
               },
@@ -410,6 +433,7 @@
                 "defaultValue": null,
                 "propertyType": "Supplied",
                 "propertyGroup": "MandatoryClosure",
+                "propertyProtected": false,
                 "editable": true,
                 "exportOrdinal": 55
               },
@@ -424,6 +448,7 @@
                 "defaultValue": null,
                 "propertyType": "Supplied",
                 "propertyGroup": "OptionalClosure",
+                "propertyProtected": false,
                 "editable": true,
                 "exportOrdinal": 50
               },
@@ -438,6 +463,7 @@
                 "defaultValue": null,
                 "propertyType": "Defined",
                 "propertyGroup": "MandatoryClosure",
+                "propertyProtected": false,
                 "editable": true,
                 "exportOrdinal": 60
               },
@@ -452,6 +478,7 @@
                 "defaultValue": null,
                 "propertyType": "Supplied",
                 "propertyGroup": "MandatoryClosure",
+                "propertyProtected": false,
                 "editable": true,
                 "exportOrdinal": 70
               },
@@ -466,6 +493,7 @@
                 "defaultValue": null,
                 "propertyType": "Supplied",
                 "propertyGroup": "MandatoryClosure",
+                "propertyProtected": false,
                 "editable": true,
                 "exportOrdinal": 85
               }
@@ -486,6 +514,7 @@
                 "defaultValue": null,
                 "propertyType": "Supplied",
                 "propertyGroup": "MandatoryClosure",
+                "propertyProtected": false,
                 "editable": true,
                 "exportOrdinal": 70
               },
@@ -500,6 +529,7 @@
                 "defaultValue": null,
                 "propertyType": "Supplied",
                 "propertyGroup": "MandatoryClosure",
+                "propertyProtected": false,
                 "editable": true,
                 "exportOrdinal": 85
               }
@@ -512,6 +542,7 @@
         "defaultValue": "Open",
         "propertyType": "Defined",
         "propertyGroup": "MandatoryClosure",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 45
       },
@@ -527,6 +558,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "OptionalClosure",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 90
       },
@@ -556,6 +588,7 @@
                 "defaultValue": "The description of this record is closed",
                 "propertyType": "Supplied",
                 "propertyGroup": "OptionalClosure",
+                "propertyProtected": false,
                 "editable": true,
                 "exportOrdinal": 90
               }
@@ -568,6 +601,7 @@
         "defaultValue": "false",
         "propertyType": "Supplied",
         "propertyGroup": "MandatoryClosure",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 85
       },
@@ -583,6 +617,7 @@
         "defaultValue": null,
         "propertyType": "System",
         "propertyGroup": "MandatoryMetadata",
+        "propertyProtected": true,
         "editable": false,
         "exportOrdinal": 10
       },
@@ -598,6 +633,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "MandatoryClosure",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 65
       },
@@ -814,6 +850,7 @@
         "defaultValue": null,
         "propertyType": "Defined",
         "propertyGroup": "MandatoryClosure",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 60
       },
@@ -829,6 +866,7 @@
         "defaultValue": null,
         "propertyType": "System",
         "propertyGroup": "MandatoryMetadata",
+        "propertyProtected": true,
         "editable": false,
         "exportOrdinal": 135
       },
@@ -844,6 +882,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "OptionalClosure",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 75
       },
@@ -873,6 +912,7 @@
                 "defaultValue": "The title of this record is closed",
                 "propertyType": "Supplied",
                 "propertyGroup": "OptionalClosure",
+                "propertyProtected": false,
                 "editable": true,
                 "exportOrdinal": 75
               }
@@ -885,6 +925,7 @@
         "defaultValue": "false",
         "propertyType": "Supplied",
         "propertyGroup": "MandatoryClosure",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 70
       },
@@ -900,6 +941,7 @@
         "defaultValue": null,
         "propertyType": "Supplied",
         "propertyGroup": "OptionalMetadata",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 140
       },
@@ -915,6 +957,7 @@
         "defaultValue": null,
         "propertyType": "System",
         "propertyGroup": "MandatoryMetadata",
+        "propertyProtected": true,
         "editable": false,
         "exportOrdinal": 20
       },
@@ -930,6 +973,7 @@
         "defaultValue": null,
         "propertyType": "Defined",
         "propertyGroup": "OptionalMetadata",
+        "propertyProtected": false,
         "editable": true,
         "exportOrdinal": 145
       }
