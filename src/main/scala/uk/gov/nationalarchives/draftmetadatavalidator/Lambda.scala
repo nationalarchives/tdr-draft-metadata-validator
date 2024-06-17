@@ -3,6 +3,7 @@ package uk.gov.nationalarchives.draftmetadatavalidator
 import cats.effect.IO
 import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
+import graphql.codegen.AddFilesAndMetadata
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
@@ -11,7 +12,7 @@ import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.AddFilesAndMetadata.{addFilesAndMetadata => af}
 import graphql.codegen.types.DataType._
-import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata}
+import graphql.codegen.types.{AddFileAndMetadataInput, AddOrUpdateFileMetadata, AddOrUpdateMetadata, ClientSideMetadataInput}
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import software.amazon.awssdk.http.apache.ApacheHttpClient
@@ -25,8 +26,9 @@ import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getFilePath}
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
+import uk.gov.nationalarchives.tdr.validation.schema.MetadataValidationJsonSchema.ObjectMetadata
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
-import uk.gov.nationalarchives.tdr.validation.schema.MetadataValidationJsonSchema
+import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
 
 import java.net.URI
 import java.sql.Timestamp
@@ -47,10 +49,12 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   private val displayPropertiesClient = new GraphQLClient[dp.Data, dp.Variables](apiUrl)
   private val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
-  private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
+  private val addFilesAndMetadataClient = new GraphQLClient[af.Data, af.Variables](apiUrl)
+  private val graphQlApi: GraphQlApi =
+    GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient, addFilesAndMetadataClient)
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
-    //Need something on the input to indicate data load metadata
+    // Need something on the input to indicate data load metadata
     val dataLoad = true
     val consignmentId = extractConsignmentId(input)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
@@ -70,22 +74,26 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
-      displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, clientSecret)
-      metadataValidator = MetadataValidationUtils.createMetadataValidation(customMetadata)
       result <- {
         val csvHandler = new CSVHandler()
         val filePath = getFilePath(draftMetadata)
-        val fileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
-        val errors = metadataValidator.validateMetadata(fileData.fileRows)
+        val fileRows: List[FileRow] = csvHandler.loadCSV(filePath)
+        val objectMetadata: Set[ObjectMetadata] = fileRows.map(fileRow => ObjectMetadata(fileRow.fileName, fileRow.metadata.toSet)).toSet
+        // Use the 'dataload' schema when available
+        val errors = MetadataValidationJsonSchema.validate(JsonSchemaDefinition.BASE_SCHEMA, objectMetadata)
         if (errors.values.exists(_.nonEmpty)) {
+          // This will need to handle additional metadata error -> save new csv back
+          // other errors
           graphQlApi
             .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DataLoadMetadata", "CompletedWithIssues")
             .map(_ => true)
         } else {
-          val addOrUpdateBulkFileMetadata = convertDataToBulkFileMetadataInput(fileData, customMetadata)
+          val inputs = convertRowsToInput(fileRows, customMetadata)
           for {
-            _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
-            - <- graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
+            // Still need to handle the undefined metadata
+            _ <- graphQlApi.addFileEntriesAndMetadata(draftMetadata.consignmentId, clientSecret, inputs.map(_._1))
+            _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, inputs.map(_._2))
+            - <- graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DataLoadMetadata", "Completed")
           } yield false
         }
       }
@@ -149,8 +157,27 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
   }
 
-  private def convertDataToFileEntriesInput(fileData: FileData): List[AddOrUpdateFileMetadata] = {
+  private val clientSideMetadataProperties: Set[String] = Set("OriginalPath", "FileSize", "Checksum", "LastModified")
 
+  private def convertRowsToInput(input: List[FileRow], customMetadata: List[CustomMetadata]): List[(ClientSideMetadataInput, AddOrUpdateFileMetadata, List[Metadata])] = {
+    input.map(fileRow => {
+      val metadata = fileRow.metadata
+      val definedMetadata = customMetadata.map(_.name).toSet
+      val undefinedMetadata = metadata.filter(m => !definedMetadata.contains(m.name) && !clientSideMetadataProperties.contains(m.name))
+      val fileId = metadata.filter(_.name == "UUID").head.value
+      val originalPath = metadata.filter(_.name == "OriginalPath").head.value
+      val fileSize = metadata.filter(_.name == "FileSize").head.value.toLong
+      val checksum = metadata.filter(_.name == "Checksum").head.value
+      val lastModified = metadata.filter(_.name == "LastModified").head.value.toLong
+
+      val clientSideMetadataInput = ClientSideMetadataInput(originalPath, checksum, lastModified, fileSize, 1)
+      val fileMetadataInput = AddOrUpdateFileMetadata(
+        UUID.fromString(fileRow.fileName),
+        fileRow.metadata.collect { case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get) }.flatten
+      )
+
+      (clientSideMetadataInput, fileMetadataInput, undefinedMetadata)
+    })
   }
 
   private def createAddOrUpdateMetadata(metadata: Metadata, customMetadata: CustomMetadata): List[AddOrUpdateMetadata] = {
