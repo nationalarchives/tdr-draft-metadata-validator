@@ -1,8 +1,8 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
-import com.amazonaws.services.lambda.runtime.Context
-import com.amazonaws.services.lambda.runtime.events.{APIGatewayProxyRequestEvent, APIGatewayProxyResponseEvent}
+import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
+import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
@@ -24,16 +24,18 @@ import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getFilePath}
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
-import uk.gov.nationalarchives.tdr.validation.Metadata
+import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
+import uk.gov.nationalarchives.tdr.validation.schema.MetadataValidationJsonSchema
 
 import java.net.URI
 import java.sql.Timestamp
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.util
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
 
-class Lambda {
+class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayProxyResponseEvent] {
 
   implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
   implicit val keycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment(authUrl, "tdr", timeToLiveSecs)
@@ -46,12 +48,11 @@ class Lambda {
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
   private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
 
-  def handleRequest(event: APIGatewayProxyRequestEvent, context: Context): APIGatewayProxyResponseEvent = {
-    val pathParam = event.getPathParameters
-
+  def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
+    val consignmentId = extractConsignmentId(input)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     for {
-      draftMetadata <- IO(DraftMetadata(UUID.fromString(pathParam.get("consignmentId"))))
+      draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId)))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
       hasErrors <- validateMetadata(draftMetadata)
       _ <- if (hasErrors) s3Files.uploadFile(bucket, draftMetadata) else IO.unit
@@ -62,17 +63,30 @@ class Lambda {
     }
   }.unsafeRunSync()(cats.effect.unsafe.implicits.global)
 
+  private def extractConsignmentId(input: util.Map[String, Object]): String = {
+    val inputParameters = input match {
+      case stepFunctionInput if stepFunctionInput.containsKey("consignmentId") => stepFunctionInput
+      case apiProxyRequestInput if apiProxyRequestInput.containsKey("pathParameters") =>
+        apiProxyRequestInput.get("pathParameters").asInstanceOf[util.Map[String, Object]]
+    }
+    inputParameters.get("consignmentId").toString
+  }
+
   private def validateMetadata(draftMetadata: DraftMetadata): IO[Boolean] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
       displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, clientSecret)
-      metadataValidator = MetadataValidationUtils.createMetadataValidation(customMetadata)
       result <- {
         val csvHandler = new CSVHandler()
         val filePath = getFilePath(draftMetadata)
-        val fileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
-        val errors = metadataValidator.validateMetadata(fileData.fileRows)
+        // Loading CSV twice as validation and writing of CSV currently done using different style
+        // The important fact is the .fileName that is used to match errors to rows written.
+        // Currently using last column UUID. If it is decided to use the UUID the 'fileName' attribute
+        // should be renamed
+        val fileData: FileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
+        val fileRows: List[FileRow] = csvHandler.loadCSV(filePath)
+        val errors = MetadataValidationJsonSchema.validate(fileRows)
         if (errors.values.exists(_.nonEmpty)) {
           val updatedFileRows = "Error" :: fileData.fileRows.map(file => {
             errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | ")
