@@ -3,7 +3,7 @@ import sbt.*
 object Dependencies {
 
   private val log4CatsVersion = "2.7.0"
-  private val mockitoScalaVersion = "1.17.31"
+  private val mockitoScalaVersion = "1.17.37"
 
   lazy val scalaCsv = "com.github.tototoshi" %% "scala-csv" % "1.3.10"
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.18"
