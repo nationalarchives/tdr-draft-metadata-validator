@@ -1,4 +1,4 @@
-name: TDR Tag build release deploy to intg
+name: TDR Tag build release and deploy
 on:
   workflow_dispatch:
   push:
