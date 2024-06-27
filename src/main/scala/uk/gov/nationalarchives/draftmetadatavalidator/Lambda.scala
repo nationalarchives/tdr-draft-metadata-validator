@@ -49,10 +49,11 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
-    val consignmentId = extractConsignmentId(input)
+    val consignmentId = extractInputParameter("consignmentId", input)
+    val fileName = extractInputParameter("fileName", input)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     for {
-      draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId)))
+      draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId), fileName))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
       hasErrors <- validateMetadata(draftMetadata)
       _ <- if (hasErrors) s3Files.uploadFile(bucket, draftMetadata) else IO.unit
@@ -63,13 +64,13 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
   }.unsafeRunSync()(cats.effect.unsafe.implicits.global)
 
-  private def extractConsignmentId(input: util.Map[String, Object]): String = {
+  private def extractInputParameter(inputParameterName: String, input: util.Map[String, Object]): String = {
     val inputParameters = input match {
-      case stepFunctionInput if stepFunctionInput.containsKey("consignmentId") => stepFunctionInput
+      case stepFunctionInput if stepFunctionInput.containsKey(s"$inputParameterName") => stepFunctionInput
       case apiProxyRequestInput if apiProxyRequestInput.containsKey("pathParameters") =>
         apiProxyRequestInput.get("pathParameters").asInstanceOf[util.Map[String, Object]]
     }
-    inputParameters.get("consignmentId").toString
+    inputParameters.get(s"$inputParameterName").toString
   }
 
   private def validateMetadata(draftMetadata: DraftMetadata): IO[Boolean] = {
@@ -163,8 +164,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 }
 
 object Lambda {
-  case class DraftMetadata(consignmentId: UUID)
-  def getFilePath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}/$fileName"""
+  case class DraftMetadata(consignmentId: UUID, fileName: String)
+  def getFilePath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}/${draftMetadata.fileName}"""
 
   def getFolderPath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}"""
 }

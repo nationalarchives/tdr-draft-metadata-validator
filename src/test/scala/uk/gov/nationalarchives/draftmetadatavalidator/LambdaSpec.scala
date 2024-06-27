@@ -35,7 +35,7 @@ class LambdaSpec extends ExternalServicesSpec {
     authOkJson()
     graphqlOkJson(true)
     mockS3GetResponse("sample.csv")
-    val input = Map("consignmentId" -> consignmentId).asJava
+    val input = Map("consignmentId" -> consignmentId, "fileName" -> "sample.csv").asJava
     val response = new Lambda().handleRequest(input, mockContext)
     response.getStatusCode should equal(200)
   }
@@ -45,7 +45,7 @@ class LambdaSpec extends ExternalServicesSpec {
     graphqlOkJson()
     mockS3GetResponse("invalid-sample.csv")
     mockS3PutResponse()
-    val input = Map("consignmentId" -> consignmentId).asJava
+    val input = Map("consignmentId" -> consignmentId, "fileName" -> "sample.csv").asJava
     val response = new Lambda().handleRequest(input, mockContext)
     response.getStatusCode should equal(200)
 

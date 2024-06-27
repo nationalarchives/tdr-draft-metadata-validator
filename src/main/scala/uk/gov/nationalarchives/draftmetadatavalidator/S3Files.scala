@@ -4,7 +4,6 @@ import cats.effect.IO
 import cats.implicits.catsSyntaxOptionId
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
-import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig.fileName
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getFilePath, getFolderPath}
 
 import java.io.File
@@ -13,7 +12,7 @@ import scala.reflect.io.Directory
 
 class S3Files(s3Utils: S3Utils)(implicit val logger: SelfAwareStructuredLogger[IO]) {
 
-  def key(draftMetadata: DraftMetadata) = s"${draftMetadata.consignmentId}/$fileName"
+  def key(draftMetadata: DraftMetadata) = s"${draftMetadata.consignmentId}/${draftMetadata.fileName}"
 
   def downloadFile(bucket: String, draftMetadata: DraftMetadata): IO[Any] = {
 
