@@ -1,14 +1,14 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
-import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
+import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
+import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
 import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.types.DataType._
 import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata}
 import org.typelevel.log4cats.SelfAwareStructuredLogger
@@ -21,11 +21,13 @@ import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend}
 import uk.gov.nationalarchives.aws.utils.s3.S3Clients._
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
-import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getFilePath}
+import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.DraftMetadata
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
-import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
+import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.BASE_SCHEMA
 import uk.gov.nationalarchives.tdr.validation.schema.MetadataValidationJsonSchema
+import uk.gov.nationalarchives.tdr.validation.schema.MetadataValidationJsonSchema.ObjectMetadata
+import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.net.URI
 import java.sql.Timestamp
@@ -80,14 +82,16 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, clientSecret)
       result <- {
         val csvHandler = new CSVHandler()
-        val filePath = getFilePath(draftMetadata)
+        val filePath = draftMetadata.filePath
         // Loading CSV twice as validation and writing of CSV currently done using different style
         // The important fact is the .fileName that is used to match errors to rows written.
         // Currently using last column UUID. If it is decided to use the UUID the 'fileName' attribute
         // should be renamed
         val fileData: FileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
         val fileRows: List[FileRow] = csvHandler.loadCSV(filePath)
-        val errors = MetadataValidationJsonSchema.validate(fileRows)
+        val errors = if (draftMetadata.dataLoad) {
+          MetadataValidationJsonSchema.validate(BASE_SCHEMA, fileRows.map(fr => ObjectMetadata(fr.fileName, fr.metadata.toSet)).toSet)
+        } else { MetadataValidationJsonSchema.validate(fileRows) }
         if (errors.values.exists(_.nonEmpty)) {
           val updatedFileRows = "Error" :: fileData.fileRows.map(file => {
             errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | ")
@@ -164,8 +168,13 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 }
 
 object Lambda {
-  case class DraftMetadata(consignmentId: UUID, fileName: String)
-  def getFilePath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}/${draftMetadata.fileName}"""
-
-  def getFolderPath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}"""
+  case class DraftMetadata(consignmentId: UUID, fileName: String) {
+    val dataLoad: Boolean = fileName == dataLoadFileName
+    val bucketKey: String = if (dataLoad) { s"$consignmentId/dataload/$fileName" }
+    else { s"$consignmentId/$fileName" }
+    val filePath: String = if (dataLoad) { s"$rootDirectory/$consignmentId/dataload/$fileName" }
+    else { s"$rootDirectory/$consignmentId/$fileName" }
+    val folderPath: String = if (dataLoad) { s"$rootDirectory/$consignmentId/dataload" }
+    else { s"$rootDirectory/$consignmentId" }
+  }
 }
