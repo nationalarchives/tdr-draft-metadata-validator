@@ -6,20 +6,21 @@ on:
       - main
 jobs:
   pre-deploy:
-     uses: nationalarchives/tdr-github-actions/.github/workflows/ecs_build.yml@main
-     with:
-        repo-name: tdr-draft-metadata-validator
-        image-name: draft-metadata-validator
-     secrets:
-        MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
-        WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
+    uses: nationalarchives/tdr-github-actions/.github/workflows/ecs_build.yml@main
+    with:
+      repo-name: tdr-draft-metadata-validator
+      image-name: draft-metadata-validator
+    secrets:
+      MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
+      WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
   deploy:
+    needs: pre-deploy
     uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml@main
     with:
       lambda-name: draft-metadata-validator
       deployment-package: draft-metadata-validator.jar
-      environment: ${{ github.event.inputs.environment }}
-      to-deploy: ${{ github.event.inputs.to-deploy }}
+      environment: intg
+      to-deploy: ${{ needs.pre-deploy.outputs.next-version }}
       image-name: draft-metadata-validator
     secrets:
       ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
