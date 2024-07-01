@@ -9,8 +9,6 @@ import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
 import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.types.DataType._
-import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata}
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import software.amazon.awssdk.http.apache.ApacheHttpClient
@@ -24,15 +22,12 @@ import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.DraftMetadata
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
+import uk.gov.nationalarchives.tdr.validation.FileRow
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.BASE_SCHEMA
 import uk.gov.nationalarchives.tdr.validation.schema.MetadataValidationJsonSchema
 import uk.gov.nationalarchives.tdr.validation.schema.MetadataValidationJsonSchema.ObjectMetadata
-import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.net.URI
-import java.sql.Timestamp
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -77,6 +72,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
   private def validateMetadata(draftMetadata: DraftMetadata): IO[Boolean] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
+    val persistMetadataHandler = DataPersistenceHandler.apply(draftMetadata, clientSecret, graphQlApi)
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
       displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, clientSecret)
@@ -91,7 +87,9 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
         val fileRows: List[FileRow] = csvHandler.loadCSV(filePath)
         val errors = if (draftMetadata.dataLoad) {
           MetadataValidationJsonSchema.validate(BASE_SCHEMA, fileRows.map(fr => ObjectMetadata(fr.fileName, fr.metadata.toSet)).toSet)
-        } else { MetadataValidationJsonSchema.validate(fileRows) }
+        } else {
+          MetadataValidationJsonSchema.validate(fileRows)
+        }
         if (errors.values.exists(_.nonEmpty)) {
           val updatedFileRows = "Error" :: fileData.fileRows.map(file => {
             errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | ")
@@ -101,41 +99,13 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
             .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "CompletedWithIssues")
             .map(_ => true)
         } else {
-          val addOrUpdateBulkFileMetadata = convertDataToBulkFileMetadataInput(fileData, customMetadata)
-          for {
-            _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
-            - <- graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
-          } yield false
+          val rows = if (draftMetadata.dataLoad) fileRows else fileData.fileRows
+          persistMetadataHandler.persistValidMetadata(rows, customMetadata)
         }
       }
     } yield {
       result
     }
-  }
-
-  private def convertDataToBulkFileMetadataInput(fileData: FileData, customMetadata: List[CustomMetadata]): List[AddOrUpdateFileMetadata] = {
-    fileData.fileRows.collect {
-      case fileRow if fileRow.metadata.exists(_.value.nonEmpty) =>
-        AddOrUpdateFileMetadata(
-          UUID.fromString(fileRow.fileName),
-          fileRow.metadata.collect { case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get) }.flatten
-        )
-    }
-  }
-
-  private def createAddOrUpdateMetadata(metadata: Metadata, customMetadata: CustomMetadata): List[AddOrUpdateMetadata] = {
-    val format = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    val values = customMetadata.dataType match {
-      case DateTime => Timestamp.valueOf(LocalDate.parse(metadata.value, format).atStartOfDay()).toString :: Nil
-      case Boolean =>
-        metadata.value.toLowerCase() match {
-          case "yes" => "true" :: Nil
-          case _     => "false" :: Nil
-        }
-      case Text if customMetadata.multiValue => metadata.value.split("\\|").toList
-      case _                                 => metadata.value :: Nil
-    }
-    values.map(v => AddOrUpdateMetadata(metadata.name, v))
   }
 
   private def getClientSecret(secretPath: String, endpoint: String): String = {
