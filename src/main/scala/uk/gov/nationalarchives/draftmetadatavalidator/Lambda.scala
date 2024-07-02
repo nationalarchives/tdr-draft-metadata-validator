@@ -97,7 +97,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
             .map(_ => true)
         } else {
           // Filter out all protected properties
-          val filterProtectedMetadata = customMetadata.filter(_.propertyProtected).map(_.name)
+          val filterProtectedMetadata = customMetadata.filter(!_.editable).map(_.name)
           val updatedFileRows = fileData.fileRows.map{ fileMetadata =>
             val filteredMetadata = fileMetadata.metadata.filterNot(metadata => filterProtectedMetadata.contains(metadata.name))
             fileMetadata.copy(metadata = filteredMetadata)
