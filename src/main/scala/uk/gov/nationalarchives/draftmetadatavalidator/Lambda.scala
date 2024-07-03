@@ -98,7 +98,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
         } else {
           // Filter out all protected properties
           val filterProtectedMetadata = customMetadata.filter(!_.editable).map(_.name)
-          val updatedFileRows = fileData.fileRows.map{ fileMetadata =>
+          val updatedFileRows = fileData.fileRows.map { fileMetadata =>
             val filteredMetadata = fileMetadata.metadata.filterNot(metadata => filterProtectedMetadata.contains(metadata.name))
             fileMetadata.copy(metadata = filteredMetadata)
           }
@@ -115,15 +115,14 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   }
 
   private def convertDataToBulkFileMetadataInput(fileRows: List[FileRow], customMetadata: List[CustomMetadata]): List[AddOrUpdateFileMetadata] = {
-    fileRows.collect {
-      case fileRow =>
-        AddOrUpdateFileMetadata(
-          UUID.fromString(fileRow.fileName),
-          fileRow.metadata.collect {
-            case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get)
-            case m                     => List(AddOrUpdateMetadata(m.name, ""))
-          }.flatten
-        )
+    fileRows.collect { case fileRow =>
+      AddOrUpdateFileMetadata(
+        UUID.fromString(fileRow.fileName),
+        fileRow.metadata.collect {
+          case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get)
+          case m                     => List(AddOrUpdateMetadata(m.name, ""))
+        }.flatten
+      )
     }
   }
 
