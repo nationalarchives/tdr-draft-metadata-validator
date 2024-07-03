@@ -24,20 +24,11 @@ class LambdaSpec extends ExternalServicesSpec {
     )
   }
 
-  def mockS3PutResponse(fileName: String): StubMapping = {
+  def mockS3PutResponse(fileName: String, filePathPrefix: String = ""): StubMapping = {
     wiremockS3.stubFor(
-      put(urlEqualTo(s"/$consignmentId/$fileName"))
+      put(urlEqualTo(s"/$consignmentId$filePathPrefix/$fileName"))
         .willReturn(aResponse().withStatus(200))
     )
-  }
-
-  "x" should "y" in {
-    authOkJson()
-    graphqlOkJson(true)
-    mockS3GetResponse("load-sample.csv", "/dataload")
-    val input = Map("consignmentId" -> consignmentId, "fileName" -> "load-sample.csv").asJava
-    val response = new Lambda().handleRequest(input, mockContext)
-    response.getStatusCode should equal(200)
   }
 
   "handleRequest" should "download the draft metadata csv file, validate and save to db if it has no errors" in {

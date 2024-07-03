@@ -49,8 +49,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val consignmentId = extractInputParameter("consignmentId", input)
     val fileName = extractInputParameter("fileName", input)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
+    val draftMetadata = DraftMetadata(UUID.fromString(consignmentId), fileName)
     for {
-      draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId), fileName))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
       hasErrors <- validateMetadata(draftMetadata)
       _ <- if (hasErrors) s3Files.uploadFile(bucket, draftMetadata) else IO.unit
@@ -86,10 +86,9 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
         val fileData: FileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
         val fileRows: List[FileRow] = csvHandler.loadCSV(filePath)
         val errors = if (draftMetadata.dataLoad) {
-          MetadataValidationJsonSchema.validate(BASE_SCHEMA, fileRows.map(fr => ObjectMetadata(fr.fileName, fr.metadata.toSet)).toSet)
-        } else {
-          MetadataValidationJsonSchema.validate(fileRows)
-        }
+          val objectMetadata = fileRows.map(fr => ObjectMetadata(fr.fileName, fr.metadata.toSet)).toSet
+          MetadataValidationJsonSchema.validate(BASE_SCHEMA, objectMetadata)
+        } else { MetadataValidationJsonSchema.validate(fileRows) }
         if (errors.values.exists(_.nonEmpty)) {
           val updatedFileRows = "Error" :: fileData.fileRows.map(file => {
             errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | ")
