@@ -14,7 +14,7 @@ object Dependencies {
   lazy val typeSafeConfig = "com.typesafe" % "config" % "1.4.3"
   lazy val awsLambda = "com.amazonaws" % "aws-lambda-java-core" % "1.2.3"
   lazy val awsLambdaJavaEvents = "com.amazonaws" % "aws-lambda-java-events" % "3.11.6"
-  lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % "0.1.190"
+  lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % "0.1.194"
   lazy val awsSsm = "software.amazon.awssdk" % "ssm" % "2.26.15"
   lazy val log4catsSlf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
   lazy val mockitoScala = "org.mockito" %% "mockito-scala" % mockitoScalaVersion
