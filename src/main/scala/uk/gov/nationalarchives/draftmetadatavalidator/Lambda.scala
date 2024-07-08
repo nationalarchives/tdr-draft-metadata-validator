@@ -1,16 +1,14 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
-import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
+import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
+import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
 import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.types.DataType._
-import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata}
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import software.amazon.awssdk.http.apache.ApacheHttpClient
@@ -22,15 +20,13 @@ import uk.gov.nationalarchives.aws.utils.s3.S3Clients._
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getFilePath}
+import uk.gov.nationalarchives.draftmetadatavalidator.utils.MetadataUtils
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
-import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
+import uk.gov.nationalarchives.tdr.validation.FileRow
 import uk.gov.nationalarchives.tdr.validation.schema.MetadataValidationJsonSchema
 
 import java.net.URI
-import java.sql.Timestamp
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util
 import java.util.UUID
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -96,13 +92,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
             .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "CompletedWithIssues")
             .map(_ => true)
         } else {
-          // Filter out all protected properties
-          val filterProtectedMetadata = customMetadata.filter(!_.editable).map(_.name)
-          val updatedFileRows = fileData.fileRows.map { fileMetadata =>
-            val filteredMetadata = fileMetadata.metadata.filterNot(metadata => filterProtectedMetadata.contains(metadata.name))
-            fileMetadata.copy(metadata = filteredMetadata)
-          }
-          val addOrUpdateBulkFileMetadata = convertDataToBulkFileMetadataInput(updatedFileRows, customMetadata)
+          val addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData)
           for {
             _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
             - <- graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
@@ -112,33 +102,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     } yield {
       result
     }
-  }
-
-  private def convertDataToBulkFileMetadataInput(fileRows: List[FileRow], customMetadata: List[CustomMetadata]): List[AddOrUpdateFileMetadata] = {
-    fileRows.collect { case fileRow =>
-      AddOrUpdateFileMetadata(
-        UUID.fromString(fileRow.fileName),
-        fileRow.metadata.collect {
-          case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get)
-          case m                     => List(AddOrUpdateMetadata(m.name, ""))
-        }.flatten
-      )
-    }
-  }
-
-  private def createAddOrUpdateMetadata(metadata: Metadata, customMetadata: CustomMetadata): List[AddOrUpdateMetadata] = {
-    val format = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    val values = customMetadata.dataType match {
-      case DateTime => Timestamp.valueOf(LocalDate.parse(metadata.value, format).atStartOfDay()).toString :: Nil
-      case Boolean =>
-        metadata.value.toLowerCase() match {
-          case "yes" => "true" :: Nil
-          case _     => "false" :: Nil
-        }
-      case Text if customMetadata.multiValue => metadata.value.split("\\|").toList
-      case _                                 => metadata.value :: Nil
-    }
-    values.map(v => AddOrUpdateMetadata(metadata.name, v))
   }
 
   private def getClientSecret(secretPath: String, endpoint: String): String = {
