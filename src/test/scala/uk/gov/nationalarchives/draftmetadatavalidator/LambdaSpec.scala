@@ -6,8 +6,10 @@ import com.github.tomakehurst.wiremock.http.RequestMethod
 import com.github.tomakehurst.wiremock.stubbing.{ServeEvent, StubMapping}
 import org.mockito.MockitoSugar.mock
 import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
+import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig.{bucket, fileName, rootDirectory}
 
 import java.nio.file.{Files, Paths}
+import java.util.UUID
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, MapHasAsJava}
 
 class LambdaSpec extends ExternalServicesSpec {
@@ -59,5 +61,55 @@ class LambdaSpec extends ExternalServicesSpec {
     val csvLines = csvWriteEvent.getRequest.getBodyAsString.split("\\n")
     csvLines(0).strip() shouldBe expectedCSVHeader
     csvLines(1).strip() shouldBe expectedCSVRow1
+  }
+
+  "'extractInputParameters'" should "return the inputs as a Map of strings to objects" in {
+    val input = Map(
+      "parameter1" -> "parameterValue1".asInstanceOf[Object],
+      "parameter2" -> "parameterValue2".asInstanceOf[Object],
+      "parameter3" -> "parameterValue3".asInstanceOf[Object]
+    ).asJava
+
+    val parameters = Lambda.extractInputParameters(input)
+
+    parameters.size() shouldBe 3
+    parameters.get("parameter1") shouldBe "parameterValue1"
+    parameters.get("parameter2") shouldBe "parameterValue2"
+    parameters.get("parameter3") shouldBe "parameterValue3"
+  }
+
+  "'DraftMetadataConfiguration'" should "set default configuration values where optional input parameters not passed" in {
+    val defaultInput = Map("consignmentId" -> "f82af3bf-b742-454c-9771-bfd6c5eae749".asInstanceOf[Object]).asJava
+
+    val defaultConfig = Lambda.DraftMetadataConfiguration(defaultInput)
+    defaultConfig.consignmentId shouldBe UUID.fromString(consignmentId.toString)
+    defaultConfig.folderPath shouldBe s"$rootDirectory/${consignmentId.toString}"
+    defaultConfig.bucketKey shouldBe s"${consignmentId.toString}/$fileName"
+    defaultConfig.sourceS3Bucket shouldBe s"$bucket"
+  }
+
+  "'DraftMetadataConfiguration'" should "set configuration values based on input parameters passed in" in {
+    val input = Map(
+      "consignmentId" -> "f82af3bf-b742-454c-9771-bfd6c5eae749".asInstanceOf[Object],
+      "sourceS3Bucket" -> "s3BucketName".asInstanceOf[Object],
+      "metadataBucketKey" -> "s3/bucket/key/filename.csv".asInstanceOf[Object],
+      "persistValidData" -> "false".asInstanceOf[Object]
+    ).asJava
+
+    val config = Lambda.DraftMetadataConfiguration(input)
+    config.consignmentId shouldBe UUID.fromString(consignmentId.toString)
+    config.folderPath shouldBe s"$rootDirectory/s3/bucket/key"
+    config.bucketKey shouldBe "s3/bucket/key/filename.csv"
+    config.sourceS3Bucket shouldBe "s3BucketName"
+  }
+
+  "'DraftMetadataConfiguration'" should "ignore any unrecognised input parameters" in {
+    val input = Map(
+      "consignmentId" -> "f82af3bf-b742-454c-9771-bfd6c5eae749".asInstanceOf[Object],
+      "unrecognizedParam" -> "someValue".asInstanceOf[Object]
+    ).asJava
+
+    val config = Lambda.DraftMetadataConfiguration(input)
+    config.consignmentId shouldBe UUID.fromString(consignmentId.toString)
   }
 }

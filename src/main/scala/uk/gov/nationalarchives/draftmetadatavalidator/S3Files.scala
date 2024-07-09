@@ -4,8 +4,7 @@ import cats.effect.IO
 import cats.implicits.catsSyntaxOptionId
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
-import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig.fileName
-import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getFilePath, getFolderPath}
+import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.DraftMetadataConfiguration
 
 import java.io.File
 import java.nio.file.Paths
@@ -13,24 +12,22 @@ import scala.reflect.io.Directory
 
 class S3Files(s3Utils: S3Utils)(implicit val logger: SelfAwareStructuredLogger[IO]) {
 
-  def key(draftMetadata: DraftMetadata) = s"${draftMetadata.consignmentId}/$fileName"
+  def downloadFile(draftMetadata: DraftMetadataConfiguration): IO[Any] = {
 
-  def downloadFile(bucket: String, draftMetadata: DraftMetadata): IO[Any] = {
-
-    cleanup(getFolderPath(draftMetadata))
-    val filePath = getFilePath(draftMetadata)
+    cleanup(draftMetadata.folderPath)
+    val filePath = draftMetadata.filePath
     if (new File(filePath).exists()) {
       logger.info("")
       IO.unit
     } else {
       IO(new File(filePath.split("/").dropRight(1).mkString("/")).mkdirs()).flatMap(_ => {
-        s3Utils.downloadFiles(bucket, key(draftMetadata), Paths.get(filePath).some)
+        s3Utils.downloadFiles(draftMetadata.sourceS3Bucket, draftMetadata.bucketKey, Paths.get(filePath).some)
       })
     }
   }
 
-  def uploadFile(bucket: String, draftMetadata: DraftMetadata): IO[Unit] = for {
-    _ <- s3Utils.upload(bucket, key(draftMetadata), Paths.get(getFilePath(draftMetadata)))
+  def uploadFile(draftMetadata: DraftMetadataConfiguration): IO[Unit] = for {
+    _ <- s3Utils.upload(draftMetadata.sourceS3Bucket, draftMetadata.bucketKey, Paths.get(draftMetadata.filePath))
   } yield ()
 
   private def cleanup(path: String): Unit = {

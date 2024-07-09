@@ -21,7 +21,7 @@ import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend}
 import uk.gov.nationalarchives.aws.utils.s3.S3Clients._
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
-import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getFilePath}
+import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadataConfiguration, extractInputParameters}
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
@@ -49,13 +49,12 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
-    val consignmentId = extractConsignmentId(input)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     for {
-      draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId)))
-      _ <- s3Files.downloadFile(bucket, draftMetadata)
+      draftMetadata <- IO(DraftMetadataConfiguration(extractInputParameters(input)))
+      _ <- s3Files.downloadFile(draftMetadata)
       hasErrors <- validateMetadata(draftMetadata)
-      _ <- if (hasErrors) s3Files.uploadFile(bucket, draftMetadata) else IO.unit
+      _ <- if (hasErrors) s3Files.uploadFile(draftMetadata) else IO.unit
     } yield {
       val response = new APIGatewayProxyResponseEvent()
       response.setStatusCode(200)
@@ -63,23 +62,14 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
   }.unsafeRunSync()(cats.effect.unsafe.implicits.global)
 
-  private def extractConsignmentId(input: util.Map[String, Object]): String = {
-    val inputParameters = input match {
-      case stepFunctionInput if stepFunctionInput.containsKey("consignmentId") => stepFunctionInput
-      case apiProxyRequestInput if apiProxyRequestInput.containsKey("pathParameters") =>
-        apiProxyRequestInput.get("pathParameters").asInstanceOf[util.Map[String, Object]]
-    }
-    inputParameters.get("consignmentId").toString
-  }
-
-  private def validateMetadata(draftMetadata: DraftMetadata): IO[Boolean] = {
+  private def validateMetadata(draftMetadata: DraftMetadataConfiguration): IO[Boolean] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
       displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, clientSecret)
       result <- {
         val csvHandler = new CSVHandler()
-        val filePath = getFilePath(draftMetadata)
+        val filePath = draftMetadata.filePath
         // Loading CSV twice as validation and writing of CSV currently done using different style
         // The important fact is the .fileName that is used to match errors to rows written.
         // Currently using last column UUID. If it is decided to use the UUID the 'fileName' attribute
@@ -163,8 +153,19 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 }
 
 object Lambda {
-  case class DraftMetadata(consignmentId: UUID)
-  def getFilePath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}/$fileName"""
+  case class DraftMetadataConfiguration(input: util.Map[String, Object]) {
+    val consignmentId: UUID = UUID.fromString(input.get("consignmentId").toString)
+    val sourceS3Bucket: String = input.getOrDefault("sourceS3Bucket", s"$bucket".asInstanceOf[Object]).toString
+    val bucketKey: String = input.getOrDefault("metadataBucketKey", s"$consignmentId/$fileName".asInstanceOf[Object]).toString
+    val filePath: String = s"$rootDirectory/$bucketKey"
+    val folderPath: String = filePath.split("/").dropRight(1).mkString("/")
+  }
 
-  def getFolderPath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}"""
+  def extractInputParameters(input: util.Map[String, Object]): util.Map[String, Object] = {
+    input match {
+      case apiProxyRequestInput if apiProxyRequestInput.containsKey("pathParameters") =>
+        apiProxyRequestInput.get("pathParameters").asInstanceOf[util.Map[String, Object]]
+      case _ => input
+    }
+  }
 }
