@@ -55,9 +55,11 @@ class LambdaSpec extends ExternalServicesSpec {
     val csvWriteEvent = s3Interactions.head
     val expectedCSVHeader =
       "Filename,Filepath,Date last modified,Closure status,Closure Start Date,Closure Period,FOI exemption code,FOI decision asserted,Is the title sensitive for the public?,Add alternative title without the file extension,Description,Is the description sensitive for the public?,Alternative description,Language,Date of the record,Translated title of record,Former reference,UUID,Error"
-    val expectedCSVRow1 = "test3.txt,test/test3.txt,12/2/2345,Closed,,,,,No,,hhhhh,No,,English,,,,a060c57d-1639-4828-9a7a-67a7c64dbf6c,date_last_modified: format.date"
+    val expectedCSVRow1 =
+      "test3.txt,test/test3.txt,12/2/2345,Closed,,,,,No,,hhhhh,No,,English,,,,a060c57d-1639-4828-9a7a-67a7c64dbf6c,foi_exemption_asserted: type | foi_exemption_code: type | closure_period: type | closure_start_date: type"
     val csvLines = csvWriteEvent.getRequest.getBodyAsString.split("\\n")
     csvLines(0).strip() shouldBe expectedCSVHeader
+    println(csvLines(1).strip())
     csvLines(1).strip() shouldBe expectedCSVRow1
   }
 }
