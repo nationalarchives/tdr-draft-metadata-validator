@@ -16,7 +16,6 @@ jobs:
   deploy-env-version:
      uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_env_tag.yml@version-tag-ecr
      with:
-       repo-name: tdr-draft-metadata-validator
        environment: intg
        image-name: draft-metadata-validator
        to-deploy: ${{ needs.pre-deploy.outputs.next-version }}
