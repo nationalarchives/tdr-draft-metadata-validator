@@ -14,7 +14,7 @@ jobs:
       MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
   deploy-env-version:
-     uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_env_tag.yml.yml@version-tag-ecr
+     uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_env_tag.yml@version-tag-ecr
      with:
        repo-name: tdr-draft-metadata-validator
        environment: intg
