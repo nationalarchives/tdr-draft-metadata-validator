@@ -14,6 +14,8 @@ jobs:
       MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
   deploy-env-version:
+     needs: 
+       - pre-deploy
      uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_env_tag.yml@version-tag-ecr
      with:
        environment: intg
