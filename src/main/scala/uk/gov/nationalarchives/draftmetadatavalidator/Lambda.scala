@@ -89,7 +89,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
         val errors = MetadataValidationJsonSchema.validate(fileRows)
         if (errors.values.exists(_.nonEmpty)) {
           val updatedFileRows = "Error" :: fileData.fileRows.map(file => {
-            errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | ")
+            errors(file.matchIdentifier).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | ")
           })
           csvHandler.writeCsv(fileData.allRowsWithHeader.zip(updatedFileRows).map(p => p._1 :+ p._2), filePath)
           graphQlApi
@@ -112,7 +112,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     fileData.fileRows.collect {
       case fileRow if fileRow.metadata.exists(_.value.nonEmpty) =>
         AddOrUpdateFileMetadata(
-          UUID.fromString(fileRow.fileName),
+          UUID.fromString(fileRow.matchIdentifier),
           fileRow.metadata.collect { case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get) }.flatten
         )
     }
