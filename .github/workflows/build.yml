@@ -13,23 +13,21 @@ jobs:
     secrets:
       MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
-  deploy-env-version:
-     uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_env_tag.yml.yml@version-tag-ecr
-     with:
-       repo-name: tdr-draft-metadata-validator
-       environment: intg
-       image-name: draft-metadata-validator
-       to-deploy: ${{ needs.pre-deploy.outputs.next-version }}
-     secrets:
-       ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
-       MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
-       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
-       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  tag-ecr-image:
+    uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_tag.yml.yml
+    with:
+      repo-name: tdr-draft-metadata-validator
+      tag: intg
+      image-name: draft-metadata-validator
+      to-deploy: ${{ needs.pre-deploy.outputs.next-version }}
+    secrets:
+      MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   deploy:
-    needs: 
-     - pre-deploy
-     - deploy-env-version
-    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml@version-tag-ecr
+    needs:
+      - pre-deploy
+      - tag-ecr-image
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml
     with:
       lambda-name: draft-metadata-validator
       deployment-package: draft-metadata-validator.jar
