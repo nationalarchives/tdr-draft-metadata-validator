@@ -23,7 +23,6 @@ jobs:
   tag-ecr-image:
     uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_tag.yml.yml@main
     with:
-      repo-name: tdr-draft-metadata-validator
       tag: ${{inputs.environment}}
       image-name: draft-metadata-validator
       to-deploy: ${{ inputs.to-deploy }}
