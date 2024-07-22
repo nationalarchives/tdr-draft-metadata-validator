@@ -5,7 +5,7 @@ on:
     branches:
       - main
 jobs:
-  pre-deploy:
+  build-image:
     uses: nationalarchives/tdr-github-actions/.github/workflows/ecs_build.yml
     with:
       repo-name: tdr-draft-metadata-validator
@@ -15,26 +15,26 @@ jobs:
       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
   tag-ecr-image:
     needs:
-      - pre-deploy
+      - build-image
     uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_tag.yml.yml
     with:
       repo-name: tdr-draft-metadata-validator
       tag: intg
       image-name: draft-metadata-validator
-      to-deploy: ${{ needs.pre-deploy.outputs.next-version }}
+      to-deploy: ${{ needs.build-image.outputs.next-version }}
     secrets:
       MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   deploy:
     needs:
-      - pre-deploy
       - tag-ecr-image
+      - build-image
     uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml
     with:
       lambda-name: draft-metadata-validator
       deployment-package: draft-metadata-validator.jar
       environment: intg
-      to-deploy: ${{ needs.pre-deploy.outputs.next-version }}
+      to-deploy: ${{ needs.build-image.outputs.next-version }}
       image-name: draft-metadata-validator
     secrets:
       ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
