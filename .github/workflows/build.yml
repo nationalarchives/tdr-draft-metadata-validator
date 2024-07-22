@@ -18,7 +18,6 @@ jobs:
       - build-image
     uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_tag.yml@main
     with:
-      repo-name: tdr-draft-metadata-validator
       tag: intg
       image-name: draft-metadata-validator
       to-deploy: ${{ needs.build-image.outputs.next-version }}
