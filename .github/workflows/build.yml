@@ -6,7 +6,7 @@ on:
       - main
 jobs:
   build-image:
-    uses: nationalarchives/tdr-github-actions/.github/workflows/ecs_build.yml
+    uses: nationalarchives/tdr-github-actions/.github/workflows/ecs_build.yml@main
     with:
       repo-name: tdr-draft-metadata-validator
       image-name: draft-metadata-validator
@@ -16,7 +16,7 @@ jobs:
   tag-ecr-image:
     needs:
       - build-image
-    uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_tag.yml.yml
+    uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_tag.yml.yml@main
     with:
       repo-name: tdr-draft-metadata-validator
       tag: intg
@@ -29,7 +29,7 @@ jobs:
     needs:
       - tag-ecr-image
       - build-image
-    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml@main
     with:
       lambda-name: draft-metadata-validator
       deployment-package: draft-metadata-validator.jar

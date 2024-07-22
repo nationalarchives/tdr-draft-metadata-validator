@@ -21,7 +21,7 @@ permissions:
   contents: write
 jobs:
   tag-ecr-image:
-    uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_tag.yml.yml
+    uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_tag.yml.yml@main
     with:
       repo-name: tdr-draft-metadata-validator
       tag: ${{inputs.environment}}
@@ -33,7 +33,7 @@ jobs:
   deploy:
     needs:
       - tag-ecr-image
-    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml@main
     with:
       lambda-name: draft-metadata-validator
       deployment-package: draft-metadata-validator.jar
