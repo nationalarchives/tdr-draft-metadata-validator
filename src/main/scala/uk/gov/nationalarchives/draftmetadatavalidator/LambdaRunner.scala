@@ -1,7 +1,5 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyRequestEvent
-
 import scala.jdk.CollectionConverters.MapHasAsJava
 
 object LambdaRunner extends App {
