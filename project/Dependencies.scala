@@ -15,7 +15,7 @@ object Dependencies {
   lazy val awsLambda = "com.amazonaws" % "aws-lambda-java-core" % "1.2.3"
   lazy val awsLambdaJavaEvents = "com.amazonaws" % "aws-lambda-java-events" % "3.13.0"
   lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % "0.1.199"
-  lazy val awsSsm = "software.amazon.awssdk" % "ssm" % "2.26.24"
+  lazy val awsSsm = "software.amazon.awssdk" % "ssm" % "2.26.27"
   lazy val log4catsSlf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
   lazy val mockitoScala = "org.mockito" %% "mockito-scala" % mockitoScalaVersion
   lazy val mockitoScalaTest = "org.mockito" %% "mockito-scala-scalatest" % mockitoScalaVersion
