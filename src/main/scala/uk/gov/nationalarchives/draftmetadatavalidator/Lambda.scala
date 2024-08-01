@@ -92,10 +92,11 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
         val fileRows: List[FileRow] = csvHandler.loadCSV(filePath)
         val errors: Map[String, Seq[ValidationError]] = MetadataValidationJsonSchema.validate(List(BASE_SCHEMA, CLOSURE_SCHEMA), fileRows)
         if (errors.values.exists(_.nonEmpty)) {
+          val rmErrors = errors.filter(y => y._2.nonEmpty)
           implicit val producerEncoder: Encoder[ValidationProcess.Value] = Encoder.encodeEnumeration(ValidationProcess)
           case class ValidationErrors(assetId: String, errors: Set[ValidationError])
           case class VD(consignmentId: UUID, date: String, validationErrors: List[ValidationErrors])
-          val validationErrors = errors.keys.map(key => ValidationErrors(key, errors(key).toSet)).toList
+          val validationErrors = rmErrors.keys.map(key => ValidationErrors(key, rmErrors(key).toSet)).toList
           println(VD(draftMetadata.consignmentId, org.joda.time.DateTime.now().toString("YYYY-mm-dd"), validationErrors).asJson.toString())
           val updatedFileRows = "Error" :: fileData.fileRows.map(file => {
             errors(file.matchIdentifier).map(p => s"${p.property}: ${p.errorKey}").mkString(" | ")
