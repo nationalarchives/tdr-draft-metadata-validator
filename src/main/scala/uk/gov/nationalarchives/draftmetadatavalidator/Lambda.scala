@@ -1,16 +1,19 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
-import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
+import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
+import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
 import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.types.DataType._
 import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata}
+import io.circe.Encoder
+import io.circe.generic.auto._
+import io.circe.syntax._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
 import software.amazon.awssdk.http.apache.ApacheHttpClient
@@ -24,8 +27,9 @@ import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getFilePath}
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
+import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA}
+import uk.gov.nationalarchives.tdr.validation.schema.{MetadataValidationJsonSchema, ValidationError, ValidationProcess}
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
-import uk.gov.nationalarchives.tdr.validation.schema.MetadataValidationJsonSchema
 
 import java.net.URI
 import java.sql.Timestamp
@@ -86,10 +90,15 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
         // should be renamed
         val fileData: FileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
         val fileRows: List[FileRow] = csvHandler.loadCSV(filePath)
-        val errors = MetadataValidationJsonSchema.validate(fileRows)
+        val errors: Map[String, Seq[ValidationError]] = MetadataValidationJsonSchema.validate(List(BASE_SCHEMA, CLOSURE_SCHEMA), fileRows)
         if (errors.values.exists(_.nonEmpty)) {
+          implicit val producerEncoder: Encoder[ValidationProcess.Value] = Encoder.encodeEnumeration(ValidationProcess)
+          case class ValidationErrors(assetId: String, errors: Set[ValidationError])
+          case class VD(consignmentId: UUID, date: String, validationErrors: List[ValidationErrors])
+          val validationErrors = errors.keys.map(key => ValidationErrors(key, errors(key).toSet)).toList
+          println(VD(draftMetadata.consignmentId, org.joda.time.DateTime.now().toString("YYYY-mm-dd"), validationErrors).asJson.toString())
           val updatedFileRows = "Error" :: fileData.fileRows.map(file => {
-            errors(file.fileName).map(p => s"${p.propertyName}: ${p.errorCode}").mkString(" | ")
+            errors(file.matchIdentifier).map(p => s"${p.property}: ${p.errorKey}").mkString(" | ")
           })
           csvHandler.writeCsv(fileData.allRowsWithHeader.zip(updatedFileRows).map(p => p._1 :+ p._2), filePath)
           graphQlApi
@@ -112,7 +121,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     fileData.fileRows.collect {
       case fileRow if fileRow.metadata.exists(_.value.nonEmpty) =>
         AddOrUpdateFileMetadata(
-          UUID.fromString(fileRow.fileName),
+          UUID.fromString(fileRow.matchIdentifier),
           fileRow.metadata.collect { case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get) }.flatten
         )
     }
