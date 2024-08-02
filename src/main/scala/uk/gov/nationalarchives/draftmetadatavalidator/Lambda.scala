@@ -123,8 +123,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     // Ignore Intellij this is used by circe
     implicit val validationProcessEncoder: Encoder[ValidationProcess.Value] = Encoder.encodeEnumeration(ValidationProcess)
     val json = ErrorFileData(draftMetadata.consignmentId, org.joda.time.DateTime.now().toString("yyyy-MM-dd"), validationErrors).asJson.toString()
-
-    Files.deleteIfExists(Paths.get(getErrorFilePath(draftMetadata)))
     Files.writeString(Paths.get(getErrorFilePath(draftMetadata)), json)
   }
 
