@@ -80,27 +80,32 @@ class LambdaSpec extends ExternalServicesSpec {
                                |        {
                                |          "validationProcess" : "SCHEMA_CLOSURE",
                                |          "property" : "closure_period",
-                               |          "errorKey" : "type"
-                               |        },
-                               |        {
-                               |          "validationProcess" : "SCHEMA_CLOSURE",
-                               |          "property" : "closure_start_date",
-                               |          "errorKey" : "type"
-                               |        },
-                               |        {
-                               |          "validationProcess" : "SCHEMA_BASE",
-                               |          "property" : "date_last_modified",
-                               |          "errorKey" : "format.date"
+                               |          "errorKey" : "type",
+                               |          "suppliedProperty" : "Closure Period"
                                |        },
                                |        {
                                |          "validationProcess" : "SCHEMA_CLOSURE",
                                |          "property" : "foi_exemption_code",
-                               |          "errorKey" : "type"
+                               |          "errorKey" : "type",
+                               |          "suppliedProperty" : "FOI exemption code"
+                               |        },
+                               |        {
+                               |          "validationProcess" : "SCHEMA_BASE",
+                               |          "property" : "date_last_modified",
+                               |          "errorKey" : "format.date",
+                               |          "suppliedProperty" : "Date last modified"
+                               |        },
+                               |        {
+                               |          "validationProcess" : "SCHEMA_CLOSURE",
+                               |          "property" : "closure_start_date",
+                               |          "errorKey" : "type",
+                               |          "suppliedProperty" : "Closure Start Date"
                                |        },
                                |        {
                                |          "validationProcess" : "SCHEMA_CLOSURE",
                                |          "property" : "foi_exemption_asserted",
-                               |          "errorKey" : "type"
+                               |          "errorKey" : "type",
+                               |          "suppliedProperty" : "FOI decision asserted"
                                |        }
                                |      ]
                                |    },
@@ -110,12 +115,14 @@ class LambdaSpec extends ExternalServicesSpec {
                                |        {
                                |          "validationProcess" : "SCHEMA_BASE",
                                |          "property" : "foi_exemption_code",
-                               |          "errorKey" : "enum"
+                               |          "errorKey" : "enum",
+                               |          "suppliedProperty" : "FOI exemption code"
                                |        },
                                |        {
                                |          "validationProcess" : "SCHEMA_CLOSURE",
                                |          "property" : "foi_exemption_code",
-                               |          "errorKey" : "enum"
+                               |          "errorKey" : "enum",
+                               |          "suppliedProperty" : "FOI exemption code"
                                |        }
                                |      ]
                                |    }
