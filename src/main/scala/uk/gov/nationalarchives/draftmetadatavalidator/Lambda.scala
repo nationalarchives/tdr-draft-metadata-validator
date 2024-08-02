@@ -27,9 +27,9 @@ import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getErrorFilePath, getFilePath}
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
+import uk.gov.nationalarchives.tdr.validation.Metadata
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA}
 import uk.gov.nationalarchives.tdr.validation.schema.{MetadataValidationJsonSchema, ValidationError, ValidationProcess}
-import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.net.URI
 import java.nio.file.{Files, Paths}
@@ -59,8 +59,11 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     for {
       draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId)))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
-      _ <- validateMetadata(draftMetadata)
+      validationResult <- validateMetadata(draftMetadata)
+      _ <- IO(writeErrorResultToFile(draftMetadata, validationResult))
       _ <- s3Files.uploadFile(bucket, s"${draftMetadata.consignmentId}/$errorFileName", getErrorFilePath(draftMetadata))
+      _ <- if (!hasErrors(validationResult)) persistMetadata(draftMetadata) else IO.unit
+      _ <- updateStatus(validationResult, draftMetadata)
     } yield {
       val response = new APIGatewayProxyResponseEvent()
       response.setStatusCode(200)
@@ -77,37 +80,32 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     inputParameters.get("consignmentId").toString
   }
 
-  private def validateMetadata(draftMetadata: DraftMetadata): IO[Boolean] = {
+  private def validateMetadata(draftMetadata: DraftMetadata): IO[Map[String, Seq[ValidationError]]] = {
+    val csvHandler = new CSVHandler()
+    val filePath = getFilePath(draftMetadata)
+    for {
+      fileRows <- IO(csvHandler.loadCSV(filePath))
+      errors <- IO(MetadataValidationJsonSchema.validate(List(BASE_SCHEMA, CLOSURE_SCHEMA), fileRows))
+    } yield errors
+  }
+
+  private def updateStatus(errorResults: Map[String, Seq[ValidationError]], draftMetadata: DraftMetadata) = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
+    val status = if (hasErrors(errorResults)) "CompletedWithIssues" else "Completed"
+    graphQlApi
+      .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", status)
+  }
+
+  private def persistMetadata(draftMetadata: DraftMetadata) = {
+    val clientSecret = getClientSecret(clientSecretPath, endpoint)
+    val csvHandler = new CSVHandler()
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
       displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, clientSecret)
-      result <- {
-        val csvHandler = new CSVHandler()
-        val filePath = getFilePath(draftMetadata)
-        // Loading CSV twice as validation and persisting of CSV data done using different style
-        // The important fact is the .fileName that is used to match errors to rows written.
-        // Currently using last column UUID. If it is decided to use the UUID the 'fileName' attribute
-        // should be renamed
-        val fileData: FileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
-        val fileRows: List[FileRow] = csvHandler.loadCSV(filePath)
-        val errors: Map[String, Seq[ValidationError]] = MetadataValidationJsonSchema.validate(List(BASE_SCHEMA, CLOSURE_SCHEMA), fileRows)
-        writeErrorsToS3(draftMetadata, errors)
-        if (hasErrors(errors)) {
-          graphQlApi
-            .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "CompletedWithIssues")
-            .map(_ => true)
-        } else {
-          val addOrUpdateBulkFileMetadata = convertDataToBulkFileMetadataInput(fileData, customMetadata)
-          for {
-            _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
-            _ <- graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
-          } yield false
-        }
-      }
-    } yield {
-      result
-    }
+      fileData <- IO(csvHandler.loadCSV(getFilePath(draftMetadata), getMetadataNames(displayProperties, customMetadata)))
+      _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, convertDataToBulkFileMetadataInput(fileData, customMetadata))
+
+    } yield ()
   }
 
   private def hasErrors(errors: Map[String, Seq[ValidationError]]) = {
@@ -115,7 +113,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     removeNoErrors.nonEmpty
   }
 
-  private def writeErrorsToS3(draftMetadata: DraftMetadata, errors: Map[String, Seq[ValidationError]]): Unit = {
+  private def writeErrorResultToFile(draftMetadata: DraftMetadata, errors: Map[String, Seq[ValidationError]]): Unit = {
     case class ValidationErrors(assetId: String, errors: Set[ValidationError])
     case class ErrorFileData(consignmentId: UUID, date: String, validationErrors: List[ValidationErrors])
 
@@ -186,7 +184,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
 object Lambda {
   case class DraftMetadata(consignmentId: UUID)
-  def getFilePath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}/$fileName"""
-  def getErrorFilePath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}/$errorFileName"""
-  def getFolderPath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}"""
+  def getFilePath(draftMetadata: DraftMetadata) = s"""$rootDirectory/${draftMetadata.consignmentId}/$fileName"""
+  def getErrorFilePath(draftMetadata: DraftMetadata) = s"""$rootDirectory/${draftMetadata.consignmentId}/$errorFileName"""
+  def getFolderPath(draftMetadata: DraftMetadata) = s"""$rootDirectory/${draftMetadata.consignmentId}"""
 }
