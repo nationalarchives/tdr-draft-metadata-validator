@@ -24,7 +24,7 @@ import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend}
 import uk.gov.nationalarchives.aws.utils.s3.S3Clients._
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
-import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getFilePath}
+import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getErrorFilePath, getFilePath}
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA}
@@ -32,6 +32,7 @@ import uk.gov.nationalarchives.tdr.validation.schema.{MetadataValidationJsonSche
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.net.URI
+import java.nio.file.{Files, Paths}
 import java.sql.Timestamp
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
@@ -58,8 +59,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     for {
       draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId)))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
-      hasErrors <- validateMetadata(draftMetadata)
-      _ <- if (hasErrors) s3Files.uploadFile(bucket, draftMetadata) else IO.unit
+      _ <- validateMetadata(draftMetadata)
+      _ <- s3Files.uploadFile(bucket, s"${draftMetadata.consignmentId}/$errorFileName", getErrorFilePath(draftMetadata))
     } yield {
       val response = new APIGatewayProxyResponseEvent()
       response.setStatusCode(200)
@@ -84,24 +85,15 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       result <- {
         val csvHandler = new CSVHandler()
         val filePath = getFilePath(draftMetadata)
-        // Loading CSV twice as validation and writing of CSV currently done using different style
+        // Loading CSV twice as validation and persisting of CSV data done using different style
         // The important fact is the .fileName that is used to match errors to rows written.
         // Currently using last column UUID. If it is decided to use the UUID the 'fileName' attribute
         // should be renamed
         val fileData: FileData = csvHandler.loadCSV(filePath, getMetadataNames(displayProperties, customMetadata))
         val fileRows: List[FileRow] = csvHandler.loadCSV(filePath)
         val errors: Map[String, Seq[ValidationError]] = MetadataValidationJsonSchema.validate(List(BASE_SCHEMA, CLOSURE_SCHEMA), fileRows)
-        if (errors.values.exists(_.nonEmpty)) {
-          val rmErrors = errors.filter(y => y._2.nonEmpty)
-          implicit val producerEncoder: Encoder[ValidationProcess.Value] = Encoder.encodeEnumeration(ValidationProcess)
-          case class ValidationErrors(assetId: String, errors: Set[ValidationError])
-          case class VD(consignmentId: UUID, date: String, validationErrors: List[ValidationErrors])
-          val validationErrors = rmErrors.keys.map(key => ValidationErrors(key, rmErrors(key).toSet)).toList
-          println(VD(draftMetadata.consignmentId, org.joda.time.DateTime.now().toString("YYYY-mm-dd"), validationErrors).asJson.toString())
-          val updatedFileRows = "Error" :: fileData.fileRows.map(file => {
-            errors(file.matchIdentifier).map(p => s"${p.property}: ${p.errorKey}").mkString(" | ")
-          })
-          csvHandler.writeCsv(fileData.allRowsWithHeader.zip(updatedFileRows).map(p => p._1 :+ p._2), filePath)
+        writeErrorsToS3(draftMetadata, errors)
+        if (hasErrors(errors)) {
           graphQlApi
             .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "CompletedWithIssues")
             .map(_ => true)
@@ -109,13 +101,33 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
           val addOrUpdateBulkFileMetadata = convertDataToBulkFileMetadataInput(fileData, customMetadata)
           for {
             _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
-            - <- graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
+            _ <- graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", "Completed")
           } yield false
         }
       }
     } yield {
       result
     }
+  }
+
+  private def hasErrors(errors: Map[String, Seq[ValidationError]]) = {
+    val removeNoErrors = errors.filter(mapEntry => mapEntry._2.nonEmpty)
+    removeNoErrors.nonEmpty
+  }
+
+  private def writeErrorsToS3(draftMetadata: DraftMetadata, errors: Map[String, Seq[ValidationError]]): Unit = {
+    case class ValidationErrors(assetId: String, errors: Set[ValidationError])
+    case class ErrorFileData(consignmentId: UUID, date: String, validationErrors: List[ValidationErrors])
+
+    val filteredErrors = errors.filter(mapEntry => mapEntry._2.nonEmpty)
+    val validationErrors = filteredErrors.keys.map(key => ValidationErrors(key, filteredErrors(key).toSet)).toList
+
+    // Ignore Intellij this is used by circe
+    implicit val validationProcessEncoder: Encoder[ValidationProcess.Value] = Encoder.encodeEnumeration(ValidationProcess)
+    val json = ErrorFileData(draftMetadata.consignmentId, org.joda.time.DateTime.now().toString("YYYY-MM-dd"), validationErrors).asJson.toString()
+
+    Files.deleteIfExists(Paths.get(getErrorFilePath(draftMetadata)))
+    Files.writeString(Paths.get(getErrorFilePath(draftMetadata)), json)
   }
 
   private def convertDataToBulkFileMetadataInput(fileData: FileData, customMetadata: List[CustomMetadata]): List[AddOrUpdateFileMetadata] = {
@@ -175,6 +187,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 object Lambda {
   case class DraftMetadata(consignmentId: UUID)
   def getFilePath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}/$fileName"""
-
+  def getErrorFilePath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}/$errorFileName"""
   def getFolderPath(draftMetadata: DraftMetadata) = s"""${rootDirectory}/${draftMetadata.consignmentId}"""
 }

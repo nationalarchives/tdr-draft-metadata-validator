@@ -31,20 +31,29 @@ class LambdaSpec extends ExternalServicesSpec {
     )
   }
 
-  "handleRequest" should "download the draft metadata csv file, validate and save to db if it has no errors" in {
+  def mockS3ErrorFilePutResponse(): StubMapping = {
+    wiremockS3.stubFor(
+      put(urlEqualTo(s"/$consignmentId/draft-metadata-errors.json"))
+        .willReturn(aResponse().withStatus(200))
+    )
+  }
+
+  "handleRequest" should "download the draft metadata csv file, validate, save error file to s3 and save to metadata to db if it has no errors" in {
     authOkJson()
     graphqlOkJson(true)
     mockS3GetResponse("sample.csv")
+    mockS3ErrorFilePutResponse
     val input = Map("consignmentId" -> consignmentId).asJava
     val response = new Lambda().handleRequest(input, mockContext)
     response.getStatusCode should equal(200)
   }
 
-  "handleRequest" should "download the draft metadata csv file, validate it and re-upload to s3 bucket if it has any errors" in {
+  "handleRequest" should "download the draft metadata csv file, validate it and save error file to s3" in {
     authOkJson()
     graphqlOkJson()
     mockS3GetResponse("invalid-sample.csv")
-    mockS3PutResponse()
+    // mockS3PutResponse()
+    mockS3ErrorFilePutResponse
     val input = Map("consignmentId" -> consignmentId).asJava
     val response = new Lambda().handleRequest(input, mockContext)
     response.getStatusCode should equal(200)
@@ -52,14 +61,60 @@ class LambdaSpec extends ExternalServicesSpec {
     val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala.filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT).toList
     s3Interactions.size shouldBe 1
 
-    val csvWriteEvent = s3Interactions.head
-    val expectedCSVHeader =
-      "Filename,Filepath,Date last modified,Closure status,Closure Start Date,Closure Period,FOI exemption code,FOI decision asserted,Is the title sensitive for the public?,Add alternative title without the file extension,Description,Is the description sensitive for the public?,Alternative description,Language,Date of the record,Translated title of record,Former reference,UUID,Error"
-    val expectedCSVRow1 =
-      "test3.txt,test/test3.txt,12/2/2345,Closed,,,,,No,,hhhhh,No,,English,,,,a060c57d-1639-4828-9a7a-67a7c64dbf6c,date_last_modified: format.date | foi_exemption_asserted: type | foi_exemption_code: type | closure_period: type | closure_start_date: type"
-    val csvLines = csvWriteEvent.getRequest.getBodyAsString.split("\\n")
-    csvLines(0).strip() shouldBe expectedCSVHeader
-    println(csvLines(1).strip())
-    csvLines(1).strip() shouldBe expectedCSVRow1
+    val errorWrite = s3Interactions.head
+    val errorFileData = errorWrite.getRequest.getBodyAsString
+    val today = org.joda.time.DateTime.now().toString("YYYY-MM-dd")
+    val expectedErrorData = s"""{
+                               |  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+                               |  "date" : "$today",
+                               |  "validationErrors" : [
+                               |    {
+                               |      "assetId" : "a060c57d-1639-4828-9a7a-67a7c64dbf6c",
+                               |      "errors" : [
+                               |        {
+                               |          "validationProcess" : "SCHEMA_CLOSURE",
+                               |          "property" : "closure_period",
+                               |          "errorKey" : "type"
+                               |        },
+                               |        {
+                               |          "validationProcess" : "SCHEMA_CLOSURE",
+                               |          "property" : "closure_start_date",
+                               |          "errorKey" : "type"
+                               |        },
+                               |        {
+                               |          "validationProcess" : "SCHEMA_BASE",
+                               |          "property" : "date_last_modified",
+                               |          "errorKey" : "format.date"
+                               |        },
+                               |        {
+                               |          "validationProcess" : "SCHEMA_CLOSURE",
+                               |          "property" : "foi_exemption_code",
+                               |          "errorKey" : "type"
+                               |        },
+                               |        {
+                               |          "validationProcess" : "SCHEMA_CLOSURE",
+                               |          "property" : "foi_exemption_asserted",
+                               |          "errorKey" : "type"
+                               |        }
+                               |      ]
+                               |    },
+                               |    {
+                               |      "assetId" : "cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c",
+                               |      "errors" : [
+                               |        {
+                               |          "validationProcess" : "SCHEMA_BASE",
+                               |          "property" : "foi_exemption_code",
+                               |          "errorKey" : "enum"
+                               |        },
+                               |        {
+                               |          "validationProcess" : "SCHEMA_CLOSURE",
+                               |          "property" : "foi_exemption_code",
+                               |          "errorKey" : "enum"
+                               |        }
+                               |      ]
+                               |    }
+                               |  ]
+                               |}""".stripMargin
+    errorFileData shouldBe expectedErrorData
   }
 }
