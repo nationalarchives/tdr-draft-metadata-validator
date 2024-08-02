@@ -60,7 +60,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId)))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
       validationResult <- validateMetadata(draftMetadata)
-      _ <- IO(writeErrorResultToFile(draftMetadata, validationResult))
+      _ <- IO(writeValidationResultToFile(draftMetadata, validationResult))
       _ <- s3Files.uploadFile(bucket, s"${draftMetadata.consignmentId}/$errorFileName", getErrorFilePath(draftMetadata))
       _ <- if (!hasErrors(validationResult)) persistMetadata(draftMetadata) else IO.unit
       _ <- updateStatus(validationResult, draftMetadata)
@@ -85,8 +85,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val filePath = getFilePath(draftMetadata)
     for {
       fileRows <- IO(csvHandler.loadCSV(filePath))
-      errors <- IO(MetadataValidationJsonSchema.validate(List(BASE_SCHEMA, CLOSURE_SCHEMA), fileRows))
-    } yield errors
+      validationResult <- IO(MetadataValidationJsonSchema.validate(List(BASE_SCHEMA, CLOSURE_SCHEMA), fileRows))
+    } yield validationResult
   }
 
   private def updateStatus(errorResults: Map[String, Seq[ValidationError]], draftMetadata: DraftMetadata) = {
@@ -113,7 +113,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     removeNoErrors.nonEmpty
   }
 
-  private def writeErrorResultToFile(draftMetadata: DraftMetadata, errors: Map[String, Seq[ValidationError]]): Unit = {
+  private def writeValidationResultToFile(draftMetadata: DraftMetadata, errors: Map[String, Seq[ValidationError]]): Unit = {
     case class ValidationErrors(assetId: String, errors: Set[ValidationError])
     case class ErrorFileData(consignmentId: UUID, date: String, validationErrors: List[ValidationErrors])
 
@@ -122,7 +122,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
     // Ignore Intellij this is used by circe
     implicit val validationProcessEncoder: Encoder[ValidationProcess.Value] = Encoder.encodeEnumeration(ValidationProcess)
-    val json = ErrorFileData(draftMetadata.consignmentId, org.joda.time.DateTime.now().toString("YYYY-MM-dd"), validationErrors).asJson.toString()
+    val json = ErrorFileData(draftMetadata.consignmentId, org.joda.time.DateTime.now().toString("yyyy-MM-dd"), validationErrors).asJson.toString()
 
     Files.deleteIfExists(Paths.get(getErrorFilePath(draftMetadata)))
     Files.writeString(Paths.get(getErrorFilePath(draftMetadata)), json)

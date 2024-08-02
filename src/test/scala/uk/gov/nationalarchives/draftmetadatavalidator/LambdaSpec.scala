@@ -45,7 +45,7 @@ class LambdaSpec extends ExternalServicesSpec {
 
     val errorWriteRequest = s3Interactions.head
     val errorFileData = errorWriteRequest.getRequest.getBodyAsString
-    val today = org.joda.time.DateTime.now().toString("YYYY-MM-dd")
+    val today = org.joda.time.DateTime.now().toString("yyyy-MM-dd")
     val expectedErrorData = s"""{
                                |  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
                                |  "date" : "$today",
@@ -69,7 +69,7 @@ class LambdaSpec extends ExternalServicesSpec {
 
     val errorWriteRequest = s3Interactions.head
     val errorFileData = errorWriteRequest.getRequest.getBodyAsString
-    val today = org.joda.time.DateTime.now().toString("YYYY-MM-dd")
+    val today = org.joda.time.DateTime.now().toString("yyyy-MM-dd")
     val expectedErrorData = s"""{
                                |  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
                                |  "date" : "$today",
