@@ -24,13 +24,6 @@ class LambdaSpec extends ExternalServicesSpec {
     )
   }
 
-  def mockS3PutResponse(): StubMapping = {
-    wiremockS3.stubFor(
-      put(urlEqualTo(s"/$consignmentId/sample.csv"))
-        .willReturn(aResponse().withStatus(200))
-    )
-  }
-
   def mockS3ErrorFilePutResponse(): StubMapping = {
     wiremockS3.stubFor(
       put(urlEqualTo(s"/$consignmentId/draft-metadata-errors.json"))
@@ -42,18 +35,7 @@ class LambdaSpec extends ExternalServicesSpec {
     authOkJson()
     graphqlOkJson(true)
     mockS3GetResponse("sample.csv")
-    mockS3ErrorFilePutResponse
-    val input = Map("consignmentId" -> consignmentId).asJava
-    val response = new Lambda().handleRequest(input, mockContext)
-    response.getStatusCode should equal(200)
-  }
-
-  "handleRequest" should "download the draft metadata csv file, validate it and save error file to s3" in {
-    authOkJson()
-    graphqlOkJson()
-    mockS3GetResponse("invalid-sample.csv")
-    // mockS3PutResponse()
-    mockS3ErrorFilePutResponse
+    mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava
     val response = new Lambda().handleRequest(input, mockContext)
     response.getStatusCode should equal(200)
@@ -61,8 +43,32 @@ class LambdaSpec extends ExternalServicesSpec {
     val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala.filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT).toList
     s3Interactions.size shouldBe 1
 
-    val errorWrite = s3Interactions.head
-    val errorFileData = errorWrite.getRequest.getBodyAsString
+    val errorWriteRequest = s3Interactions.head
+    val errorFileData = errorWriteRequest.getRequest.getBodyAsString
+    val today = org.joda.time.DateTime.now().toString("YYYY-MM-dd")
+    val expectedErrorData = s"""{
+                               |  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+                               |  "date" : "$today",
+                               |  "validationErrors" : [
+                               |  ]
+                               |}""".stripMargin
+    errorFileData shouldBe expectedErrorData
+  }
+
+  "handleRequest" should "download the draft metadata csv file, validate it and save error file to s3" in {
+    authOkJson()
+    graphqlOkJson()
+    mockS3GetResponse("invalid-sample.csv")
+    mockS3ErrorFilePutResponse()
+    val input = Map("consignmentId" -> consignmentId).asJava
+    val response = new Lambda().handleRequest(input, mockContext)
+    response.getStatusCode should equal(200)
+
+    val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala.filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT).toList
+    s3Interactions.size shouldBe 1
+
+    val errorWriteRequest = s3Interactions.head
+    val errorFileData = errorWriteRequest.getRequest.getBodyAsString
     val today = org.joda.time.DateTime.now().toString("YYYY-MM-dd")
     val expectedErrorData = s"""{
                                |  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
