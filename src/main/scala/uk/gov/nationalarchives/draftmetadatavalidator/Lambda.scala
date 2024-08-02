@@ -29,7 +29,7 @@ import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.validation.Metadata
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA}
-import uk.gov.nationalarchives.tdr.validation.schema.{MetadataValidationJsonSchema, ValidationError, ValidationProcess}
+import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema, ValidationError, ValidationProcess}
 
 import java.net.URI
 import java.nio.file.{Files, Paths}
@@ -55,11 +55,12 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
     val consignmentId = extractConsignmentId(input)
+    val schemaToValidate = List(BASE_SCHEMA, CLOSURE_SCHEMA)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     for {
       draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId)))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
-      validationResult <- validateMetadata(draftMetadata)
+      validationResult <- validateMetadata(draftMetadata, schemaToValidate)
       _ <- IO(writeValidationResultToFile(draftMetadata, validationResult))
       _ <- s3Files.uploadFile(bucket, s"${draftMetadata.consignmentId}/$errorFileName", getErrorFilePath(draftMetadata))
       _ <- if (!hasErrors(validationResult)) persistMetadata(draftMetadata) else IO.unit
@@ -80,12 +81,12 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     inputParameters.get("consignmentId").toString
   }
 
-  private def validateMetadata(draftMetadata: DraftMetadata): IO[Map[String, Seq[ValidationError]]] = {
+  private def validateMetadata(draftMetadata: DraftMetadata, schema: List[JsonSchemaDefinition]): IO[Map[String, Seq[ValidationError]]] = {
     val csvHandler = new CSVHandler()
     val filePath = getFilePath(draftMetadata)
     for {
       fileRows <- IO(csvHandler.loadCSV(filePath))
-      validationResult <- IO(MetadataValidationJsonSchema.validate(List(BASE_SCHEMA, CLOSURE_SCHEMA), fileRows))
+      validationResult <- IO(MetadataValidationJsonSchema.validate(schema, fileRows))
     } yield validationResult
   }
 
