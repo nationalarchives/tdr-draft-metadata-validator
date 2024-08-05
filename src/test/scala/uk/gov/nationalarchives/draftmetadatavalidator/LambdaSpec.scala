@@ -37,7 +37,7 @@ class LambdaSpec extends ExternalServicesSpec {
   val pattern = "yyyy-MM-dd"
   val dateFormat = new SimpleDateFormat(pattern)
 
-  "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 and save to metadata to db if it has no errors" in {
+  "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 and save metadata to db if it has no errors" in {
     authOkJson()
     graphqlOkJson(true)
     mockS3GetResponse("sample.csv")
