@@ -8,6 +8,9 @@ import org.mockito.MockitoSugar.mock
 import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
 
 import java.nio.file.{Files, Paths}
+import java.text.SimpleDateFormat
+import java.util.Date
+import scala.io.Source
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, MapHasAsJava}
 
 class LambdaSpec extends ExternalServicesSpec {
@@ -31,7 +34,7 @@ class LambdaSpec extends ExternalServicesSpec {
     )
   }
 
-  "handleRequest" should "download the draft metadata csv file, validate, save error file to s3 and save to metadata to db if it has no errors" in {
+  "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 and save to metadata to db if it has no errors" in {
     authOkJson()
     graphqlOkJson(true)
     mockS3GetResponse("sample.csv")
@@ -55,7 +58,7 @@ class LambdaSpec extends ExternalServicesSpec {
     errorFileData shouldBe expectedErrorData
   }
 
-  "handleRequest" should "download the draft metadata csv file, validate it and save error file to s3" in {
+  "handleRequest" should "download the draft metadata csv file, validate it and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson()
     mockS3GetResponse("invalid-sample.csv")
@@ -69,58 +72,10 @@ class LambdaSpec extends ExternalServicesSpec {
 
     val errorWriteRequest = s3Interactions.head
     val errorFileData = errorWriteRequest.getRequest.getBodyAsString
-    val today = org.joda.time.DateTime.now().toString("yyyy-MM-dd")
-    val expectedErrorData = s"""{
-                               |  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
-                               |  "date" : "$today",
-                               |  "validationErrors" : [
-                               |    {
-                               |      "assetId" : "a060c57d-1639-4828-9a7a-67a7c64dbf6c",
-                               |      "errors" : [
-                               |        {
-                               |          "validationProcess" : "SCHEMA_CLOSURE",
-                               |          "property" : "closure_period",
-                               |          "errorKey" : "type"
-                               |        },
-                               |        {
-                               |          "validationProcess" : "SCHEMA_CLOSURE",
-                               |          "property" : "closure_start_date",
-                               |          "errorKey" : "type"
-                               |        },
-                               |        {
-                               |          "validationProcess" : "SCHEMA_BASE",
-                               |          "property" : "date_last_modified",
-                               |          "errorKey" : "format.date"
-                               |        },
-                               |        {
-                               |          "validationProcess" : "SCHEMA_CLOSURE",
-                               |          "property" : "foi_exemption_code",
-                               |          "errorKey" : "type"
-                               |        },
-                               |        {
-                               |          "validationProcess" : "SCHEMA_CLOSURE",
-                               |          "property" : "foi_exemption_asserted",
-                               |          "errorKey" : "type"
-                               |        }
-                               |      ]
-                               |    },
-                               |    {
-                               |      "assetId" : "cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c",
-                               |      "errors" : [
-                               |        {
-                               |          "validationProcess" : "SCHEMA_BASE",
-                               |          "property" : "foi_exemption_code",
-                               |          "errorKey" : "enum"
-                               |        },
-                               |        {
-                               |          "validationProcess" : "SCHEMA_CLOSURE",
-                               |          "property" : "foi_exemption_code",
-                               |          "errorKey" : "enum"
-                               |        }
-                               |      ]
-                               |    }
-                               |  ]
-                               |}""".stripMargin
+    val pattern = "yyyy-MM-dd"
+    val dateFormat = new SimpleDateFormat(pattern)
+    val today = dateFormat.format(new Date)
+    val expectedErrorData: String = Source.fromResource("json/errors.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
     errorFileData shouldBe expectedErrorData
   }
 }

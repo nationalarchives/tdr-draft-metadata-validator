@@ -34,10 +34,11 @@ import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, Meta
 import java.net.URI
 import java.nio.file.{Files, Paths}
 import java.sql.Timestamp
+import java.text.SimpleDateFormat
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util
-import java.util.UUID
+import java.util.{Date, UUID}
 import scala.concurrent.ExecutionContext.Implicits.global
 
 class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayProxyResponseEvent] {
@@ -55,7 +56,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
     val consignmentId = extractConsignmentId(input)
-    val schemaToValidate = List(BASE_SCHEMA, CLOSURE_SCHEMA)
+    val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     for {
       draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId)))
@@ -81,7 +82,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     inputParameters.get("consignmentId").toString
   }
 
-  private def validateMetadata(draftMetadata: DraftMetadata, schema: List[JsonSchemaDefinition]): IO[Map[String, Seq[ValidationError]]] = {
+  private def validateMetadata(draftMetadata: DraftMetadata, schema: Set[JsonSchemaDefinition]): IO[Map[String, Seq[ValidationError]]] = {
     val csvHandler = new CSVHandler()
     val filePath = getFilePath(draftMetadata)
     for {
@@ -110,8 +111,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   }
 
   private def hasErrors(errors: Map[String, Seq[ValidationError]]) = {
-    val removeNoErrors = errors.filter(mapEntry => mapEntry._2.nonEmpty)
-    removeNoErrors.nonEmpty
+    val errorsOnly = errors.filter(mapEntry => mapEntry._2.nonEmpty)
+    errorsOnly.nonEmpty
   }
 
   private def writeValidationResultToFile(draftMetadata: DraftMetadata, errors: Map[String, Seq[ValidationError]]): Unit = {
@@ -123,7 +124,9 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
     // Ignore Intellij this is used by circe
     implicit val validationProcessEncoder: Encoder[ValidationProcess.Value] = Encoder.encodeEnumeration(ValidationProcess)
-    val json = ErrorFileData(draftMetadata.consignmentId, org.joda.time.DateTime.now().toString("yyyy-MM-dd"), validationErrors).asJson.toString()
+    val pattern = "yyyy-MM-dd"
+    val dateFormat = new SimpleDateFormat(pattern)
+    val json = ErrorFileData(draftMetadata.consignmentId, dateFormat.format(new Date), validationErrors).asJson.toString()
     Files.writeString(Paths.get(getErrorFilePath(draftMetadata)), json)
   }
 
