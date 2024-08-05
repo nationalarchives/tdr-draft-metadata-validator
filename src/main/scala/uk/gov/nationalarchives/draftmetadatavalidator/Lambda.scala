@@ -87,7 +87,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val filePath = getFilePath(draftMetadata)
     for {
       fileRows <- IO(csvHandler.loadCSV(filePath))
-      validationResult <- IO(MetadataValidationJsonSchema.validate(schema.toSet, fileRows))
+      validationResult <- IO(MetadataValidationJsonSchema.validate(schema, fileRows))
     } yield validationResult
   }
 
