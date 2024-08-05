@@ -34,6 +34,9 @@ class LambdaSpec extends ExternalServicesSpec {
     )
   }
 
+  val pattern = "yyyy-MM-dd"
+  val dateFormat = new SimpleDateFormat(pattern)
+
   "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 and save to metadata to db if it has no errors" in {
     authOkJson()
     graphqlOkJson(true)
@@ -48,13 +51,9 @@ class LambdaSpec extends ExternalServicesSpec {
 
     val errorWriteRequest = s3Interactions.head
     val errorFileData = errorWriteRequest.getRequest.getBodyAsString
-    val today = org.joda.time.DateTime.now().toString("yyyy-MM-dd")
-    val expectedErrorData = s"""{
-                               |  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
-                               |  "date" : "$today",
-                               |  "validationErrors" : [
-                               |  ]
-                               |}""".stripMargin
+
+    val today = dateFormat.format(new Date)
+    val expectedErrorData: String = Source.fromResource("json/empty-error-file.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
     errorFileData shouldBe expectedErrorData
   }
 
@@ -72,10 +71,9 @@ class LambdaSpec extends ExternalServicesSpec {
 
     val errorWriteRequest = s3Interactions.head
     val errorFileData = errorWriteRequest.getRequest.getBodyAsString
-    val pattern = "yyyy-MM-dd"
-    val dateFormat = new SimpleDateFormat(pattern)
+
     val today = dateFormat.format(new Date)
-    val expectedErrorData: String = Source.fromResource("json/errors.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
+    val expectedErrorData: String = Source.fromResource("json/error-file.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
     errorFileData shouldBe expectedErrorData
   }
 }
