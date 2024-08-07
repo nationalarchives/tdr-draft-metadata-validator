@@ -53,7 +53,8 @@ class LambdaSpec extends ExternalServicesSpec {
     val errorFileData = errorWriteRequest.getRequest.getBodyAsString
 
     val today = dateFormat.format(new Date)
-    val expectedErrorData: String = Source.fromResource("json/empty-error-file.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
+    val expectedErrorData: String =
+      Source.fromResource("json/empty-error-file.json").getLines.filter(line => !line.isBlank).mkString(System.lineSeparator()).replace("$today", today)
     errorFileData shouldBe expectedErrorData
   }
 
@@ -73,7 +74,7 @@ class LambdaSpec extends ExternalServicesSpec {
     val errorFileData = errorWriteRequest.getRequest.getBodyAsString
 
     val today = dateFormat.format(new Date)
-    val expectedErrorData: String = Source.fromResource("json/error-file.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
+    val expectedErrorData: String = Source.fromResource("json/error-file.json").getLines.filter(line => !line.isBlank).mkString(System.lineSeparator()).replace("$today", today)
     errorFileData shouldBe expectedErrorData
   }
 }
