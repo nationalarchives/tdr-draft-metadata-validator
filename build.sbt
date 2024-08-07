@@ -19,6 +19,10 @@ lazy val root = (project in file("."))
       authUtils,
       s3Utils,
       log4catsSlf4j,
+      circeGenericExtras,
+      circeGeneric,
+      circeCore,
+      circeParser,
       scalaTest % Test,
       mockitoScala % Test,
       mockitoScalaTest % Test

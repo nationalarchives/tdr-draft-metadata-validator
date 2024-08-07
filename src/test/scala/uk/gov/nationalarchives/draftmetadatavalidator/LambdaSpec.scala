@@ -8,6 +8,9 @@ import org.mockito.MockitoSugar.mock
 import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
 
 import java.nio.file.{Files, Paths}
+import java.text.SimpleDateFormat
+import java.util.Date
+import scala.io.Source
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, MapHasAsJava}
 
 class LambdaSpec extends ExternalServicesSpec {
@@ -24,27 +27,21 @@ class LambdaSpec extends ExternalServicesSpec {
     )
   }
 
-  def mockS3PutResponse(): StubMapping = {
+  def mockS3ErrorFilePutResponse(): StubMapping = {
     wiremockS3.stubFor(
-      put(urlEqualTo(s"/$consignmentId/sample.csv"))
+      put(urlEqualTo(s"/$consignmentId/draft-metadata-errors.json"))
         .willReturn(aResponse().withStatus(200))
     )
   }
 
-  "handleRequest" should "download the draft metadata csv file, validate and save to db if it has no errors" in {
+  val pattern = "yyyy-MM-dd"
+  val dateFormat = new SimpleDateFormat(pattern)
+
+  "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 and save metadata to db if it has no errors" in {
     authOkJson()
     graphqlOkJson(true)
     mockS3GetResponse("sample.csv")
-    val input = Map("consignmentId" -> consignmentId).asJava
-    val response = new Lambda().handleRequest(input, mockContext)
-    response.getStatusCode should equal(200)
-  }
-
-  "handleRequest" should "download the draft metadata csv file, validate it and re-upload to s3 bucket if it has any errors" in {
-    authOkJson()
-    graphqlOkJson()
-    mockS3GetResponse("invalid-sample.csv")
-    mockS3PutResponse()
+    mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava
     val response = new Lambda().handleRequest(input, mockContext)
     response.getStatusCode should equal(200)
@@ -52,13 +49,32 @@ class LambdaSpec extends ExternalServicesSpec {
     val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala.filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT).toList
     s3Interactions.size shouldBe 1
 
-    val csvWriteEvent = s3Interactions.head
-    val expectedCSVHeader =
-      "Filename,Filepath,Date last modified,Closure status,Closure Start Date,Closure Period,FOI exemption code,FOI decision asserted,Is the title sensitive for the public?,Add alternative title without the file extension,Description,Is the description sensitive for the public?,Alternative description,Language,Date of the record,Translated title of record,Former reference,UUID,Error"
-    val expectedCSVRow1 =
-      "test3.txt,test/test3.txt,12/2/2345,Closed,,,,,No,,hhhhh,No,,English,,,,a060c57d-1639-4828-9a7a-67a7c64dbf6c,foi_exemption_asserted: type | foi_exemption_code: type | closure_period: type | closure_start_date: type"
-    val csvLines = csvWriteEvent.getRequest.getBodyAsString.split("\\n")
-    csvLines(0).strip() shouldBe expectedCSVHeader
-    csvLines(1).strip() shouldBe expectedCSVRow1
+    val errorWriteRequest = s3Interactions.head
+    val errorFileData = errorWriteRequest.getRequest.getBodyAsString
+
+    val today = dateFormat.format(new Date)
+    val expectedErrorData: String =
+      Source.fromResource("json/empty-error-file.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
+    errorFileData shouldBe expectedErrorData
+  }
+
+  "handleRequest" should "download the draft metadata csv file, validate it and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson()
+    mockS3GetResponse("invalid-sample.csv")
+    mockS3ErrorFilePutResponse()
+    val input = Map("consignmentId" -> consignmentId).asJava
+    val response = new Lambda().handleRequest(input, mockContext)
+    response.getStatusCode should equal(200)
+
+    val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala.filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT).toList
+    s3Interactions.size shouldBe 1
+
+    val errorWriteRequest = s3Interactions.head
+    val errorFileData = errorWriteRequest.getRequest.getBodyAsString
+
+    val today = dateFormat.format(new Date)
+    val expectedErrorData: String = Source.fromResource("json/error-file.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
+    errorFileData shouldBe expectedErrorData
   }
 }

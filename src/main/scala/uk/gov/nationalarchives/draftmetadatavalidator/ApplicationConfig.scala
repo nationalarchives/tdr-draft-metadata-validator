@@ -14,5 +14,6 @@ object ApplicationConfig {
   val bucket: String = configFactory.getString("s3.draftMetadataBucket")
   val rootDirectory: String = configFactory.getString("root.directory")
   val fileName: String = configFactory.getString("draftMetadata.fileName")
+  val errorFileName: String = configFactory.getString("draftMetadata.errorFileName")
   val timeToLiveSecs: Int = 60
 }
