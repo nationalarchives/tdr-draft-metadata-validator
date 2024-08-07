@@ -20,13 +20,24 @@ permissions:
   id-token: write
   contents: write
 jobs:
+  tag-ecr-image:
+    uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_tag.yml@main
+    with:
+      tag: ${{inputs.environment}}
+      image-name: draft-metadata-validator
+      to-deploy: ${{ inputs.to-deploy }}
+    secrets:
+      MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
+      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   deploy:
+    needs:
+      - tag-ecr-image
     uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml@main
     with:
       lambda-name: draft-metadata-validator
       deployment-package: draft-metadata-validator.jar
-      environment: ${{ github.event.inputs.environment }}
-      to-deploy: ${{ github.event.inputs.to-deploy }}
+      environment: ${{inputs.environment}}
+      to-deploy: ${{ needs.pre-deploy.outputs.next-version }}
       image-name: draft-metadata-validator
     secrets:
       ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
