@@ -25,7 +25,7 @@ object MetadataUtils {
   private def convertDataToBulkFileMetadataInput(fileRows: List[FileRow], customMetadata: List[CustomMetadata]): List[AddOrUpdateFileMetadata] = {
     fileRows.collect { case fileRow =>
       AddOrUpdateFileMetadata(
-        UUID.fromString(fileRow.fileName),
+        UUID.fromString(fileRow.matchIdentifier),
         fileRow.metadata.collect {
           case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get)
           case m                     => List(AddOrUpdateMetadata(m.name, ""))
