@@ -4,14 +4,13 @@ import cats.effect.unsafe.implicits.global
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import com.typesafe.scalalogging.Logger
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
+import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata, DataType}
 import graphql.codegen.types.DataType.{Boolean, Text}
-import graphql.codegen.types.PropertyType.Defined
+import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata, DataType}
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
@@ -41,8 +40,8 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   val keycloak = mock[KeycloakUtils]
 
   val customMetadata: List[CustomMetadata] = List(
-    createCustomMetadata("ClosureType", "Closure status", 1, DataType.Text),
-    createCustomMetadata("ClosurePeriod", "Closure period", 2, DataType.Integer)
+    TestUtils.createCustomMetadata("ClosureType", "Closure status", 1, DataType.Text),
+    TestUtils.createCustomMetadata("ClosurePeriod", "Closure period", 2, DataType.Integer)
   )
   val displayProperties: List[dp.DisplayProperties] = List(
     dp.DisplayProperties(
@@ -197,21 +196,4 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
 
     response should equal(expected)
   }
-
-  def createCustomMetadata(name: String, fullName: String, exportOrdinal: Int, dataType: DataType = Text, allowExport: Boolean = true): CustomMetadata = CustomMetadata(
-    name,
-    None,
-    Some(fullName),
-    Defined,
-    Some("MandatoryClosure"),
-    dataType,
-    editable = true,
-    multiValue = false,
-    Some("Open"),
-    1,
-    Nil,
-    Option(exportOrdinal),
-    allowExport = allowExport
-  )
-
 }

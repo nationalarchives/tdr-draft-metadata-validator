@@ -9,8 +9,6 @@ import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
 import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.types.DataType._
-import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata}
 import io.circe.Encoder
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -25,18 +23,15 @@ import uk.gov.nationalarchives.aws.utils.s3.S3Clients._
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getErrorFilePath, getFilePath}
+import uk.gov.nationalarchives.draftmetadatavalidator.utils.MetadataUtils
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
-import uk.gov.nationalarchives.tdr.validation.Metadata
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA}
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema, ValidationError, ValidationProcess}
 
 import java.net.URI
 import java.nio.file.{Files, Paths}
-import java.sql.Timestamp
 import java.text.SimpleDateFormat
-import java.time.LocalDate
-import java.time.format.DateTimeFormatter
 import java.util
 import java.util.{Date, UUID}
 import scala.concurrent.ExecutionContext.Implicits.global
@@ -105,7 +100,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
       displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, clientSecret)
       fileData <- IO(csvHandler.loadCSV(getFilePath(draftMetadata), getMetadataNames(displayProperties, customMetadata)))
-      _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, convertDataToBulkFileMetadataInput(fileData, customMetadata))
+      addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData)
+      _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
 
     } yield ()
   }
@@ -128,31 +124,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val dateFormat = new SimpleDateFormat(pattern)
     val json = ErrorFileData(draftMetadata.consignmentId, dateFormat.format(new Date), validationErrors).asJson.toString()
     Files.writeString(Paths.get(getErrorFilePath(draftMetadata)), json)
-  }
-
-  private def convertDataToBulkFileMetadataInput(fileData: FileData, customMetadata: List[CustomMetadata]): List[AddOrUpdateFileMetadata] = {
-    fileData.fileRows.collect {
-      case fileRow if fileRow.metadata.exists(_.value.nonEmpty) =>
-        AddOrUpdateFileMetadata(
-          UUID.fromString(fileRow.matchIdentifier),
-          fileRow.metadata.collect { case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get) }.flatten
-        )
-    }
-  }
-
-  private def createAddOrUpdateMetadata(metadata: Metadata, customMetadata: CustomMetadata): List[AddOrUpdateMetadata] = {
-    val format = DateTimeFormatter.ofPattern("yyyy-MM-dd")
-    val values = customMetadata.dataType match {
-      case DateTime => Timestamp.valueOf(LocalDate.parse(metadata.value, format).atStartOfDay()).toString :: Nil
-      case Boolean =>
-        metadata.value.toLowerCase() match {
-          case "yes" => "true" :: Nil
-          case _     => "false" :: Nil
-        }
-      case Text if customMetadata.multiValue => metadata.value.split("\\|").toList
-      case _                                 => metadata.value :: Nil
-    }
-    values.map(v => AddOrUpdateMetadata(metadata.name, v))
   }
 
   private def getClientSecret(secretPath: String, endpoint: String): String = {
