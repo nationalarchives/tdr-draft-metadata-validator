@@ -4,12 +4,10 @@ import cats.effect.IO
 import cats.implicits.catsSyntaxOptionId
 import com.typesafe.scalalogging.Logger
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
-import graphql.codegen.types.AddOrUpdateFileMetadata
-import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
-import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
-import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, ConsignmentStatusInput}
+import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
+import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
+import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, AddOrUpdateFileMetadata, ConsignmentStatusInput}
 import sttp.client3._
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig.clientId
 import uk.gov.nationalarchives.tdr.GraphQLClient
@@ -22,8 +20,7 @@ class GraphQlApi(
     keycloak: KeycloakUtils,
     customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
     updateConsignmentStatus: GraphQLClient[ucs.Data, ucs.Variables],
-    addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
-    displayPropertiesClient: GraphQLClient[dp.Data, dp.Variables]
+    addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables]
 )(implicit
     logger: Logger,
     keycloakDeployment: TdrKeycloakDeployment,
@@ -35,12 +32,6 @@ class GraphQlApi(
     metadata <- customMetadataClient.getResult(token, cm.document, cm.Variables(consignmentId).some).toIO
     data <- IO.fromOption(metadata.data)(new RuntimeException("No custom metadata definitions found"))
   } yield data.customMetadata
-
-  def getDisplayProperties(consignmentId: UUID, clientSecret: String)(implicit executionContext: ExecutionContext): IO[List[dp.DisplayProperties]] = for {
-    token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
-    metadata <- displayPropertiesClient.getResult(token, dp.document, dp.Variables(consignmentId).some).toIO
-    data <- IO.fromOption(metadata.data)(new RuntimeException("No display properties definitions found"))
-  } yield data.displayProperties
 
   def updateConsignmentStatus(consignmentId: UUID, clientSecret: String, statusType: String, statusValue: String)(implicit executionContext: ExecutionContext): IO[Option[Int]] =
     for {
@@ -68,13 +59,12 @@ object GraphQlApi {
       keycloak: KeycloakUtils,
       customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
       updateConsignmentStatus: GraphQLClient[ucs.Data, ucs.Variables],
-      addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
-      displayPropertiesClient: GraphQLClient[dp.Data, dp.Variables]
+      addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables]
   )(implicit
       backend: SttpBackend[Identity, Any],
       keycloakDeployment: TdrKeycloakDeployment
   ): GraphQlApi = {
     val logger: Logger = Logger[GraphQlApi]
-    new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatus, addOrUpdateBulkFileMetadata, displayPropertiesClient)(logger, keycloakDeployment, backend)
+    new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatus, addOrUpdateBulkFileMetadata)(logger, keycloakDeployment, backend)
   }
 }

@@ -4,10 +4,8 @@ import cats.effect.IO
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetDisplayProperties.displayProperties.DisplayProperties
-import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import io.circe.Encoder
 import io.circe.generic.auto._
@@ -44,10 +42,9 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
   private val keycloakUtils = new KeycloakUtils()
   private val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
-  private val displayPropertiesClient = new GraphQLClient[dp.Data, dp.Variables](apiUrl)
   private val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
-  private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
+  private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient)
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
     val consignmentId = extractConsignmentId(input)
@@ -98,8 +95,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val csvHandler = new CSVHandler()
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
-      displayProperties <- graphQlApi.getDisplayProperties(draftMetadata.consignmentId, clientSecret)
-      fileData <- IO(csvHandler.loadCSV(getFilePath(draftMetadata), getMetadataNames(displayProperties, customMetadata)))
+      fileData <- IO(csvHandler.loadCSV(getFilePath(draftMetadata), getMetadataNames()))
       addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData)
       _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
 
@@ -138,10 +134,29 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     ssmClient.getParameter(getParameterRequest).parameter().value()
   }
 
-  private def getMetadataNames(displayProperties: List[DisplayProperties], customMetadata: List[CustomMetadata]): List[String] = {
-    val nameMap = displayProperties.filter(dp => dp.attributes.find(_.attribute == "Active").getBoolean).map(_.propertyName)
-    val filteredMetadata: List[CustomMetadata] = customMetadata.filter(cm => nameMap.contains(cm.name) && cm.allowExport).sortBy(_.exportOrdinal.getOrElse(Int.MaxValue))
-    filteredMetadata.map(_.name)
+  private def getMetadataNames(): List[String] = {
+    // This is a temporary change to fix the issue related to order of the columns. We should use the schema to get the DB property name
+    val columnOrder = List(
+      "ClientSideOriginalFilepath",
+      "Filename",
+      "ClientSideFileLastModifiedDate",
+      "end_date",
+      "description",
+      "former_reference_department",
+      "ClosureType",
+      "ClosureStartDate",
+      "ClosurePeriod",
+      "FoiExemptionCode",
+      "FoiExemptionAsserted",
+      "TitleClosed",
+      "TitleAlternate",
+      "DescriptionClosed",
+      "DescriptionAlternate",
+      "Language",
+      "file_name_translation",
+      "UUID"
+    )
+    columnOrder
   }
 
   implicit class AttributeHelper(attribute: Option[DisplayProperties.Attributes]) {

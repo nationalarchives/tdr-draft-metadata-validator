@@ -11,7 +11,7 @@ import java.nio.file.{Files, Path}
 class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
 
   val filePath: String = getClass.getResource("/sample-for-csv-handler.csv").getPath
-  val metadataNames: List[String] = List("ClosureStatus", "ClosurePeriod")
+  val metadataNames: List[String] = List("Filename", "Filepath", "end_date", "ClosureStatus", "ClosurePeriod")
 
   "loadCSV with path and metadata names" should "read the file and return FileData with all the rows" in {
     val csvHandler = new CSVHandler
@@ -25,12 +25,20 @@ class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
         List("file3.jpg", "aa/file.jpg", "2020-05-29", "Open", "", "61b49923-daf7-4140-98f1-58ba6cbed61f")
       ),
       List(
-        FileRow("16b2f65c-ec50-494b-824b-f8c08e6b575c", List(Metadata("ClosureStatus", "Closed"), Metadata("ClosurePeriod", "10"))),
-        FileRow("18449d9b-6a86-40b4-8855-b872a79bebad", List(Metadata("ClosureStatus", "Open"), Metadata("ClosurePeriod", ""))),
-        FileRow("61b49923-daf7-4140-98f1-58ba6cbed61f", List(Metadata("ClosureStatus", "Open"), Metadata("ClosurePeriod", "")))
+        FileRow(
+          "16b2f65c-ec50-494b-824b-f8c08e6b575c",
+          List(Metadata("Filename", "file1.jpg"), Metadata("Filepath", "aa/file.jpg"), Metadata("end_date", "2020-05-29"), Metadata("ClosureStatus", "Closed"))
+        ),
+        FileRow(
+          "18449d9b-6a86-40b4-8855-b872a79bebad",
+          List(Metadata("Filename", "file2.jpg"), Metadata("Filepath", "aa/file.jpg"), Metadata("end_date", "2020-05-29"), Metadata("ClosureStatus", "Open"))
+        ),
+        FileRow(
+          "61b49923-daf7-4140-98f1-58ba6cbed61f",
+          List(Metadata("Filename", "file3.jpg"), Metadata("Filepath", "aa/file.jpg"), Metadata("end_date", "2020-05-29"), Metadata("ClosureStatus", "Open"))
+        )
       )
     )
-
     fileData should be(expected)
   }
 
