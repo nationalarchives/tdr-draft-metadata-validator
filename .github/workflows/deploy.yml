@@ -37,7 +37,7 @@ jobs:
       lambda-name: draft-metadata-validator
       deployment-package: draft-metadata-validator.jar
       environment: ${{inputs.environment}}
-      to-deploy: ${{ needs.pre-deploy.outputs.next-version }}
+      to-deploy: ${{ inputs.to-deploy }}
       image-name: draft-metadata-validator
     secrets:
       ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
