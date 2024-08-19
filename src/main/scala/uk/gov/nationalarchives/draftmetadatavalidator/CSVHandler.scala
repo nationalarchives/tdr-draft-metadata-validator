@@ -13,10 +13,10 @@ class CSVHandler {
     val allRowsWithHeader = reader.all()
     val fileRows = allRowsWithHeader match {
       case _ :: rows =>
-        rows.map { case filename :: filepath :: dateLastModified :: data =>
+        rows.map { data =>
           FileRow(
             data.last,
-            metadataNames.zipWithIndex.map { case (name, index) => Metadata(name, data(index)) }
+            metadataNames.dropRight(1).zipWithIndex.map { case (name, index) => Metadata(name, data(index)) }
           )
         }
     }
