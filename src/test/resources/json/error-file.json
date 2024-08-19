@@ -1,0 +1,51 @@
+{
+  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+  "date" : "$today",
+  "validationErrors" : [
+    {
+      "assetId" : "a060c57d-1639-4828-9a7a-67a7c64dbf6c",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_CLOSURE",
+          "property" : "closure_period",
+          "errorKey" : "type"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE",
+          "property" : "closure_start_date",
+          "errorKey" : "type"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "date_last_modified",
+          "errorKey" : "format.date"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE",
+          "property" : "foi_exemption_code",
+          "errorKey" : "type"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE",
+          "property" : "foi_exemption_asserted",
+          "errorKey" : "type"
+        }
+      ]
+    },
+    {
+      "assetId" : "cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "foi_exemption_code",
+          "errorKey" : "enum"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE",
+          "property" : "foi_exemption_code",
+          "errorKey" : "enum"
+        }
+      ]
+    }
+  ]
+}

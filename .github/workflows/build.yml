@@ -5,24 +5,19 @@ on:
     branches:
       - main
 jobs:
-  pre-deploy:
-     uses: nationalarchives/tdr-github-actions/.github/workflows/ecs_build.yml@main
-     with:
-        repo-name: tdr-draft-metadata-validator
-        image-name: draft-metadata-validator
-     secrets:
-        MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
-        WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
-  deploy:
-    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml@main
+  build-image:
+    uses: nationalarchives/tdr-github-actions/.github/workflows/ecs_build.yml@main
     with:
-      lambda-name: draft-metadata-validator
-      deployment-package: draft-metadata-validator.jar
-      environment: ${{ github.event.inputs.environment }}
-      to-deploy: ${{ github.event.inputs.to-deploy }}
+      repo-name: tdr-draft-metadata-validator
       image-name: draft-metadata-validator
     secrets:
-      ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
       MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
-      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
+  deploy:
+    needs: build-image
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: gh workflow run deploy.yml -f environment=intg -f to-deploy=${{ needs.build-image.outputs.next-version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_PAT }}

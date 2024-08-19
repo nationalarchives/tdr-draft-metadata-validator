@@ -4,14 +4,11 @@ import cats.effect.unsafe.implicits.global
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import com.typesafe.scalalogging.Logger
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
+import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
-import graphql.codegen.GetDisplayProperties.{displayProperties => dp}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata, DataType}
-import graphql.codegen.types.DataType.{Boolean, Text}
-import graphql.codegen.types.PropertyType.Defined
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
@@ -35,28 +32,17 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
 
   val consignmentId = UUID.randomUUID()
   val customMetadataClient: GraphQLClient[cm.Data, cm.Variables] = mock[GraphQLClient[cm.Data, cm.Variables]]
-  val displayPropertiesClient: GraphQLClient[dp.Data, dp.Variables] = mock[GraphQLClient[dp.Data, dp.Variables]]
   val updateConsignmentStatusClient = mock[GraphQLClient[ucs.Data, ucs.Variables]]
   val addOrUpdateBulkFileMetadataClient = mock[GraphQLClient[afm.Data, afm.Variables]]
   val keycloak = mock[KeycloakUtils]
 
   val customMetadata: List[CustomMetadata] = List(
-    createCustomMetadata("ClosureType", "Closure status", 1, DataType.Text),
-    createCustomMetadata("ClosurePeriod", "Closure period", 2, DataType.Integer)
-  )
-  val displayProperties: List[dp.DisplayProperties] = List(
-    dp.DisplayProperties(
-      "activeProperty",
-      List(
-        dp.DisplayProperties.Attributes("Active", Some("true"), Boolean),
-        dp.DisplayProperties.Attributes("ComponentType", Some("componentType"), Text),
-        dp.DisplayProperties.Attributes("Description", Some("description value"), Text)
-      )
-    )
+    TestUtils.createCustomMetadata("ClosureType", "Closure status", 1, DataType.Text),
+    TestUtils.createCustomMetadata("ClosurePeriod", "Closure period", 2, DataType.Integer)
   )
 
   "getCustomMetadata" should "throw an exception when no custom metadata are found" in {
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
+    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient)
 
     doAnswer(() => Future(new BearerAccessToken("token")))
       .when(keycloak)
@@ -73,7 +59,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   }
 
   "getCustomMetadata" should "return the custom metadata" in {
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
+    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient)
 
     doAnswer(() => Future(new BearerAccessToken("token")))
       .when(keycloak)
@@ -88,43 +74,8 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
     response should equal(customMetadata)
   }
 
-  "getDisplayProperties" should "throw an exception when no custom metadata are found" in {
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
-
-    doAnswer(() => Future(new BearerAccessToken("token")))
-      .when(keycloak)
-      .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
-
-    doAnswer(() => Future(GraphQlResponse[dp.Data](None, Nil)))
-      .when(displayPropertiesClient)
-      .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[dp.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
-
-    val exception = intercept[RuntimeException] {
-      api.getDisplayProperties(consignmentId, "secret").unsafeRunSync()
-    }
-    exception.getMessage should equal(s"No display properties definitions found")
-  }
-
-  "getDisplayProperties" should "return the custom metadata" in {
-
-    val consignmentId = UUID.randomUUID()
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
-
-    doAnswer(() => Future(new BearerAccessToken("token")))
-      .when(keycloak)
-      .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
-
-    doAnswer(() => Future(GraphQlResponse[dp.Data](Option(dp.Data(displayProperties)), Nil)))
-      .when(displayPropertiesClient)
-      .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[dp.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
-
-    val response = api.getDisplayProperties(consignmentId, "secret").unsafeRunSync()
-
-    response should equal(displayProperties)
-  }
-
   "updateConsignmentStatus" should "throw an exception when the api fails to update the consignment status" in {
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
+    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient)
 
     doAnswer(() => Future(new BearerAccessToken("token")))
       .when(keycloak)
@@ -143,7 +94,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   "updateConsignmentStatus" should "update the consignment status with status type and value" in {
 
     val consignmentId = UUID.randomUUID()
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
+    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient)
 
     doAnswer(() => Future(new BearerAccessToken("token")))
       .when(keycloak)
@@ -159,7 +110,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   }
 
   "addOrUpdateBulkFileMetadata" should "throw an exception when the api fails to add or update the file metadata" in {
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
+    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient)
 
     doAnswer(() => Future(new BearerAccessToken("token")))
       .when(keycloak)
@@ -180,7 +131,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
 
     val consignmentId = UUID.randomUUID()
     val fileId = UUID.randomUUID()
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, displayPropertiesClient)
+    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient)
 
     doAnswer(() => Future(new BearerAccessToken("token")))
       .when(keycloak)
@@ -197,21 +148,4 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
 
     response should equal(expected)
   }
-
-  def createCustomMetadata(name: String, fullName: String, exportOrdinal: Int, dataType: DataType = Text, allowExport: Boolean = true): CustomMetadata = CustomMetadata(
-    name,
-    None,
-    Some(fullName),
-    Defined,
-    Some("MandatoryClosure"),
-    dataType,
-    editable = true,
-    multiValue = false,
-    Some("Open"),
-    1,
-    Nil,
-    Option(exportOrdinal),
-    allowExport = allowExport
-  )
-
 }
