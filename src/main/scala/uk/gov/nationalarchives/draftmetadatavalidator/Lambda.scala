@@ -78,12 +78,15 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       // combine all errors (no need to use utfCheckResult
       validationResult <- combineErrors(Seq(schemaCheck, csvResultCheck, requiredCheck))
       // always write validation result file
-      _ <- IO(writeValidationResultToFile(draftMetadata, validationResult))
+      // maybe return emptyError list on success and handleError with an error
+      writeDataResult <- IO(writeValidationResultToFile(draftMetadata, validationResult))
       // upload validation result file
-      _ <- s3Files.uploadFile(bucket, s"${draftMetadata.consignmentId}/$errorFileName", getErrorFilePath(draftMetadata))
+      // maybe return emptyError list on success and handleError with an error
+      uploadDataResult <- s3Files.uploadFile(bucket, s"${draftMetadata.consignmentId}/$errorFileName", getErrorFilePath(draftMetadata))
       // if no errors save metadata
-      _ <- if (noErrors(validationResult)) persistMetadata(draftMetadata) else IO(Map.empty[String, Seq[ValidationError]])
-      // update status
+      // maybe return emptyError list on success and handleError with an error
+      persistMetaDataResult <- if (noErrors(validationResult)) persistMetadata(draftMetadata) else IO(Map.empty[String, Seq[ValidationError]])
+      // update status  combine validationResult with writeDataResult, uploadDataResult, persistMetaDataResult and check all for errors
       _ <- updateStatus(validationResult, draftMetadata)
     } yield {
       val response = new APIGatewayProxyResponseEvent()
