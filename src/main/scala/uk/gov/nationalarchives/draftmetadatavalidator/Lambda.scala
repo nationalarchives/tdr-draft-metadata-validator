@@ -73,8 +73,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       // validate required fields (using separate check as only one row required and want to change key identifier to consignmentID)
       // treat required fields as consignment problem not specific row of data)
       requiredCheck <- validateRequired(data, consignmentId)
-      // validate
-      schemaCheck <- validateMetadata(data, schemaToValidate)
+      // validate against schema if all required fields present
+      schemaCheck <- if (noErrors(requiredCheck)) validateMetadata(data, schemaToValidate) else IO(Map.empty[String, Seq[ValidationError]])
       // combine all errors (no need to use utfCheckResult
       validationResult <- combineErrors(Seq(schemaCheck, csvResultCheck, requiredCheck))
       // always write validation result file
