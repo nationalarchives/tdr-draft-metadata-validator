@@ -27,12 +27,12 @@ import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getErrorFilePath, getFilePath}
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
-import uk.gov.nationalarchives.tdr.validation.Metadata
+import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA}
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema, ValidationError, ValidationProcess}
 
 import java.net.URI
-import java.nio.file.{Files, Paths}
+import java.nio.file.{Files, Path, Paths}
 import java.sql.Timestamp
 import java.text.SimpleDateFormat
 import java.time.LocalDate
@@ -58,20 +58,69 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val consignmentId = extractConsignmentId(input)
     val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
-    for {
+    val unexpectedFailureResponse = new APIGatewayProxyResponseEvent()
+    unexpectedFailureResponse.setStatusCode(500)
+
+    val requestHandler: IO[APIGatewayProxyResponseEvent] = for {
       draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId)))
       _ <- s3Files.downloadFile(bucket, draftMetadata)
-      validationResult <- validateMetadata(draftMetadata, schemaToValidate)
+      // check UTF 8
+      utfCheckResult <- validUTF(draftMetadata)
+      // check CSV if UTF 8
+      csvResultCheck <- if (noErrors(utfCheckResult)) validCSV(draftMetadata) else IO(utfCheckResult)
+      // if valid csv load data
+      data <- if (noErrors(csvResultCheck)) loadCSV(draftMetadata) else IO(List.empty[FileRow])
+      // validate required fields (using separate check as only one row required
+      requiredCheck <- validateRequired(data, consignmentId)
+      // validate
+      schemaCheck <- validateMetadata(data, schemaToValidate)
+      // combine all errors
+      validationResult <- combineErrors(Seq(schemaCheck, utfCheckResult, requiredCheck))
+      // always write validation result file
       _ <- IO(writeValidationResultToFile(draftMetadata, validationResult))
+      // upload validation result file
       _ <- s3Files.uploadFile(bucket, s"${draftMetadata.consignmentId}/$errorFileName", getErrorFilePath(draftMetadata))
-      _ <- if (!hasErrors(validationResult)) persistMetadata(draftMetadata) else IO.unit
+      // if no errors save metadata
+      _ <- if (noErrors(validationResult)) persistMetadata(draftMetadata) else IO(Map.empty[String, Seq[ValidationError]])
+      // update status
       _ <- updateStatus(validationResult, draftMetadata)
     } yield {
       val response = new APIGatewayProxyResponseEvent()
       response.setStatusCode(200)
       response
     }
-  }.unsafeRunSync()(cats.effect.unsafe.implicits.global)
+    requestHandler.handleErrorWith(_ => IO(unexpectedFailureResponse)).unsafeRunSync()(cats.effect.unsafe.implicits.global)
+  }
+
+  private def validateRequired(csvData: List[FileRow], consignmentID: String) = {
+    if (csvData.isEmpty) IO(Map.empty[String, Seq[ValidationError]])
+    else // need required schema not BASE_SCHEMA
+      for {
+        errors <- validateMetadata(List(csvData.head), Set(BASE_SCHEMA))
+        changedKeyToConsignmentId <- IO(errors.foldLeft(Map[String, Seq[ValidationError]]()) { case (acc, (_, v)) =>
+          acc + (consignmentID -> List.empty[ValidationError])
+        })
+      } yield changedKeyToConsignmentId
+
+  }
+
+  private def combineErrors(errors: Seq[Map[String, Seq[ValidationError]]]) = {
+    val r = errors.flatten.foldLeft(Map[String, List[ValidationError]]()) { case (acc, (k, v)) =>
+      acc + (k -> (acc.getOrElse(k, List.empty[ValidationError]) ++ v.toList))
+    }
+    IO(r)
+  }
+
+  def validUTF(draftMetadata: DraftMetadata): IO[Map[String, Seq[ValidationError]]] = {
+    // check UTF 8
+    val p = IO(Map("consignmentId" -> Set(ValidationError(ValidationProcess.SCHEMA_BASE, "fileName", "badUTF8")).toSeq))
+    IO(Map.empty[String, Seq[ValidationError]])
+  }
+
+  def validCSV(draftMetadata: DraftMetadata): IO[Map[String, Seq[ValidationError]]] = {
+    // check  CSV
+    IO(Map.empty[String, Seq[ValidationError]])
+  }
 
   private def extractConsignmentId(input: util.Map[String, Object]): String = {
     val inputParameters = input match {
@@ -82,18 +131,23 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     inputParameters.get("consignmentId").toString
   }
 
-  private def validateMetadata(draftMetadata: DraftMetadata, schema: Set[JsonSchemaDefinition]): IO[Map[String, Seq[ValidationError]]] = {
+  private def validateMetadata(csvData: List[FileRow], schema: Set[JsonSchemaDefinition]): IO[Map[String, Seq[ValidationError]]] = {
+    val r = for {
+      mapped <- IO(csvData.map(f => f))
+      validationResult <- IO(MetadataValidationJsonSchema.validate(schema, mapped))
+    } yield validationResult
+    r
+  }
+
+  private def loadCSV(draftMetadata: DraftMetadata) = {
     val csvHandler = new CSVHandler()
     val filePath = getFilePath(draftMetadata)
-    for {
-      fileRows <- IO(csvHandler.loadCSV(filePath))
-      validationResult <- IO(MetadataValidationJsonSchema.validate(schema, fileRows))
-    } yield validationResult
+    IO(csvHandler.loadCSV(filePath))
   }
 
   private def updateStatus(errorResults: Map[String, Seq[ValidationError]], draftMetadata: DraftMetadata) = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
-    val status = if (hasErrors(errorResults)) "CompletedWithIssues" else "Completed"
+    val status = if (noErrors(errorResults)) "CompletedWithIssues" else "Completed"
     graphQlApi
       .updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", status)
   }
@@ -110,9 +164,9 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     } yield ()
   }
 
-  private def hasErrors(errors: Map[String, Seq[ValidationError]]) = {
+  private def noErrors(errors: Map[String, Seq[ValidationError]]) = {
     val errorsOnly = errors.filter(mapEntry => mapEntry._2.nonEmpty)
-    errorsOnly.nonEmpty
+    errorsOnly.isEmpty
   }
 
   private def writeValidationResultToFile(draftMetadata: DraftMetadata, errors: Map[String, Seq[ValidationError]]): Unit = {
