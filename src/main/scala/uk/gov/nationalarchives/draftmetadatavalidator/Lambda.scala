@@ -68,7 +68,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       utfCheckResult <- validUTF(draftMetadata)
       // check CSV is a CSV file -
       csvResultCheck <- if (noErrors(utfCheckResult)) validCSV(draftMetadata) else IO(utfCheckResult)
-      // if valid csv load data
+      // if valid csv load data - this could be required for later when preparing the validation resulton json file 
       data <- if (noErrors(csvResultCheck)) loadCSV(draftMetadata) else IO(List.empty[FileRow])
       // validate required fields (using separate check as only one row required and want to change key identifier to consignmentID)
       // treat required fields as consignment problem not specific row of data)
