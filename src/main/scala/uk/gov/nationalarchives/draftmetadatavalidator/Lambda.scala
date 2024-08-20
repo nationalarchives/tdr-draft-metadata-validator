@@ -66,16 +66,17 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       _ <- s3Files.downloadFile(bucket, draftMetadata)
       // check UTF 8
       utfCheckResult <- validUTF(draftMetadata)
-      // check CSV if UTF 8
+      // check CSV is a CSV file -
       csvResultCheck <- if (noErrors(utfCheckResult)) validCSV(draftMetadata) else IO(utfCheckResult)
       // if valid csv load data
       data <- if (noErrors(csvResultCheck)) loadCSV(draftMetadata) else IO(List.empty[FileRow])
-      // validate required fields (using separate check as only one row required
+      // validate required fields (using separate check as only one row required and want to change key identifier to consignmentID)
+      // treat required fields as consignment problem not specific row of data)
       requiredCheck <- validateRequired(data, consignmentId)
       // validate
       schemaCheck <- validateMetadata(data, schemaToValidate)
-      // combine all errors
-      validationResult <- combineErrors(Seq(schemaCheck, utfCheckResult, requiredCheck))
+      // combine all errors (no need to use utfCheckResult
+      validationResult <- combineErrors(Seq(schemaCheck, csvResultCheck, requiredCheck))
       // always write validation result file
       _ <- IO(writeValidationResultToFile(draftMetadata, validationResult))
       // upload validation result file
@@ -89,9 +90,13 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       response.setStatusCode(200)
       response
     }
+    // let's stop blowing up on unexpected errors
     requestHandler.handleErrorWith(_ => IO(unexpectedFailureResponse)).unsafeRunSync()(cats.effect.unsafe.implicits.global)
   }
 
+  // use a required schema, pass one row of data that will return missing required fields, change row identifier
+  // to consignmentID. Can then use to help populate required on UI
+  // just hack code
   private def validateRequired(csvData: List[FileRow], consignmentID: String) = {
     if (csvData.isEmpty) IO(Map.empty[String, Seq[ValidationError]])
     else // need required schema not BASE_SCHEMA
@@ -104,21 +109,28 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
   }
 
+  // this might not be correct just added for initial testing
   private def combineErrors(errors: Seq[Map[String, Seq[ValidationError]]]) = {
-    val r = errors.flatten.foldLeft(Map[String, List[ValidationError]]()) { case (acc, (k, v)) =>
+    val combinedErrors = errors.flatten.foldLeft(Map[String, List[ValidationError]]()) { case (acc, (k, v)) =>
       acc + (k -> (acc.getOrElse(k, List.empty[ValidationError]) ++ v.toList))
     }
-    IO(r)
+    IO(combinedErrors)
   }
 
+  // Check file is UTF
+  // maybe have new ValidationProcess.FILE_CHECK that can be used file integrity checks
   def validUTF(draftMetadata: DraftMetadata): IO[Map[String, Seq[ValidationError]]] = {
     // check UTF 8
     val p = IO(Map("consignmentId" -> Set(ValidationError(ValidationProcess.SCHEMA_BASE, "fileName", "badUTF8")).toSeq))
+    // just returning no errors until checked
     IO(Map.empty[String, Seq[ValidationError]])
   }
 
+  // Check file is a what is understood as a CSV header row and rows of data
+  // maybe have new ValidationProcess.FILE_CHECK that can be used file integrity checks
   def validCSV(draftMetadata: DraftMetadata): IO[Map[String, Seq[ValidationError]]] = {
     // check  CSV
+    // just returning no errors until checked
     IO(Map.empty[String, Seq[ValidationError]])
   }
 
