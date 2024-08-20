@@ -87,6 +87,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       // maybe return emptyError list on success and handleError with an error
       persistMetaDataResult <- if (noErrors(validationResult)) persistMetadata(draftMetadata) else IO(Map.empty[String, Seq[ValidationError]])
       // update status  combine validationResult with writeDataResult, uploadDataResult, persistMetaDataResult and check all for errors
+      // new status required if writeDataResult, uploadDataResult, persistMetaDataResult have a failure
       _ <- updateStatus(validationResult, draftMetadata)
     } yield {
       val response = new APIGatewayProxyResponseEvent()
