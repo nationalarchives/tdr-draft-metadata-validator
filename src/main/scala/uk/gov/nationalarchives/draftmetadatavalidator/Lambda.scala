@@ -58,6 +58,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val consignmentId = extractConsignmentId(input)
     val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
+    val defaultAlernateKeyType = "tdrFileHeader" // could be passed in future
     val unexpectedFailureResponse = new APIGatewayProxyResponseEvent()
     unexpectedFailureResponse.setStatusCode(500)
 
@@ -78,7 +79,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       // combine all errors (no need to use utfCheckResult
       validationResult <- combineErrors(Seq(schemaCheck, csvResultCheck, requiredCheck))
       // would be better to create JSON first then write - in future may want to return json 
-      // resultJson <- convertResultToJson(validationResult, data)
+      // this file will be used for content of metadata checks pages and error download - 
+      // resultJson <- convertResultToJson(validationResult, data, defaultAlernateKeyType)
       // always write validation result file
       // maybe return emptyError list on success and handleError with an error
       writeDataResult <- IO(writeValidationResultToFile(draftMetadata, validationResult))
