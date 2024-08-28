@@ -77,6 +77,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       schemaCheck <- if (noErrors(requiredCheck)) validateMetadata(data, schemaToValidate) else IO(Map.empty[String, Seq[ValidationError]])
       // combine all errors (no need to use utfCheckResult
       validationResult <- combineErrors(Seq(schemaCheck, csvResultCheck, requiredCheck))
+      // would be better to create JSON first then write - in future may want to return json 
+      // resultJson <- convertResultToJson(validationResult, data)
       // always write validation result file
       // maybe return emptyError list on success and handleError with an error
       writeDataResult <- IO(writeValidationResultToFile(draftMetadata, validationResult))
