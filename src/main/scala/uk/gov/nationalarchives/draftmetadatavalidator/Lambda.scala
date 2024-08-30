@@ -69,7 +69,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       utfCheckResult <- validUTF(draftMetadata)
       // check CSV is a CSV file -
       csvResultCheck <- if (noErrors(utfCheckResult)) validCSV(draftMetadata) else IO(utfCheckResult)
-      // if valid csv load data - this could be required for later when preparing the validation resulton json file 
+      // if valid csv load data - this could be required for later when preparing the validation resulton json file
       data <- if (noErrors(csvResultCheck)) loadCSV(draftMetadata) else IO(List.empty[FileRow])
       // validate required fields (using separate check as only one row required and want to change key identifier to consignmentID)
       // treat required fields as consignment problem not specific row of data)
@@ -78,12 +78,12 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       schemaCheck <- if (noErrors(requiredCheck)) validateMetadata(data, schemaToValidate) else IO(Map.empty[String, Seq[ValidationError]])
       // combine all errors (no need to use utfCheckResult
       validationResult <- combineErrors(Seq(schemaCheck, csvResultCheck, requiredCheck))
-      // would be better to create JSON first then write - in future may want to return json 
-      // this file will be used for content of metadata checks pages and error download - 
+      // would be better to create JSON first then write - in future may want to return json
+      // this file will be used for content of metadata checks pages and error download -
       // resultJson <- convertResultToJson(validationResult, data, defaultAlernateKeyType)
       // always write validation result file
       // maybe return emptyError list on success and handleError with an error
-      writeDataResult <- IO(writeValidationResultToFile(draftMetadata, validationResult))
+      writeDataResult <- IO(writeValidationResultToFile(data, draftMetadata, validationResult))
       // upload validation result file
       // maybe return emptyError list on success and handleError with an error
       uploadDataResult <- s3Files.uploadFile(bucket, s"${draftMetadata.consignmentId}/$errorFileName", getErrorFilePath(draftMetadata))
@@ -189,12 +189,13 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     errorsOnly.isEmpty
   }
 
-  private def writeValidationResultToFile(draftMetadata: DraftMetadata, errors: Map[String, Seq[ValidationError]]): Unit = {
-    case class ValidationErrors(assetId: String, errors: Set[ValidationError])
+  private def writeValidationResultToFile(data: List[FileRow], draftMetadata: DraftMetadata, errors: Map[String, Seq[ValidationError]]): Unit = {
+    case class ValidationErrors(assetId: String, errors: Set[ValidationError], data: List[Metadata] = List.empty[Metadata])
     case class ErrorFileData(consignmentId: UUID, date: String, validationErrors: List[ValidationErrors])
 
-    val filteredErrors = errors.filter(mapEntry => mapEntry._2.nonEmpty)
-    val validationErrors = filteredErrors.keys.map(key => ValidationErrors(key, filteredErrors(key).toSet)).toList
+    val filteredErrors: Map[String, Seq[ValidationError]] = errors.filter(mapEntry => mapEntry._2.nonEmpty)
+
+    val validationErrors = filteredErrors.toList.map((e => ValidationErrors(e._1, e._2.toSet, data.filter(row => row.matchIdentifier.equals(e._1)).head.metadata)))
 
     // Ignore Intellij this is used by circe
     implicit val validationProcessEncoder: Encoder[ValidationProcess.Value] = Encoder.encodeEnumeration(ValidationProcess)

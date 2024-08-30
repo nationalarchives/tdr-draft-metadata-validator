@@ -61,7 +61,7 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv file, validate it and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson()
-    mockS3GetResponse("invalid-sample.csv")
+    mockS3GetResponse("all.csv")
     mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava
     val response = new Lambda().handleRequest(input, mockContext)
@@ -72,7 +72,6 @@ class LambdaSpec extends ExternalServicesSpec {
 
     val errorWriteRequest = s3Interactions.head
     val errorFileData = errorWriteRequest.getRequest.getBodyAsString
-
     val today = dateFormat.format(new Date)
     val expectedErrorData: String = Source.fromResource("json/error-file.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
     errorFileData shouldBe expectedErrorData

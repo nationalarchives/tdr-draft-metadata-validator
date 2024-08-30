@@ -1,14 +1,29 @@
 {
   "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
-  "date" : "$today",
+  "date" : "2024-08-30",
   "validationErrors" : [
     {
-      "assetId" : "a060c57d-1639-4828-9a7a-67a7c64dbf6c",
+      "assetId" : "6cc4c3d8-76c8-44de-9166-d4c202efdc9e",
       "errors" : [
         {
           "validationProcess" : "SCHEMA_CLOSURE",
           "property" : "closure_period",
+          "errorKey" : "required"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE",
+          "property" : "title_closed",
           "errorKey" : "type"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE",
+          "property" : "foi_exemption_code",
+          "errorKey" : "type"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "foi_exemption_asserted",
+          "errorKey" : "daBeforeToday"
         },
         {
           "validationProcess" : "SCHEMA_CLOSURE",
@@ -16,34 +31,83 @@
           "errorKey" : "type"
         },
         {
-          "validationProcess" : "SCHEMA_BASE",
-          "property" : "date_last_modified",
-          "errorKey" : "format.date"
-        },
-        {
           "validationProcess" : "SCHEMA_CLOSURE",
-          "property" : "foi_exemption_code",
-          "errorKey" : "type"
-        },
-        {
-          "validationProcess" : "SCHEMA_CLOSURE",
-          "property" : "foi_exemption_asserted",
+          "property" : "description_closed",
           "errorKey" : "type"
         }
-      ]
-    },
-    {
-      "assetId" : "cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c",
-      "errors" : [
+      ],
+      "data" : [
         {
-          "validationProcess" : "SCHEMA_BASE",
-          "property" : "foi_exemption_code",
-          "errorKey" : "enum"
+          "name" : "FOI decision asserted",
+          "value" : "2025-07-31"
         },
         {
-          "validationProcess" : "SCHEMA_CLOSURE",
-          "property" : "foi_exemption_code",
-          "errorKey" : "enum"
+          "name" : "Translated title of record",
+          "value" : ""
+        },
+        {
+          "name" : "Add alternative title without the file extension",
+          "value" : ""
+        },
+        {
+          "name" : "Alternative description",
+          "value" : ""
+        },
+        {
+          "name" : "Closure status",
+          "value" : "Closed"
+        },
+        {
+          "name" : "UUID",
+          "value" : "6cc4c3d8-76c8-44de-9166-d4c202efdc9e"
+        },
+        {
+          "name" : "Description",
+          "value" : "My description"
+        },
+        {
+          "name" : "FOI exemption code",
+          "value" : ""
+        },
+        {
+          "name" : "Language",
+          "value" : "English"
+        },
+        {
+          "name" : "Filename",
+          "value" : "metadata.json"
+        },
+        {
+          "name" : "Date of the record",
+          "value" : ""
+        },
+        {
+          "name" : "Closure Periods",
+          "value" : "1"
+        },
+        {
+          "name" : "Closure Start Date",
+          "value" : ""
+        },
+        {
+          "name" : "Is the title sensitive for the public?",
+          "value" : ""
+        },
+        {
+          "name" : "Former reference",
+          "value" : ""
+        },
+        {
+          "name" : "Date last modified",
+          "value" : "2024-07-31"
+        },
+        {
+          "name" : "Filepath",
+          "value" : "test/metadata.json"
+        },
+        {
+          "name" : "Is the description sensitive for the public?",
+          "value" : ""
         }
       ]
     }
