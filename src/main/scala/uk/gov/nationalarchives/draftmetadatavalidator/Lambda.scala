@@ -124,7 +124,12 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       .collect {
         case result if result._2.nonEmpty =>
           val errors = result._2.map(p =>
-            Error(p.validationProcess.toString, convertToAlternateKey(defaultAlternateKeyType, p.property), p.errorKey, s"${p.validationProcess}.${p.property}.${p.errorKey}")
+            Error(
+              p.validationProcess.toString,
+              convertToAlternateKey(defaultAlternateKeyType, p.property),
+              p.errorKey,
+              s"${p.validationProcess}.${p.property}.${p.errorKey}"
+            )
           )
           val errorProperties = errors.map(_.property) :+ "Filepath"
           val data = csvData.find(_.matchIdentifier == result._1).get.metadata.filter(p => errorProperties.contains(p.name))
