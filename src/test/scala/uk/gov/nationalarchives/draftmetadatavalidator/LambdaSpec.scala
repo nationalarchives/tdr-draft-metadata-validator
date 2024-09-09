@@ -4,12 +4,17 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, put, urlEqualTo}
 import com.github.tomakehurst.wiremock.http.RequestMethod
 import com.github.tomakehurst.wiremock.stubbing.{ServeEvent, StubMapping}
+import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
+import graphql.codegen.types.ConsignmentStatusInput
+import io.circe.generic.auto._
+import io.circe.parser.decode
 import org.mockito.MockitoSugar.mock
+import org.scalatest.matchers.must.Matchers.{be, convertToAnyMustWrapper}
 import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
 
 import java.nio.file.{Files, Paths}
 import java.text.SimpleDateFormat
-import java.util.Date
+import java.util.{Date, UUID}
 import scala.io.Source
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, MapHasAsJava}
 
@@ -56,6 +61,14 @@ class LambdaSpec extends ExternalServicesSpec {
     val expectedErrorData: String =
       Source.fromResource("json/empty-error-file.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
     errorFileData shouldBe expectedErrorData
+
+    val updateConsignmentStatusEvent = getServeEvent("updateConsignmentStatus").get
+    val request: UpdateConsignmentStatusGraphqlRequestData = decode[UpdateConsignmentStatusGraphqlRequestData](updateConsignmentStatusEvent.getRequest.getBodyAsString)
+      .getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None))))
+    val updateConsignmentStatusInput = request.variables.updateConsignmentStatusInput
+
+    updateConsignmentStatusInput.statusType must be("DraftMetadata")
+    updateConsignmentStatusInput.statusValue must be(Some("Completed"))
   }
 
   "handleRequest" should "download the draft metadata csv file, validate it and save error file with errors to s3" in {
@@ -76,5 +89,16 @@ class LambdaSpec extends ExternalServicesSpec {
     val today = dateFormat.format(new Date)
     val expectedErrorData: String = Source.fromResource("json/error-file.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
     errorFileData shouldBe expectedErrorData
+
+    val updateConsignmentStatusEvent = getServeEvent("updateConsignmentStatus").get
+    val request: UpdateConsignmentStatusGraphqlRequestData = decode[UpdateConsignmentStatusGraphqlRequestData](updateConsignmentStatusEvent.getRequest.getBodyAsString)
+      .getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None))))
+    val updateConsignmentStatusInput = request.variables.updateConsignmentStatusInput
+
+    updateConsignmentStatusInput.statusType must be("DraftMetadata")
+    updateConsignmentStatusInput.statusValue must be(Some("CompletedWithIssues"))
   }
+
 }
+
+case class UpdateConsignmentStatusGraphqlRequestData(query: String, variables: ucs.Variables)
