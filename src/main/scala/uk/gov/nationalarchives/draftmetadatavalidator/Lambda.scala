@@ -31,8 +31,9 @@ import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, Meta
 import java.net.URI
 import java.nio.file.{Files, Paths}
 import java.util
-import java.util.UUID
+import java.util.{Properties, UUID}
 import scala.concurrent.ExecutionContext.Implicits.global
+import scala.io.Source
 
 class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayProxyResponseEvent] {
 
@@ -119,18 +120,24 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   }
 
   private def validateMetadata(draftMetadata: DraftMetadata, csvData: List[FileRow], schema: Set[JsonSchemaDefinition]): Either[Unit, ErrorFileData] = {
+
+    lazy val messageProperties = getMessageProperties()
     val validationErrors = MetadataValidationJsonSchema
       .validate(schema, csvData)
       .collect {
         case result if result._2.nonEmpty =>
-          val errors = result._2.map(p =>
+          val errors = result._2.map(error => {
+            val errorKey = s"${error.validationProcess}.${error.property}.${error.errorKey}"
             Error(
-              p.validationProcess.toString,
-              convertToAlternateKey(defaultAlternateKeyType, p.property),
-              p.errorKey,
-              s"${p.validationProcess}.${p.property}.${p.errorKey}"
+              error.validationProcess.toString,
+              convertToAlternateKey(defaultAlternateKeyType, error.property) match {
+                case "" => error.property
+                case alternateKey => alternateKey
+              },
+              error.errorKey,
+              messageProperties.getProperty(errorKey, errorKey)
             )
-          )
+          })
           val errorProperties = errors.map(_.property) :+ "Filepath"
           val data = csvData.find(_.matchIdentifier == result._1).get.metadata.filter(p => errorProperties.contains(p.name))
           ValidationErrors(result._1, errors.toSet, data)
@@ -142,6 +149,13 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     } else {
       Left()
     }
+  }
+
+  private def getMessageProperties(): Properties = {
+    val source = Source.fromURL(getClass.getResource("/validation-messages/validation-messages.properties"))
+    val properties = new Properties()
+    properties.load(source.bufferedReader())
+    properties
   }
 
   private def loadCSV(draftMetadata: DraftMetadata): IO[List[FileRow]] = {

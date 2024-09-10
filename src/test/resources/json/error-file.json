@@ -71,7 +71,7 @@
           "validationProcess" : "SCHEMA_BASE",
           "property" : "FOI exemption code",
           "errorKey" : "enum",
-          "message" : "SCHEMA_BASE.foi_exemption_code.enum"
+          "message" : "This must be a pipe delimited list of valid FOI codes, (eg. 31|33). Please see the guidance for more detail on valid codes"
         },
         {
           "validationProcess" : "SCHEMA_CLOSURE",
