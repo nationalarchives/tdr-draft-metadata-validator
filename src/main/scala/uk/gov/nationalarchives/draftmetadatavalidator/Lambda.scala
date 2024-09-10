@@ -131,7 +131,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
             Error(
               error.validationProcess.toString,
               convertToAlternateKey(defaultAlternateKeyType, error.property) match {
-                case "" => error.property
+                case ""           => error.property
                 case alternateKey => alternateKey
               },
               error.errorKey,
