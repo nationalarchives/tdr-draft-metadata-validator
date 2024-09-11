@@ -14,6 +14,8 @@ lazy val root = (project in file("."))
       awsLambdaJavaEvents,
       awsSsm,
       metadataValidation,
+      metadataSchema,
+      schemaUtils,
       generatedGraphql,
       graphqlClient,
       authUtils,

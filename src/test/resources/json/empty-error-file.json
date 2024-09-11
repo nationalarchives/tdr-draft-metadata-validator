@@ -1,6 +1,7 @@
 {
   "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
   "date" : "$today",
+  "fileError" : "None",
   "validationErrors" : [
   ]
 }
