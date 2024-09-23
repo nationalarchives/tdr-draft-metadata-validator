@@ -1,34 +1,66 @@
 {
   "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
   "date" : "$today",
+  "fileError" : "SCHEMA_VALIDATION",
   "validationErrors" : [
     {
       "assetId" : "a060c57d-1639-4828-9a7a-67a7c64dbf6c",
       "errors" : [
         {
           "validationProcess" : "SCHEMA_CLOSURE",
-          "property" : "closure_period",
-          "errorKey" : "type"
+          "property" : "Closure Period",
+          "errorKey" : "type",
+          "message" : "SCHEMA_CLOSURE.closure_period.type"
         },
         {
           "validationProcess" : "SCHEMA_CLOSURE",
-          "property" : "closure_start_date",
-          "errorKey" : "type"
+          "property" : "Closure Start Date",
+          "errorKey" : "type",
+          "message" : "SCHEMA_CLOSURE.closure_start_date.type"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE",
+          "property" : "FOI exemption code",
+          "errorKey" : "type",
+          "message" : "SCHEMA_CLOSURE.foi_exemption_code.type"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE",
+          "property" : "FOI decision asserted",
+          "errorKey" : "type",
+          "message" : "SCHEMA_CLOSURE.foi_exemption_asserted.type"
         },
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "date_last_modified",
-          "errorKey" : "format.date"
+          "property" : "Date last modified",
+          "errorKey" : "format.date",
+          "message" : "SCHEMA_BASE.date_last_modified.format.date"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "FOI decision asserted",
+          "value" : ""
         },
         {
-          "validationProcess" : "SCHEMA_CLOSURE",
-          "property" : "foi_exemption_code",
-          "errorKey" : "type"
+          "name" : "FOI exemption code",
+          "value" : ""
         },
         {
-          "validationProcess" : "SCHEMA_CLOSURE",
-          "property" : "foi_exemption_asserted",
-          "errorKey" : "type"
+          "name" : "Closure Period",
+          "value" : ""
+        },
+        {
+          "name" : "Closure Start Date",
+          "value" : ""
+        },
+        {
+          "name" : "Date last modified",
+          "value" : "12/2/2345"
+        },
+        {
+          "name" : "Filepath",
+          "value" : "test/test3.txt"
         }
       ]
     },
@@ -37,13 +69,25 @@
       "errors" : [
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "foi_exemption_code",
-          "errorKey" : "enum"
+          "property" : "FOI exemption code",
+          "errorKey" : "enum",
+          "message" : "This must be a pipe delimited list of valid FOI codes, (eg. 31|33). Please see the guidance for more detail on valid codes"
         },
         {
           "validationProcess" : "SCHEMA_CLOSURE",
-          "property" : "foi_exemption_code",
-          "errorKey" : "enum"
+          "property" : "FOI exemption code",
+          "errorKey" : "enum",
+          "message" : "SCHEMA_CLOSURE.foi_exemption_code.enum"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "FOI exemption code",
+          "value" : "78|27(1)|27(2)"
+        },
+        {
+          "name" : "Filepath",
+          "value" : "test/test1.txt"
         }
       ]
     }
