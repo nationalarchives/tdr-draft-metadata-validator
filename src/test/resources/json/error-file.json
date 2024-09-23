@@ -7,28 +7,28 @@
       "assetId" : "a060c57d-1639-4828-9a7a-67a7c64dbf6c",
       "errors" : [
         {
-          "validationProcess" : "SCHEMA_CLOSURE",
-          "property" : "Closure Period",
-          "errorKey" : "type",
-          "message" : "SCHEMA_CLOSURE.closure_period.type"
-        },
-        {
-          "validationProcess" : "SCHEMA_CLOSURE",
+          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
           "property" : "Closure Start Date",
           "errorKey" : "type",
-          "message" : "SCHEMA_CLOSURE.closure_start_date.type"
+          "message" : "Must be provided for a closed record"
         },
         {
-          "validationProcess" : "SCHEMA_CLOSURE",
-          "property" : "FOI exemption code",
+          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
+          "property" : "Closure Period",
           "errorKey" : "type",
-          "message" : "SCHEMA_CLOSURE.foi_exemption_code.type"
+          "message" : "Must be provided for a closed record"
         },
         {
-          "validationProcess" : "SCHEMA_CLOSURE",
+          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
           "property" : "FOI decision asserted",
           "errorKey" : "type",
-          "message" : "SCHEMA_CLOSURE.foi_exemption_asserted.type"
+          "message" : "Must be provided for a closed record"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
+          "property" : "FOI exemption code",
+          "errorKey" : "type",
+          "message" : "Must be provided for a closed record"
         },
         {
           "validationProcess" : "SCHEMA_BASE",
@@ -72,12 +72,6 @@
           "property" : "FOI exemption code",
           "errorKey" : "enum",
           "message" : "This must be a pipe delimited list of valid FOI codes, (eg. 31|33). Please see the guidance for more detail on valid codes"
-        },
-        {
-          "validationProcess" : "SCHEMA_CLOSURE",
-          "property" : "FOI exemption code",
-          "errorKey" : "enum",
-          "message" : "SCHEMA_CLOSURE.foi_exemption_code.enum"
         }
       ],
       "data" : [
