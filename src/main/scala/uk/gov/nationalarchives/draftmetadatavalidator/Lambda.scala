@@ -3,6 +3,7 @@ package uk.gov.nationalarchives.draftmetadatavalidator
 import cats.effect.IO
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
+import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
@@ -76,7 +77,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       _ <- s3Files.uploadFile(bucket, s"${draftMetadata.consignmentId}/$errorFileName", errorFilePath)
       // if no errors save metadata
       // maybe return emptyError list on success and handleError with an error
-      _ <- IO(errorFileData.fold(l => persistMetadata(draftMetadata), r => r))
+      _ <- errorFileData.fold(l => persistMetadata(draftMetadata), r => IO(r))
       // Check errorFileData and update the status accordingly
       _ <- updateStatus(errorFileData, draftMetadata)
     } yield {
@@ -121,7 +122,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
   private def validateMetadata(draftMetadata: DraftMetadata, csvData: List[FileRow], schema: Set[JsonSchemaDefinition]): Either[Unit, ErrorFileData] = {
 
-    lazy val messageProperties = getMessageProperties()
+    lazy val messageProperties = getMessageProperties
     val validationErrors = MetadataValidationJsonSchema
       .validate(schema, csvData)
       .collect {
@@ -151,7 +152,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
   }
 
-  private def getMessageProperties(): Properties = {
+  private def getMessageProperties: Properties = {
     val source = Source.fromURL(getClass.getResource("/validation-messages/validation-messages.properties"))
     val properties = new Properties()
     properties.load(source.bufferedReader())
@@ -170,16 +171,15 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", status)
   }
 
-  private def persistMetadata(draftMetadata: DraftMetadata): Unit = {
+  private def persistMetadata(draftMetadata: DraftMetadata): IO[List[AddOrUpdateBulkFileMetadata]] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     val csvHandler = new CSVHandler()
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
       fileData <- IO(csvHandler.loadCSV(getFilePath(draftMetadata), getMetadataNames()))
       addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData)
-      _ <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
-
-    } yield ()
+      result <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
+    } yield result
   }
 
   private def writeErrorFileDataToFile(draftMetadata: DraftMetadata, errorFileData: Either[Unit, ErrorFileData]): String = {
