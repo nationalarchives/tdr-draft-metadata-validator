@@ -2,6 +2,8 @@
 
 The tdr-draft-metadata-validator is a Lambda that is invoked with a consignment ID from the tdrMetadataChecks step function
 
+![drMetadataChecks ](images/metadata-validation-stepfunction-gif.gif)
+
 
 ``` def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
     val consignmentId = extractConsignmentId(input)
