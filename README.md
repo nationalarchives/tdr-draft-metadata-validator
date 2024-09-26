@@ -6,19 +6,22 @@ The tdr-draft-metadata-validator is a Lambda that is invoked with a consignment 
 
 
 ```
+// validates, saves metadata, updates consignment status - the response value is not used by the step function
 def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
     val consignmentId = extractConsignmentId(input)
     val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA)
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     val draftMetadata = DraftMetadata(UUID.fromString(consignmentId))
+    val unexpectedFailureResponse = new APIGatewayProxyResponseEvent()
+    unexpectedFailureResponse.setStatusCode(500)
 
     val requestHandler: IO[APIGatewayProxyResponseEvent] = for {
       errorFileData <- doValidation(draftMetadata,schemaToValidate)  
-      errorFilePath <- IO(writeErrorFileDataToFile(draftMetadata, Right(errorFileData)))
-      _ <- s3Files.uploadFile(bucket, s"${draftMetadata.consignmentId}/$errorFileName", errorFilePath)
-      _ <- if(errorFileData.validationErrors.isEmpty) persistMetadata(draftMetadata)
-      statusCode <- updateStatus(errorFileData, draftMetadata)
-    } yield {
+      errorFilePath <- IO(writeErrorFileDataToFile(draftMetadata, Right(errorFileData)))  // save the error file locally
+      _ <- s3Files.uploadFile(bucket, s"${draftMetadata.consignmentId}/$errorFileName", errorFilePath) // upload error file to s3
+      _ <- if(errorFileData.validationErrors.isEmpty) persistMetadata(draftMetadata) // if no errors persist metadata to DB
+      statusCode <- updateStatus(errorFileData, draftMetadata) // update the consignment status 
+    } yield {  
       val response = new APIGatewayProxyResponseEvent()
       response.setStatusCode(statusCode)
       response
