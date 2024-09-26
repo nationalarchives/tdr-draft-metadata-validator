@@ -1,4 +1,8 @@
 # tdr-draft-metadata-validator
+
+The tdr-draft-metadata-validator is a Lambda that is invoked with a consignment ID from the tdrMetadataChecks step function
+
+
 ``` def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
     val consignmentId = extractConsignmentId(input)
     val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA)
@@ -6,7 +10,7 @@
     val draftMetadata = DraftMetadata(UUID.fromString(consignmentId))
 
     val requestHandler: IO[APIGatewayProxyResponseEvent] = for {
-      errorFileData <- doValidation(draftMetadata,schemaToValidate)
+      errorFileData <- doValidation(draftMetadata,schemaToValidate)  
       errorFilePath <- IO(writeErrorFileDataToFile(draftMetadata, Right(errorFileData)))
       _ <- s3Files.uploadFile(bucket, s"${draftMetadata.consignmentId}/$errorFileName", errorFilePath)
       _ <- if(errorFileData.validationErrors.isEmpty) persistMetadata(draftMetadata)
@@ -20,7 +24,9 @@
     requestHandler.handleErrorWith(_ => IO(unexpectedFailureResponse)).unsafeRunSync()(cats.effect.unsafe.implicits.global)
   }
 
-
+  // The validation involves several processes. When one fails furthur validation processes will not be tried
+  // Probably best way to handle this is to raise the error and handle error at end to return the error so furthur processing can take plac
+  // writing error file, updating status etc
   private def doValidation(draftMetadata: DraftMetadata, schemaToValidate: Set[JsonSchemaDefinition]):IO[ErrorFileData] = {
     ( for {
       _ <- s3Files.downloadFile(bucket, draftMetadata)
@@ -36,10 +42,12 @@
   }
 
   // for validation
+  // validate required columns using a schema
   private def validateRequired(csvData: List[FileRow], consignmentID: String):IO[Unit] = ??? // IO.raiseError(new ValidationError(ErrorFileData with requiredErrors)
   private def validUTF(draftMetadata: DraftMetadata): IO[Unit] = ??? // IO.raiseError(new ValidationError(ErrorFileData with validUTF error)
   private def validCSV(draftMetadata: DraftMetadata):IO[Unit] = ???  // IO.raiseError(new ValidationError(ErrorFileData with validCSV error)
   private def loadCSVData(draftMetadata: DraftMetadata) :IO[List[FileRow]] = ??? // IO.raiseError(new ValidationError(ErrorFileData with validCSV error)
+  // validate using schema
   private def validateMetadata(draftMetadata: DraftMetadata, csvData: List[FileRow], schema: Set[JsonSchemaDefinition]): IO[ErrorFileData] = ???  // not raising error here
 
   case class ValidationError(errorData:ErrorFileData ) extends Throwable
