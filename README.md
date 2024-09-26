@@ -30,9 +30,8 @@
       _ <-  validateRequired(csvData,draftMetadata.consignmentId.toString)
       errorFile  <- validateMetadata(draftMetadata,csvData,schemaToValidate)
     } yield errorFile).handleErrorWith {
-      // case validationError :ValidationError => IO.pure(validationError.ErrorFileData)
-      case _ :Exception => IO.pure(ErrorFileData(draftMetadata))
-      case _:Throwable =>  IO.pure(ErrorFileData(draftMetadata))
+      case validationError:ValidationError => IO.pure(validationError.errorData)
+      case _:Throwable =>  IO.pure(ErrorFileData(draftMetadata)) // with useful error data
     }
   }
 
@@ -43,5 +42,5 @@
   private def loadCSVData(draftMetadata: DraftMetadata) :IO[List[FileRow]] = ??? // IO.raiseError(new ValidationError(ErrorFileData with validCSV error)
   private def validateMetadata(draftMetadata: DraftMetadata, csvData: List[FileRow], schema: Set[JsonSchemaDefinition]): IO[ErrorFileData] = ???  // not raising error here
 
-
+  case class ValidationError(errorData:ErrorFileData ) extends Throwable
   private def updateStatus(errorFileData: ErrorFileData, draftMetadata: DraftMetadata):IO[Int] = ???```
