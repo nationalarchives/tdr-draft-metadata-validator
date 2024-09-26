@@ -33,6 +33,7 @@ The tdr-draft-metadata-validator is a Lambda that is invoked with a consignment 
       _ <-  validUTF(draftMetadata)
       _ <-  validCSV(draftMetadata)
       csvData <- loadCSVData(draftMetadata: DraftMetadata)
+      // do other validations using same pattern  
       _ <-  validateRequired(csvData,draftMetadata.consignmentId.toString)
       errorFile  <- validateMetadata(draftMetadata,csvData,schemaToValidate)
     } yield errorFile).handleErrorWith {
