@@ -26,7 +26,7 @@ def handleRequest(input: java.util.Map[String, Object], context: Context): APIGa
       response.setStatusCode(statusCode)
       response
     }
-    // let's stop blowing up on unexpected errors but do log
+    // let's stop blowing up on unexpected errors but should log
     requestHandler.handleErrorWith(_ => IO(unexpectedFailureResponse)).unsafeRunSync()(cats.effect.unsafe.implicits.global)
   }
 
