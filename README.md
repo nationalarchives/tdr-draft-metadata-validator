@@ -58,7 +58,8 @@ def handleRequest(input: java.util.Map[String, Object], context: Context): APIGa
   private def validateMetadata(draftMetadata: DraftMetadata, csvData: List[FileRow], schema: Set[JsonSchemaDefinition]): IO[ErrorFileData] = ???  // not raising error here
 
   case class ValidationError(errorData:ErrorFileData ) extends Throwable
-  private def updateStatus(errorFileData: ErrorFileData, draftMetadata: DraftMetadata):IO[Int] = ???```
+  private def updateStatus(errorFileData: ErrorFileData, draftMetadata: DraftMetadata):IO[Int] = ???
+```
 
 
 # Lambda Function: Metadata Validation and Processing
