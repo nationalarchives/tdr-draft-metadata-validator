@@ -66,13 +66,15 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       response
     }
     // let's stop blowing up on unexpected errors
-    requestHandler.handleErrorWith(error => {
-      logger.error(s"Unexpected validation problem:${error.getMessage}")
-      val unexpectedFailureResponse = new APIGatewayProxyResponseEvent()
-      unexpectedFailureResponse.setStatusCode(500)
-      unexpectedFailureResponse.withBody(s"Unexpected validation problem:${error.getMessage}")
-      IO(unexpectedFailureResponse)
-    }).unsafeRunSync()(cats.effect.unsafe.implicits.global)
+    requestHandler
+      .handleErrorWith(error => {
+        logger.error(s"Unexpected validation problem:${error.getMessage}")
+        val unexpectedFailureResponse = new APIGatewayProxyResponseEvent()
+        unexpectedFailureResponse.setStatusCode(500)
+        unexpectedFailureResponse.withBody(s"Unexpected validation problem:${error.getMessage}")
+        IO(unexpectedFailureResponse)
+      })
+      .unsafeRunSync()(cats.effect.unsafe.implicits.global)
   }
 
   private case class ValidationData(errorFileData: ErrorFileData, csvData: Seq[FileRow])
@@ -115,10 +117,10 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     fileInputStream.read(bytesArray)
     fileInputStream.close()
     val bom = "EFBBBF".sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toArray
-    if(bom sameElements  bytesArray)
-    IO.unit
+    if (bom sameElements bytesArray)
+      IO.unit
     else
-    IO.raiseError(new Throwable("Agh"))
+      IO.raiseError(new Throwable("Agh"))
   }
 
   private def validCSVFile(validationParameters: ValidationParameters): IO[Unit] = {
