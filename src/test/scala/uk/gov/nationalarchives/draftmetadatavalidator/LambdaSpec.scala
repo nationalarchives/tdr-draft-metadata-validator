@@ -5,7 +5,8 @@ import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, put, url
 import com.github.tomakehurst.wiremock.http.RequestMethod
 import com.github.tomakehurst.wiremock.stubbing.{ServeEvent, StubMapping}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.types.ConsignmentStatusInput
+import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
+import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, AddOrUpdateFileMetadata, AddOrUpdateMetadata, ConsignmentStatusInput}
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import org.mockito.MockitoSugar.mock
@@ -67,6 +68,14 @@ class LambdaSpec extends ExternalServicesSpec {
       .getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None))))
     val updateConsignmentStatusInput = request.variables.updateConsignmentStatusInput
 
+    val addOrUpdateBulkFileMetadataEvent = getServeEvent("addOrUpdateBulkFileMetadata").get
+    val request2: AddOrUpdateBulkFileMetadataGraphqlRequestData = decode[AddOrUpdateBulkFileMetadataGraphqlRequestData](addOrUpdateBulkFileMetadataEvent.getRequest.getBodyAsString)
+      .getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil))))
+    val addOrUpdateBulkFileMetadataInput = request2.variables.addOrUpdateBulkFileMetadataInput
+
+    addOrUpdateBulkFileMetadataInput.fileMetadata.size should be(3)
+    addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput)
+
     updateConsignmentStatusInput.statusType must be("DraftMetadata")
     updateConsignmentStatusInput.statusValue must be(Some("Completed"))
   }
@@ -99,6 +108,69 @@ class LambdaSpec extends ExternalServicesSpec {
     updateConsignmentStatusInput.statusValue must be(Some("CompletedWithIssues"))
   }
 
+  private def expectedFileMetadataInput: List[AddOrUpdateFileMetadata] = {
+    List(
+      AddOrUpdateFileMetadata(
+        UUID.fromString("a060c57d-1639-4828-9a7a-67a7c64dbf6c"),
+        List(
+          AddOrUpdateMetadata("end_date", ""),
+          AddOrUpdateMetadata("description", "eee"),
+          AddOrUpdateMetadata("former_reference_department", ""),
+          AddOrUpdateMetadata("ClosureType", "Open"),
+          AddOrUpdateMetadata("ClosureStartDate", ""),
+          AddOrUpdateMetadata("ClosurePeriod", ""),
+          AddOrUpdateMetadata("FoiExemptionCode", ""),
+          AddOrUpdateMetadata("FoiExemptionAsserted", ""),
+          AddOrUpdateMetadata("TitleClosed", ""),
+          AddOrUpdateMetadata("TitleAlternate", ""),
+          AddOrUpdateMetadata("DescriptionClosed", ""),
+          AddOrUpdateMetadata("DescriptionAlternate", ""),
+          AddOrUpdateMetadata("Language", "English"),
+          AddOrUpdateMetadata("file_name_translation", "")
+        )
+      ),
+      AddOrUpdateFileMetadata(
+        UUID.fromString("cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c"),
+        List(
+          AddOrUpdateMetadata("end_date", ""),
+          AddOrUpdateMetadata("description", "hello"),
+          AddOrUpdateMetadata("former_reference_department", ""),
+          AddOrUpdateMetadata("ClosureType", "Closed"),
+          AddOrUpdateMetadata("ClosureStartDate", "1990-01-01 00:00:00.0"),
+          AddOrUpdateMetadata("ClosurePeriod", "33"),
+          AddOrUpdateMetadata("FoiExemptionCode", "27(1)"),
+          AddOrUpdateMetadata("FoiExemptionCode", "27(2)"),
+          AddOrUpdateMetadata("FoiExemptionAsserted", "1990-01-01 00:00:00.0"),
+          AddOrUpdateMetadata("TitleClosed", "true"),
+          AddOrUpdateMetadata("TitleAlternate", "title"),
+          AddOrUpdateMetadata("DescriptionClosed", "false"),
+          AddOrUpdateMetadata("DescriptionAlternate", ""),
+          AddOrUpdateMetadata("Language", "English"),
+          AddOrUpdateMetadata("file_name_translation", "")
+        )
+      ),
+      AddOrUpdateFileMetadata(
+        UUID.fromString("c4d5e0f1-f6e1-4a77-a7c0-a4317404da00"),
+        List(
+          AddOrUpdateMetadata("end_date", ""),
+          AddOrUpdateMetadata("description", "www"),
+          AddOrUpdateMetadata("former_reference_department", ""),
+          AddOrUpdateMetadata("ClosureType", "Open"),
+          AddOrUpdateMetadata("ClosureStartDate", ""),
+          AddOrUpdateMetadata("ClosurePeriod", ""),
+          AddOrUpdateMetadata("FoiExemptionCode", ""),
+          AddOrUpdateMetadata("FoiExemptionAsserted", ""),
+          AddOrUpdateMetadata("TitleClosed", ""),
+          AddOrUpdateMetadata("TitleAlternate", ""),
+          AddOrUpdateMetadata("DescriptionClosed", ""),
+          AddOrUpdateMetadata("DescriptionAlternate", ""),
+          AddOrUpdateMetadata("Language", "English"),
+          AddOrUpdateMetadata("file_name_translation", "")
+        )
+      )
+    )
+  }
 }
 
 case class UpdateConsignmentStatusGraphqlRequestData(query: String, variables: ucs.Variables)
+case class AddOrUpdateBulkFileMetadataGraphqlRequestData(query: String, variables: afm.Variables)
