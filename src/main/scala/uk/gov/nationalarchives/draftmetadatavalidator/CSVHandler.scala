@@ -30,10 +30,10 @@ class CSVHandler {
     * @return
     *   List of FileRows
     */
-  def loadCSV(filePath: String): List[FileRow] = {
+  def loadCSV(filePath: String, key: String): List[FileRow] = {
     val reader = CSVReader.open(filePath)
     val all: Seq[Map[String, String]] = reader.allWithHeaders()
-    val fileRows = all.map(row => FileRow(row("UUID"), row.map(columnHeaderValue => Metadata(columnHeaderValue._1, columnHeaderValue._2)).toList))
+    val fileRows = all.map(row => FileRow(row(key), row.map(columnHeaderValue => Metadata(columnHeaderValue._1, columnHeaderValue._2)).toList))
     fileRows.toList
   }
 
