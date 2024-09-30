@@ -109,17 +109,16 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   }
 
   private def validUTF8(validationParameters: ValidationParameters): IO[Unit] = {
-    // TODO: To be implemented TDRD-61
     val filePath = getFilePath(validationParameters)
     val fileInputStream = new FileInputStream(filePath)
     val bytesArray = new Array[Byte](3)
     fileInputStream.read(bytesArray)
     fileInputStream.close()
-    val expected = "EFBBBF".sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toArray
-   println( new String(bytesArray))
-    println(expected, bytesArray)
+    val bom = "EFBBBF".sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toArray
+    if(bom sameElements  bytesArray)
     IO.unit
-    // IO.raiseError(new Throwable("Agh"))
+    else
+    IO.raiseError(new Throwable("Agh"))
   }
 
   private def validCSVFile(validationParameters: ValidationParameters): IO[Unit] = {
