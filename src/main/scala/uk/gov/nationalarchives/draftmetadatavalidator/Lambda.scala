@@ -57,10 +57,10 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val validationParameters: ValidationParameters = ValidationParameters(UUID.fromString(consignmentId), schemaToValidate, "UUID", "tdrFileHeader")
 
     val requestHandler: IO[APIGatewayProxyResponseEvent] = for {
-      validationData <- doValidation(validationParameters)
-      _ <- writeErrorFileDataToFile(validationParameters, validationData.errorFileData)
-      _ <- if (validationData.errorFileData.validationErrors.isEmpty) persistMetadata(validationParameters) else IO.unit
-      _ <- updateStatus(validationData.errorFileData, validationParameters)
+      errorFileData <- doValidation(validationParameters)
+      _ <- writeErrorFileDataToFile(validationParameters, errorFileData)
+      _ <- if (errorFileData.validationErrors.isEmpty) persistMetadata(validationParameters) else IO.unit
+      _ <- updateStatus(errorFileData, validationParameters)
     } yield {
       val response = new APIGatewayProxyResponseEvent()
       response.setStatusCode(200)
@@ -78,9 +78,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       .unsafeRunSync()(cats.effect.unsafe.implicits.global)
   }
 
-  private case class ValidationData(errorFileData: ErrorFileData, csvData: Seq[FileRow])
-
-  private def doValidation(validationParameters: ValidationParameters): IO[ValidationData] = {
+  private def doValidation(validationParameters: ValidationParameters): IO[ErrorFileData] = {
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     val validationProgram = for {
       _ <- s3Files.downloadFile(bucket, validationParameters)
@@ -88,18 +86,17 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       csvData <- loadCSV(validationParameters)
       _ <- validateRequired(csvData, validationParameters)
       _ <- validateMetadata(validationParameters, csvData)
-    } yield ValidationData(ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors]), csvData)
+    } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
 
     // all validations will raise ValidationExecutionError if they do not pass
     validationProgram.handleError({
-      case validationExecutionError: ValidationExecutionError => ValidationData(validationExecutionError.errorFileData, validationExecutionError.csvData)
+      case validationExecutionError: ValidationExecutionError => validationExecutionError.errorFileData
       case err =>
         logger.error(s"Error doing validation for consignment:${validationParameters.consignmentId.toString} :${err.getMessage}")
         val singleError = Error("Validation", validationParameters.consignmentId.toString, "UNKNOWN", err.getMessage)
         val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
-        ValidationData(ErrorFileData(validationParameters, FileError.UNKNOWN, List(validationErrors)), List.empty[FileRow])
+        ErrorFileData(validationParameters, FileError.UNKNOWN, List(validationErrors))
     })
-
   }
 
   // use a required schema, pass one row of data that will return missing required fields, change row identifier
