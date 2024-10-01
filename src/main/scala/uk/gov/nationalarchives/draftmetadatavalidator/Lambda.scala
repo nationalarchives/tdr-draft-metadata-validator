@@ -85,7 +85,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val validationProgram = for {
       _ <- s3Files.downloadFile(bucket, validationParameters)
       _ <- validUTF8(validationParameters)
-      _ <- validCSVFile(validationParameters)
       csvData <- loadCSV(validationParameters)
       _ <- validateRequired(csvData, validationParameters)
       _ <- validateMetadata(validationParameters, csvData)
@@ -141,11 +140,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
   }
 
-  private def validCSVFile(validationParameters: ValidationParameters): IO[Unit] = {
-    // TODO: To be implemented TDRD-61
-    IO.unit
-  }
-
   private def extractConsignmentId(input: util.Map[String, Object]): String = {
     val inputParameters = input match {
       case stepFunctionInput if stepFunctionInput.containsKey("consignmentId") => stepFunctionInput
@@ -193,9 +187,21 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   }
 
   private def loadCSV(validationParameters: ValidationParameters): IO[List[FileRow]] = {
+
+    def csvErrorData(messageVal: String) = {
+      val messageKey = "FILE_CHECK.CSV.INVALID"
+      val message = if (messageProperties.containsKey(messageKey)) messageProperties.getProperty(messageKey) else messageVal
+      val singleError = Error("FILE_CHECK", validationParameters.consignmentId.toString, "CSV", message)
+      val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
+      ErrorFileData(validationParameters, FileError.INVALID_CSV, List(validationErrors))
+    }
+
     val csvHandler = new CSVHandler()
     val filePath = getFilePath(validationParameters)
-    IO(csvHandler.loadCSV(filePath, validationParameters.uniqueAssetIDKey))
+    IO(csvHandler.loadCSV(filePath, validationParameters.uniqueAssetIDKey)).handleErrorWith(err => {
+      logger.error(s"Metadata Validation failed to load csv :${err.getMessage}")
+      IO.raiseError(ValidationExecutionError(csvErrorData("Not valid CSV failed to load"), List.empty[FileRow]))
+    })
   }
 
   private def updateStatus(errorFileData: ErrorFileData, draftMetadata: ValidationParameters): IO[Option[Int]] = {
