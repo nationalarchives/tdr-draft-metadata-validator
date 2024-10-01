@@ -100,7 +100,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
         val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
         ValidationData(ErrorFileData(validationParameters, FileError.UNKNOWN, List(validationErrors)), List.empty[FileRow])
     })
-    // validationProgram
+
   }
 
   // use a required schema, pass one row of data that will return missing required fields, change row identifier
@@ -112,7 +112,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   }
 
   private def validUTF8(validationParameters: ValidationParameters): IO[Unit] = {
-
     val filePath = getFilePath(validationParameters)
 
     def utf8ErrorData(messageVal: String = "Not valid UTF-8 no BOM") = {
@@ -150,8 +149,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   private def extractConsignmentId(input: util.Map[String, Object]): String = {
     val inputParameters = input match {
       case stepFunctionInput if stepFunctionInput.containsKey("consignmentId") => stepFunctionInput
-      case stepFunctionInput if stepFunctionInput.containsKey("pathParameters") =>
-        stepFunctionInput.get("pathParameters").asInstanceOf[util.Map[String, Object]]
+      case apiProxyRequestInput if apiProxyRequestInput.containsKey("pathParameters") =>
+        apiProxyRequestInput.get("pathParameters").asInstanceOf[util.Map[String, Object]]
     }
     inputParameters.get("consignmentId").toString
   }

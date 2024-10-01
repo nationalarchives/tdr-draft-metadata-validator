@@ -26,14 +26,14 @@ class CSVHandler {
   /** Reads a CSV file into a list of FileRows The FileRow.fileName is the identifier for the row and has been used to store the UUID in above loadCSV def (expecting the UUID to be
     * in the last column). What the identifier to be used is to be decided FileRow metadata key(header) unaltered and the value maintained as a string
     * @param filePath
-    *   path to csv
+    *   path to csv uniqueRowKey each row will be keyed to a column value that is unique
     * @return
     *   List of FileRows
     */
-  def loadCSV(filePath: String, key: String): List[FileRow] = {
+  def loadCSV(filePath: String, uniqueRowKey: String): List[FileRow] = {
     val reader = CSVReader.open(filePath)
     val all: Seq[Map[String, String]] = reader.allWithHeaders()
-    val fileRows = all.map(row => FileRow(row(key), row.map(columnHeaderValue => Metadata(columnHeaderValue._1, columnHeaderValue._2)).toList))
+    val fileRows = all.map(row => FileRow(row(uniqueRowKey), row.map(columnHeaderValue => Metadata(columnHeaderValue._1, columnHeaderValue._2)).toList))
     fileRows.toList
   }
 
