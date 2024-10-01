@@ -108,6 +108,34 @@ class LambdaSpec extends ExternalServicesSpec {
     updateConsignmentStatusInput.statusValue must be(Some("CompletedWithIssues"))
   }
 
+  "handleRequest" should "download the a draft metadata csv file without BOM, validate it as a UTF-8 with BOM and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson()
+    mockS3GetResponse("sample-no-bom.csv")
+    mockS3ErrorFilePutResponse()
+    val input = Map("consignmentId" -> consignmentId).asJava
+    val response = new Lambda().handleRequest(input, mockContext)
+    response.getStatusCode should equal(200)
+
+    val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala.filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT).toList
+    s3Interactions.size shouldBe 1
+
+    val errorWriteRequest = s3Interactions.head
+    val errorFileData = errorWriteRequest.getRequest.getBodyAsString
+
+    val today = dateFormat.format(new Date)
+    val expectedErrorData: String = Source.fromResource("json/no-bom-error.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
+    errorFileData shouldBe expectedErrorData
+
+    val updateConsignmentStatusEvent = getServeEvent("updateConsignmentStatus").get
+    val request: UpdateConsignmentStatusGraphqlRequestData = decode[UpdateConsignmentStatusGraphqlRequestData](updateConsignmentStatusEvent.getRequest.getBodyAsString)
+      .getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None))))
+    val updateConsignmentStatusInput = request.variables.updateConsignmentStatusInput
+
+    updateConsignmentStatusInput.statusType must be("DraftMetadata")
+    updateConsignmentStatusInput.statusValue must be(Some("CompletedWithIssues"))
+  }
+
   private def expectedFileMetadataInput: List[AddOrUpdateFileMetadata] = {
     List(
       AddOrUpdateFileMetadata(

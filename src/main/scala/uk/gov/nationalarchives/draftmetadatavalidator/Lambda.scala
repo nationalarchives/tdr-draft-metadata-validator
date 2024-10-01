@@ -43,6 +43,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   implicit val keycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment(authUrl, "tdr", timeToLiveSecs)
   implicit def logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
   implicit val fileErrorEncoder: Encoder[FileError.Value] = Encoder.encodeEnumeration(FileError)
+  private lazy val messageProperties = getMessageProperties
 
   private val keycloakUtils = new KeycloakUtils()
   private val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
@@ -65,7 +66,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       response.setStatusCode(200)
       response
     }
-    // let's stop blowing up on unexpected errors
+
     requestHandler
       .handleErrorWith(error => {
         logger.error(s"Unexpected validation problem:${error.getMessage}")
@@ -95,7 +96,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       case validationExecutionError: ValidationExecutionError => ValidationData(validationExecutionError.errorFileData, validationExecutionError.csvData)
       case err =>
         logger.error(s"Error doing validation for consignment:${validationParameters.consignmentId.toString} :${err.getMessage}")
-        val singleError = Error("Validation", validationParameters.consignmentId.toString, "WTF", err.getMessage)
+        val singleError = Error("Validation", validationParameters.consignmentId.toString, "UNKNOWN", err.getMessage)
         val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
         ValidationData(ErrorFileData(validationParameters, FileError.UNKNOWN, List(validationErrors)), List.empty[FileRow])
     })
@@ -111,16 +112,34 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   }
 
   private def validUTF8(validationParameters: ValidationParameters): IO[Unit] = {
+
     val filePath = getFilePath(validationParameters)
-    val fileInputStream = new FileInputStream(filePath)
-    val bytesArray = new Array[Byte](3)
-    fileInputStream.read(bytesArray)
-    fileInputStream.close()
-    val bom = "EFBBBF".sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toArray
-    if (bom sameElements bytesArray)
-      IO.unit
-    else
-      IO.raiseError(new Throwable("Agh"))
+
+    def utf8ErrorData(messageVal: String = "Not valid UTF-8 no BOM") = {
+      val messageKey = "FILE_CHECK.UTF.INVALID"
+      val message = if (messageProperties.containsKey(messageKey)) messageProperties.getProperty(messageKey) else messageVal
+      val singleError = Error("FILE_CHECK", validationParameters.consignmentId.toString, "UTF8", message)
+      val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
+      ErrorFileData(validationParameters, FileError.UTF_8, List(validationErrors))
+    }
+
+    def checkBOM(inputStream: FileInputStream) = {
+      val bytesArray = new Array[Byte](3)
+      inputStream.read(bytesArray)
+      inputStream.close()
+      val bom = "EFBBBF".sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toArray
+      if (bom sameElements bytesArray)
+        IO.unit
+      else {
+        IO.raiseError(ValidationExecutionError(utf8ErrorData("Invalid CSV No valid BOM"), List.empty[FileRow]))
+      }
+    }
+
+    for {
+      inputStream <- IO(new FileInputStream(filePath))
+      _ <- checkBOM(inputStream)
+    } yield ()
+
   }
 
   private def validCSVFile(validationParameters: ValidationParameters): IO[Unit] = {
@@ -138,8 +157,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   }
 
   private def validateMetadata(validationParameters: ValidationParameters, csvData: List[FileRow]): IO[ErrorFileData] = {
-
-    lazy val messageProperties = getMessageProperties
     val validationErrors = MetadataValidationJsonSchema
       .validate(validationParameters.schemaToValidate, csvData)
       .collect {
