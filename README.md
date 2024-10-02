@@ -28,14 +28,14 @@ The **TDR Draft Metadata Validator** is a core component of the **Transfer Digit
     - Validate that it is a well-formed CSV file.
     - Ensure required columns exist and match the structure defined in the JSON schemas.
 4. **Error Handling**:
-    - If any validation fails, the Lambda creates an error report in JSON format.
+    - A validation json file is created by the Lambda for each invocation in JSON format.
     - The JSON file is saved to S3, under the consignment folder, for easy access.
 5. **Persist Data**:
     - If the file passes validation, the Lambda saves the metadata to the database.
 6. **Update Consignment Status**:
     - The consignment status is updated based on the validation result: either **Completed** (if no errors) or **CompletedWithIssues** (if errors were found).
 7. **Return APIGatewayProxyResponseEvent**
-    - The current response should always have status of 200 and no other data   
+    - The current response has the status of 200 and no other data   
 
 ## Input
 
