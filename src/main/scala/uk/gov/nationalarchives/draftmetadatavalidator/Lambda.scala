@@ -110,9 +110,9 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   private def validUTF8(validationParameters: ValidationParameters): IO[Unit] = {
     val filePath = getFilePath(validationParameters)
 
-    def utf8ErrorData(messageVal: String = "Not valid UTF-8 no BOM") = {
+    def utf8FileErrorData = {
       val messageKey = "FILE_CHECK.UTF.INVALID"
-      val message = if (messageProperties.containsKey(messageKey)) messageProperties.getProperty(messageKey) else messageVal
+      val message = if (messageProperties.containsKey(messageKey)) messageProperties.getProperty(messageKey) else messageKey
       val singleError = Error("FILE_CHECK", validationParameters.consignmentId.toString, "UTF8", message)
       val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
       ErrorFileData(validationParameters, FileError.UTF_8, List(validationErrors))
@@ -126,7 +126,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       if (bom sameElements bytesArray)
         IO.unit
       else {
-        IO.raiseError(ValidationExecutionError(utf8ErrorData("Invalid CSV No valid BOM"), List.empty[FileRow]))
+        IO.raiseError(ValidationExecutionError(utf8FileErrorData, List.empty[FileRow]))
       }
     }
 
@@ -185,10 +185,10 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
   private def loadCSV(validationParameters: ValidationParameters): IO[List[FileRow]] = {
 
-    def csvErrorData(messageVal: String) = {
+    def invalidCSVFileErrorData = {
       val messageKey = "FILE_CHECK.CSV.INVALID"
-      val message = if (messageProperties.containsKey(messageKey)) messageProperties.getProperty(messageKey) else messageVal
-      val singleError = Error("FILE_CHECK", validationParameters.consignmentId.toString, "CSV", message)
+      val message = if (messageProperties.containsKey(messageKey)) messageProperties.getProperty(messageKey) else messageKey
+      val singleError = Error("FILE_CHECK", validationParameters.consignmentId.toString, "LOAD", message)
       val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
       ErrorFileData(validationParameters, FileError.INVALID_CSV, List(validationErrors))
     }
@@ -197,7 +197,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val filePath = getFilePath(validationParameters)
     IO(csvHandler.loadCSV(filePath, validationParameters.uniqueAssetIDKey)).handleErrorWith(err => {
       logger.error(s"Metadata Validation failed to load csv :${err.getMessage}")
-      IO.raiseError(ValidationExecutionError(csvErrorData("Not valid CSV failed to load"), List.empty[FileRow]))
+      IO.raiseError(ValidationExecutionError(invalidCSVFileErrorData, List.empty[FileRow]))
     })
   }
 
@@ -212,7 +212,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val csvHandler = new CSVHandler()
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
-      fileData <- IO(csvHandler.loadCSV(getFilePath(draftMetadata), getMetadataNames()))
+      fileData <- IO(csvHandler.loadCSV(getFilePath(draftMetadata), getMetadataNames))
       addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData)
       result <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
     } yield result
@@ -241,7 +241,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     ssmClient.getParameter(getParameterRequest).parameter().value()
   }
 
-  private def getMetadataNames(): List[String] = {
+  private def getMetadataNames: List[String] = {
     // This is a temporary change to fix the issue related to order of the columns. We should use the schema to get the DB property name
     val columnOrder = List(
       "ClientSideOriginalFilepath",

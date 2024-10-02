@@ -9,8 +9,8 @@
         {
           "validationProcess" : "FILE_CHECK",
           "property" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
-          "errorKey" : "CSV",
-          "message" : "Not valid CSV failed to load"
+          "errorKey" : "LOAD",
+          "message" : "FILE_CHECK.CSV.INVALID"
         }
       ],
       "data" : [

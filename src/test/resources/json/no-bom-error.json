@@ -10,7 +10,7 @@
           "validationProcess" : "FILE_CHECK",
           "property" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
           "errorKey" : "UTF8",
-          "message" : "Invalid CSV No valid BOM"
+          "message" : "FILE_CHECK.UTF.INVALID"
         }
       ],
       "data" : [
