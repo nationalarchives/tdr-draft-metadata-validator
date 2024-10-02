@@ -85,6 +85,6 @@ Ensure the following environment variables are configured for the Lambda functio
 
 Unit tests are included to validate the core functionality of the Lambda. You can run the tests locally using `sbt`:
 
-```bash
+```
 sbt test
-
+```
