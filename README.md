@@ -31,7 +31,7 @@ The **TDR Draft Metadata Validator** is a core component of the **Transfer Digit
 5. **Persist Data**:
     - If the file passes validation, the Lambda saves the metadata to the database.
 6. **Update Consignment Status**:
-    - The consignment status is updated based on the validation result: either **Completed** (if no errors) or **Completed with Issues** (if errors were found).
+    - The consignment status is updated based on the validation result: either **Completed** (if no errors) or **CompletedWithIssues** (if errors were found).
 
 ## Input
 
@@ -49,7 +49,7 @@ The Lambda function is invoked with a single input parameter:
 3. **Consignment Status**:
     - The consignment status is updated to reflect the validation result. The statuses can be:
         - **Completed**: All validations passed successfully.
-        - **Completed with Issues**: Validation issues were found, but the process completed.
+        - **CompletedWithIssues**: Validation issues were found, but the process completed.
 
 ## Error Handling
 
