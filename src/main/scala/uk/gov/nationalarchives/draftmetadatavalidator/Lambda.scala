@@ -1,6 +1,7 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
+import cats.effect.kernel.Resource
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
@@ -20,7 +21,7 @@ import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend}
 import uk.gov.nationalarchives.aws.utils.s3.S3Clients._
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
-import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getErrorFilePath, getFilePath}
+import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{ValidationExecutionError, ValidationParameters, getErrorFilePath, getFilePath}
 import uk.gov.nationalarchives.draftmetadatavalidator.utils.MetadataUtils
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
@@ -29,6 +30,7 @@ import uk.gov.nationalarchives.tdr.validation.FileRow
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN}
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
 
+import java.io.FileInputStream
 import java.net.URI
 import java.nio.file.{Files, Paths}
 import java.util
@@ -42,73 +44,97 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   implicit val keycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment(authUrl, "tdr", timeToLiveSecs)
   implicit def logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
   implicit val fileErrorEncoder: Encoder[FileError.Value] = Encoder.encodeEnumeration(FileError)
+  private lazy val messageProperties = getMessageProperties
 
   private val keycloakUtils = new KeycloakUtils()
   private val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
   private val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
   private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient)
-  private val defaultAlternateKeyType = "tdrFileHeader"
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
     val consignmentId = extractConsignmentId(input)
     val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN)
-    val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
-    val unexpectedFailureResponse = new APIGatewayProxyResponseEvent()
-    unexpectedFailureResponse.setStatusCode(500)
+    val validationParameters: ValidationParameters = ValidationParameters(UUID.fromString(consignmentId), schemaToValidate, "UUID", "tdrFileHeader")
 
     val requestHandler: IO[APIGatewayProxyResponseEvent] = for {
-      draftMetadata <- IO(DraftMetadata(UUID.fromString(consignmentId)))
-      _ <- s3Files.downloadFile(bucket, draftMetadata)
-      // check UTF 8
-      errorFileData <- validUTF(draftMetadata)
-      // check CSV is a valid CSV file if no UTF-8 error
-      errorFileData <- IO(errorFileData.orElse(validCSV(draftMetadata)))
-      // if it is a valid csv then load the data
-      csvData <- errorFileData.fold(l => loadCSV(draftMetadata), r => IO(List.empty[FileRow]))
-      // validate required fields (using separate check as only one row required and want to change key identifier to consignmentID)
-      // treat required fields as consignment problem not specific row of data)
-      errorFileData <- IO(errorFileData.orElse(validateRequired(csvData, consignmentId)))
-      // validate against schema if all required fields present
-      errorFileData <- IO(errorFileData.orElse(validateMetadata(draftMetadata, csvData, schemaToValidate)))
-      errorFilePath <- IO(writeErrorFileDataToFile(draftMetadata, errorFileData))
-      // upload validation result file
-      // maybe return emptyError list on success and handleError with an error
-      _ <- s3Files.uploadFile(bucket, s"${draftMetadata.consignmentId}/$errorFileName", errorFilePath)
-      // if no errors save metadata
-      // maybe return emptyError list on success and handleError with an error
-      _ <- errorFileData.fold(l => persistMetadata(draftMetadata), r => IO(r))
-      // Check errorFileData and update the status accordingly
-      _ <- updateStatus(errorFileData, draftMetadata)
+      errorFileData <- doValidation(validationParameters)
+      _ <- writeErrorFileDataToFile(validationParameters, errorFileData)
+      _ <- if (errorFileData.validationErrors.isEmpty) persistMetadata(validationParameters) else IO.unit
+      _ <- updateStatus(errorFileData, validationParameters)
     } yield {
       val response = new APIGatewayProxyResponseEvent()
       response.setStatusCode(200)
       response
     }
-    // let's stop blowing up on unexpected errors
-    requestHandler.handleErrorWith(_ => IO(unexpectedFailureResponse)).unsafeRunSync()(cats.effect.unsafe.implicits.global)
+
+    requestHandler
+      .handleErrorWith(error => {
+        logger.error(s"Unexpected validation problem:${error.getMessage}")
+        val unexpectedFailureResponse = new APIGatewayProxyResponseEvent()
+        unexpectedFailureResponse.setStatusCode(500)
+        unexpectedFailureResponse.withBody(s"Unexpected validation problem:${error.getMessage}")
+        IO(unexpectedFailureResponse)
+      })
+      .unsafeRunSync()(cats.effect.unsafe.implicits.global)
+  }
+
+  private def doValidation(validationParameters: ValidationParameters): IO[ErrorFileData] = {
+    val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
+    val validationProgram = for {
+      _ <- s3Files.downloadFile(bucket, validationParameters)
+      _ <- validUTF8(validationParameters)
+      csvData <- loadCSV(validationParameters)
+      _ <- validateRequired(csvData, validationParameters)
+      _ <- validateMetadata(validationParameters, csvData)
+    } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
+
+    // all validations will raise ValidationExecutionError if they do not pass
+    validationProgram.handleError({
+      case validationExecutionError: ValidationExecutionError => validationExecutionError.errorFileData
+      case err =>
+        logger.error(s"Error doing validation for consignment:${validationParameters.consignmentId.toString} :${err.getMessage}")
+        val singleError = Error("Validation", validationParameters.consignmentId.toString, "UNKNOWN", err.getMessage)
+        val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
+        ErrorFileData(validationParameters, FileError.UNKNOWN, List(validationErrors))
+    })
   }
 
   // use a required schema, pass one row of data that will return missing required fields, change row identifier
   // to consignmentID. Can then use to help populate required on UI
   // just hack code
-  private def validateRequired(csvData: List[FileRow], consignmentID: String): Either[Unit, ErrorFileData] = {
+  private def validateRequired(csvData: List[FileRow], validationParameters: ValidationParameters): IO[Unit] = {
     // TODO: To be implemented TDRD-62
-    Left()
+    IO.unit
   }
 
-  // Check file is UTF
-  // maybe have new ValidationProcess.FILE_CHECK that can be used file integrity checks
-  private def validUTF(draftMetadata: DraftMetadata): IO[Either[Unit, ErrorFileData]] = {
-    // TODO: To be implemented TDRD-61
-    IO(Left())
-  }
+  private def validUTF8(validationParameters: ValidationParameters): IO[Unit] = {
+    val filePath = getFilePath(validationParameters)
 
-  // Check file is a what is understood as a CSV header row and rows of data
-  // maybe have new ValidationProcess.FILE_CHECK that can be used file integrity checks
-  private def validCSV(draftMetadata: DraftMetadata): Either[Unit, ErrorFileData] = {
-    // TODO: To be implemented TDRD-61
-    Left()
+    def utf8FileErrorData = {
+      val messageKey = "FILE_CHECK.UTF.INVALID"
+      val message = messageProperties.getProperty(messageKey, messageKey)
+      val singleError = Error("FILE_CHECK", validationParameters.consignmentId.toString, "UTF8", message)
+      val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
+      ErrorFileData(validationParameters, FileError.UTF_8, List(validationErrors))
+    }
+
+    def checkBOM(inputStream: FileInputStream) = {
+      val utf8BOM = Array(0xef.toByte, 0xbb.toByte, 0xbf.toByte)
+      Resource.fromAutoCloseable(IO(inputStream)).use { stream =>
+        val bytesArray = new Array[Byte](3)
+        stream.read(bytesArray)
+        if (bytesArray sameElements utf8BOM) {
+          IO.unit
+        } else
+          IO.raiseError(ValidationExecutionError(utf8FileErrorData, List.empty[FileRow]))
+      }
+    }
+
+    for {
+      inputStream <- IO(new FileInputStream(filePath))
+      _ <- checkBOM(inputStream)
+    } yield ()
   }
 
   private def extractConsignmentId(input: util.Map[String, Object]): String = {
@@ -120,18 +146,16 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     inputParameters.get("consignmentId").toString
   }
 
-  private def validateMetadata(draftMetadata: DraftMetadata, csvData: List[FileRow], schema: Set[JsonSchemaDefinition]): Either[Unit, ErrorFileData] = {
-
-    lazy val messageProperties = getMessageProperties
+  private def validateMetadata(validationParameters: ValidationParameters, csvData: List[FileRow]): IO[ErrorFileData] = {
     val validationErrors = MetadataValidationJsonSchema
-      .validate(schema, csvData)
+      .validate(validationParameters.schemaToValidate, csvData)
       .collect {
         case result if result._2.nonEmpty =>
           val errors = result._2.map(error => {
             val errorKey = s"${error.validationProcess}.${error.property}.${error.errorKey}"
             Error(
               error.validationProcess.toString,
-              convertToAlternateKey(defaultAlternateKeyType, error.property) match {
+              convertToAlternateKey(validationParameters.alternateKey, error.property) match {
                 case ""           => error.property
                 case alternateKey => alternateKey
               },
@@ -146,9 +170,9 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       .toList
 
     if (validationErrors.nonEmpty) {
-      Right(ErrorFileData(draftMetadata, FileError.SCHEMA_VALIDATION, validationErrors))
+      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, validationErrors), csvData))
     } else {
-      Left()
+      IO(ErrorFileData(validationParameters))
     }
   }
 
@@ -159,35 +183,50 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     properties
   }
 
-  private def loadCSV(draftMetadata: DraftMetadata): IO[List[FileRow]] = {
+  private def loadCSV(validationParameters: ValidationParameters): IO[List[FileRow]] = {
+
+    def invalidCSVFileErrorData = {
+      val messageKey = "FILE_CHECK.CSV.INVALID"
+      val message = messageProperties.getProperty(messageKey, messageKey)
+      val singleError = Error("FILE_CHECK", validationParameters.consignmentId.toString, "LOAD", message)
+      val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
+      ErrorFileData(validationParameters, FileError.INVALID_CSV, List(validationErrors))
+    }
+
     val csvHandler = new CSVHandler()
-    val filePath = getFilePath(draftMetadata)
-    IO(csvHandler.loadCSV(filePath))
+    val filePath = getFilePath(validationParameters)
+    IO(csvHandler.loadCSV(filePath, validationParameters.uniqueAssetIDKey)).handleErrorWith(err => {
+      logger.error(s"Metadata Validation failed to load csv :${err.getMessage}")
+      IO.raiseError(ValidationExecutionError(invalidCSVFileErrorData, List.empty[FileRow]))
+    })
   }
 
-  private def updateStatus(errorFileData: Either[Unit, ErrorFileData], draftMetadata: DraftMetadata): IO[Option[Int]] = {
+  private def updateStatus(errorFileData: ErrorFileData, draftMetadata: ValidationParameters): IO[Option[Int]] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
-    val status = errorFileData.fold(_ => "Completed", _ => "CompletedWithIssues")
+    val status = if (errorFileData.validationErrors.isEmpty) "Completed" else "CompletedWithIssues"
     graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", status)
   }
 
-  private def persistMetadata(draftMetadata: DraftMetadata): IO[List[AddOrUpdateBulkFileMetadata]] = {
+  private def persistMetadata(draftMetadata: ValidationParameters): IO[List[AddOrUpdateBulkFileMetadata]] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     val csvHandler = new CSVHandler()
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
-      fileData <- IO(csvHandler.loadCSV(getFilePath(draftMetadata), getMetadataNames()))
+      fileData <- IO(csvHandler.loadCSV(getFilePath(draftMetadata), getMetadataNames))
       addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData)
       result <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
     } yield result
   }
 
-  private def writeErrorFileDataToFile(draftMetadata: DraftMetadata, errorFileData: Either[Unit, ErrorFileData]): String = {
-    val noError = ErrorFileData(draftMetadata)
-    val json = errorFileData.getOrElse(noError).asJson.toString()
-    val errorFilePath = getErrorFilePath(draftMetadata)
-    Files.writeString(Paths.get(errorFilePath), json)
-    errorFilePath
+  private def writeErrorFileDataToFile(validationParameters: ValidationParameters, errorFileData: ErrorFileData) = {
+    val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
+    val json = errorFileData.asJson.toString()
+    val errorFilePath = getErrorFilePath(validationParameters)
+    for {
+      _ <- IO(Files.writeString(Paths.get(errorFilePath), json))
+      _ <- s3Files.uploadFile(bucket, s"${validationParameters.consignmentId}/$errorFileName", errorFilePath)
+    } yield ()
+
   }
 
   private def getClientSecret(secretPath: String, endpoint: String): String = {
@@ -202,7 +241,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     ssmClient.getParameter(getParameterRequest).parameter().value()
   }
 
-  private def getMetadataNames(): List[String] = {
+  private def getMetadataNames: List[String] = {
     // This is a temporary change to fix the issue related to order of the columns. We should use the schema to get the DB property name
     val columnOrder = List(
       "ClientSideOriginalFilepath",
@@ -229,8 +268,10 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 }
 
 object Lambda {
-  case class DraftMetadata(consignmentId: UUID)
-  def getFilePath(draftMetadata: DraftMetadata) = s"""$rootDirectory/${draftMetadata.consignmentId}/$fileName"""
-  def getErrorFilePath(draftMetadata: DraftMetadata) = s"""$rootDirectory/${draftMetadata.consignmentId}/$errorFileName"""
-  def getFolderPath(draftMetadata: DraftMetadata) = s"""$rootDirectory/${draftMetadata.consignmentId}"""
+
+  case class ValidationExecutionError(errorFileData: ErrorFileData, csvData: List[FileRow]) extends Throwable
+  case class ValidationParameters(consignmentId: UUID, schemaToValidate: Set[JsonSchemaDefinition], uniqueAssetIDKey: String, alternateKey: String)
+  def getFilePath(draftMetadata: ValidationParameters) = s"""$rootDirectory/${draftMetadata.consignmentId}/$fileName"""
+  def getErrorFilePath(draftMetadata: ValidationParameters) = s"""$rootDirectory/${draftMetadata.consignmentId}/$errorFileName"""
+  def getFolderPath(draftMetadata: ValidationParameters) = s"""$rootDirectory/${draftMetadata.consignmentId}"""
 }

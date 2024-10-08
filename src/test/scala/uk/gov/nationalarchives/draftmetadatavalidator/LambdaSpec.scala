@@ -84,6 +84,24 @@ class LambdaSpec extends ExternalServicesSpec {
     authOkJson()
     graphqlOkJson()
     mockS3GetResponse("invalid-sample.csv")
+    checkFileError("json/error-file.json")
+  }
+
+  "handleRequest" should "download the a draft metadata csv file without BOM, validate it as a UTF-8 with BOM and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson()
+    mockS3GetResponse("sample-no-bom.csv")
+    checkFileError("json/no-bom-error.json")
+  }
+
+  "handleRequest" should "download the a draft metadata csv file with no key value column try and load and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson()
+    mockS3GetResponse("sample-no-match-column.csv")
+    checkFileError("json/no-match-col-error.json")
+  }
+
+  private def checkFileError(errorFile: String) = {
     mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava
     val response = new Lambda().handleRequest(input, mockContext)
@@ -96,7 +114,7 @@ class LambdaSpec extends ExternalServicesSpec {
     val errorFileData = errorWriteRequest.getRequest.getBodyAsString
 
     val today = dateFormat.format(new Date)
-    val expectedErrorData: String = Source.fromResource("json/error-file.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
+    val expectedErrorData: String = Source.fromResource(errorFile).getLines.mkString(System.lineSeparator()).replace("$today", today)
     errorFileData shouldBe expectedErrorData
 
     val updateConsignmentStatusEvent = getServeEvent("updateConsignmentStatus").get
