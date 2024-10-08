@@ -135,7 +135,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       inputStream <- IO(new FileInputStream(filePath))
       _ <- checkBOM(inputStream)
     } yield ()
-
   }
 
   private def extractConsignmentId(input: util.Map[String, Object]): String = {

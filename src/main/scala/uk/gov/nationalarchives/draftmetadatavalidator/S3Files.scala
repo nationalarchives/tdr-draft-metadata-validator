@@ -16,11 +16,9 @@ class S3Files(s3Utils: S3Utils)(implicit val logger: SelfAwareStructuredLogger[I
   def key(validationParameters: ValidationParameters) = s"${validationParameters.consignmentId}/$fileName"
 
   def downloadFile(bucket: String, validationParameters: ValidationParameters): IO[Any] = {
-
     cleanup(getFolderPath(validationParameters))
     val filePath = getFilePath(validationParameters)
     if (new File(filePath).exists()) {
-      logger.info("")
       IO.unit
     } else {
       IO(new File(filePath.split("/").dropRight(1).mkString("/")).mkdirs()).flatMap(_ => {
