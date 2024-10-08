@@ -1,6 +1,7 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
+import cats.effect.kernel.Resource
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
@@ -112,21 +113,21 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
     def utf8FileErrorData = {
       val messageKey = "FILE_CHECK.UTF.INVALID"
-      val message = if (messageProperties.containsKey(messageKey)) messageProperties.getProperty(messageKey) else messageKey
+      val message = messageProperties.getProperty(messageKey, messageKey)
       val singleError = Error("FILE_CHECK", validationParameters.consignmentId.toString, "UTF8", message)
       val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
       ErrorFileData(validationParameters, FileError.UTF_8, List(validationErrors))
     }
 
     def checkBOM(inputStream: FileInputStream) = {
-      val bytesArray = new Array[Byte](3)
-      inputStream.read(bytesArray)
-      inputStream.close()
-      val bom = "EFBBBF".sliding(2, 2).map(Integer.parseInt(_, 16).toByte).toArray
-      if (bom sameElements bytesArray)
-        IO.unit
-      else {
-        IO.raiseError(ValidationExecutionError(utf8FileErrorData, List.empty[FileRow]))
+      val utf8BOM = Array(0xef.toByte, 0xbb.toByte, 0xbf.toByte)
+      Resource.fromAutoCloseable(IO(inputStream)).use { stream =>
+        val bytesArray = new Array[Byte](3)
+        stream.read(bytesArray)
+        if (bytesArray sameElements utf8BOM) {
+          IO.unit
+        } else
+          IO.raiseError(ValidationExecutionError(utf8FileErrorData, List.empty[FileRow]))
       }
     }
 
@@ -187,7 +188,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
     def invalidCSVFileErrorData = {
       val messageKey = "FILE_CHECK.CSV.INVALID"
-      val message = if (messageProperties.containsKey(messageKey)) messageProperties.getProperty(messageKey) else messageKey
+      val message = messageProperties.getProperty(messageKey, messageKey)
       val singleError = Error("FILE_CHECK", validationParameters.consignmentId.toString, "LOAD", message)
       val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
       ErrorFileData(validationParameters, FileError.INVALID_CSV, List(validationErrors))
