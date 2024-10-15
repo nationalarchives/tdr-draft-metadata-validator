@@ -34,7 +34,7 @@
           "validationProcess" : "SCHEMA_BASE",
           "property" : "Date last modified",
           "errorKey" : "format.date",
-          "message" : "SCHEMA_BASE.date_last_modified.format.date"
+          "message" : "We are unable to recognise this as a valid date format, please provide a date in the format yyyy-mm-dd"
         }
       ],
       "data" : [
