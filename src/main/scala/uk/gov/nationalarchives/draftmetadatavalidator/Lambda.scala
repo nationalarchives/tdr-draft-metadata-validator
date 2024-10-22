@@ -27,7 +27,7 @@ import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.convertToAlternateKey
 import uk.gov.nationalarchives.tdr.validation.FileRow
-import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN}
+import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, REQUIRED_SCHEMA}
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
 
 import java.io.FileInputStream
@@ -85,7 +85,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       _ <- s3Files.downloadFile(bucket, validationParameters)
       _ <- validUTF8(validationParameters)
       csvData <- loadCSV(validationParameters)
-      _ <- validateRequired(csvData, validationParameters)
+      _ <- validateRequired(csvData, validationParameters.copy(schemaToValidate = Set(REQUIRED_SCHEMA)))
       _ <- validateMetadata(validationParameters, csvData)
     } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
 
@@ -98,14 +98,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
         val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
         ErrorFileData(validationParameters, FileError.UNKNOWN, List(validationErrors))
     })
-  }
-
-  // use a required schema, pass one row of data that will return missing required fields, change row identifier
-  // to consignmentID. Can then use to help populate required on UI
-  // just hack code
-  private def validateRequired(csvData: List[FileRow], validationParameters: ValidationParameters): IO[Unit] = {
-    // TODO: To be implemented TDRD-62
-    IO.unit
   }
 
   private def validUTF8(validationParameters: ValidationParameters): IO[Unit] = {
@@ -146,8 +138,26 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     inputParameters.get("consignmentId").toString
   }
 
+  private def validateRequired(csvData: List[FileRow], validationParameters: ValidationParameters): IO[Unit] = {
+    val validationErrors = schemaValidate(validationParameters, List(csvData.head))
+    if (validationErrors.nonEmpty) {
+      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_REQUIRED, validationErrors.toList), csvData))
+    } else {
+      IO.unit
+    }
+  }
+
   private def validateMetadata(validationParameters: ValidationParameters, csvData: List[FileRow]): IO[ErrorFileData] = {
-    val validationErrors = MetadataValidationJsonSchema
+    val validationErrors = schemaValidate(validationParameters, csvData)
+    if (validationErrors.nonEmpty) {
+      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, validationErrors), csvData))
+    } else {
+      IO(ErrorFileData(validationParameters))
+    }
+  }
+
+  private def schemaValidate(validationParameters: ValidationParameters, csvData: List[FileRow]) = {
+    MetadataValidationJsonSchema
       .validate(validationParameters.schemaToValidate, csvData)
       .collect {
         case result if result._2.nonEmpty =>
@@ -168,12 +178,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
           ValidationErrors(result._1, errors.toSet, data)
       }
       .toList
-
-    if (validationErrors.nonEmpty) {
-      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, validationErrors), csvData))
-    } else {
-      IO(ErrorFileData(validationParameters))
-    }
   }
 
   private def getMessageProperties: Properties = {
