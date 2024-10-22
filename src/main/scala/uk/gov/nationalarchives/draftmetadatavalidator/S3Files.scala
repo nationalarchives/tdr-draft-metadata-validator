@@ -5,7 +5,7 @@ import cats.implicits.catsSyntaxOptionId
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig.fileName
-import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{DraftMetadata, getFilePath, getFolderPath}
+import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{ValidationParameters, getFilePath, getFolderPath}
 
 import java.io.File
 import java.nio.file.Paths
@@ -13,18 +13,16 @@ import scala.reflect.io.Directory
 
 class S3Files(s3Utils: S3Utils)(implicit val logger: SelfAwareStructuredLogger[IO]) {
 
-  def key(draftMetadata: DraftMetadata) = s"${draftMetadata.consignmentId}/$fileName"
+  def key(validationParameters: ValidationParameters) = s"${validationParameters.consignmentId}/$fileName"
 
-  def downloadFile(bucket: String, draftMetadata: DraftMetadata): IO[Any] = {
-
-    cleanup(getFolderPath(draftMetadata))
-    val filePath = getFilePath(draftMetadata)
+  def downloadFile(bucket: String, validationParameters: ValidationParameters): IO[Any] = {
+    cleanup(getFolderPath(validationParameters))
+    val filePath = getFilePath(validationParameters)
     if (new File(filePath).exists()) {
-      logger.info("")
       IO.unit
     } else {
       IO(new File(filePath.split("/").dropRight(1).mkString("/")).mkdirs()).flatMap(_ => {
-        s3Utils.downloadFiles(bucket, key(draftMetadata), Paths.get(filePath).some)
+        s3Utils.downloadFiles(bucket, key(validationParameters), Paths.get(filePath).some)
       })
     }
   }
