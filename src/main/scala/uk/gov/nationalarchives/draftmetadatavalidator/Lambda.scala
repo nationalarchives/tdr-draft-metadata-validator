@@ -55,7 +55,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
     val consignmentId = extractConsignmentId(input)
     val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN)
-    val validationParameters: ValidationParameters = ValidationParameters(UUID.fromString(consignmentId), schemaToValidate, "UUID", "tdrFileHeader")
+    val validationParameters: ValidationParameters = ValidationParameters(UUID.fromString(consignmentId), schemaToValidate, "UUID", "tdrFileHeader", Some(REQUIRED_SCHEMA))
 
     val requestHandler: IO[APIGatewayProxyResponseEvent] = for {
       errorFileData <- doValidation(validationParameters)
@@ -85,7 +85,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       _ <- s3Files.downloadFile(bucket, validationParameters)
       _ <- validUTF8(validationParameters)
       csvData <- loadCSV(validationParameters)
-      _ <- validateRequired(csvData, validationParameters.copy(schemaToValidate = Set(REQUIRED_SCHEMA)))
+      _ <- validateRequired(csvData, validationParameters)
       _ <- validateMetadata(validationParameters, csvData)
     } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
 
@@ -139,16 +139,20 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   }
 
   private def validateRequired(csvData: List[FileRow], validationParameters: ValidationParameters): IO[Unit] = {
-    val validationErrors = schemaValidate(validationParameters, List(csvData.head))
-    if (validationErrors.nonEmpty) {
-      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_REQUIRED, validationErrors.toList), csvData))
-    } else {
-      IO.unit
+    validationParameters.requiredSchema match {
+      case None => IO.unit
+      case Some(schema) =>
+        val validationErrors = schemaValidate(Set(schema), List(csvData.head), validationParameters.alternateKey)
+        if (validationErrors.nonEmpty) {
+          IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_REQUIRED, validationErrors.toList), csvData))
+        } else {
+          IO.unit
+        }
     }
   }
 
   private def validateMetadata(validationParameters: ValidationParameters, csvData: List[FileRow]): IO[ErrorFileData] = {
-    val validationErrors = schemaValidate(validationParameters, csvData)
+    val validationErrors = schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters.alternateKey)
     if (validationErrors.nonEmpty) {
       IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, validationErrors), csvData))
     } else {
@@ -156,16 +160,16 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
   }
 
-  private def schemaValidate(validationParameters: ValidationParameters, csvData: List[FileRow]) = {
+  private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], alternateKey: String) = {
     MetadataValidationJsonSchema
-      .validate(validationParameters.schemaToValidate, csvData)
+      .validate(schema, csvData)
       .collect {
         case result if result._2.nonEmpty =>
           val errors = result._2.map(error => {
             val errorKey = s"${error.validationProcess}.${error.property}.${error.errorKey}"
             Error(
               error.validationProcess.toString,
-              convertToAlternateKey(validationParameters.alternateKey, error.property) match {
+              convertToAlternateKey(alternateKey, error.property) match {
                 case ""           => error.property
                 case alternateKey => alternateKey
               },
@@ -274,7 +278,13 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 object Lambda {
 
   case class ValidationExecutionError(errorFileData: ErrorFileData, csvData: List[FileRow]) extends Throwable
-  case class ValidationParameters(consignmentId: UUID, schemaToValidate: Set[JsonSchemaDefinition], uniqueAssetIDKey: String, alternateKey: String)
+  case class ValidationParameters(
+      consignmentId: UUID,
+      schemaToValidate: Set[JsonSchemaDefinition],
+      uniqueAssetIDKey: String,
+      alternateKey: String,
+      requiredSchema: Option[JsonSchemaDefinition] = None
+  )
   def getFilePath(draftMetadata: ValidationParameters) = s"""$rootDirectory/${draftMetadata.consignmentId}/$fileName"""
   def getErrorFilePath(draftMetadata: ValidationParameters) = s"""$rootDirectory/${draftMetadata.consignmentId}/$errorFileName"""
   def getFolderPath(draftMetadata: ValidationParameters) = s"""$rootDirectory/${draftMetadata.consignmentId}"""
