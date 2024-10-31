@@ -5,7 +5,6 @@ import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.io.ByteArrayOutputStream
 import java.nio.file.{Files, Paths}
-import scala.io.Source
 
 class CSVHandler {
 
@@ -40,12 +39,6 @@ class CSVHandler {
 
   def loadHeaders(filePath: String): Option[List[String]] = {
     CSVReader.open(filePath).readNext()
-//    val source = Source.fromFile(filePath)
-//    try {
-//      source.getLines.find(_ => true)
-//    } finally {
-//      source.close()
-//    }
   }
 
   def writeCsv(rows: List[List[String]], filePath: String): Unit = {
