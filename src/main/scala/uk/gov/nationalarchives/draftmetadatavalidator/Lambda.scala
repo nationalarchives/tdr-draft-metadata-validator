@@ -84,6 +84,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val validationProgram = for {
       _ <- s3Files.downloadFile(bucket, validationParameters)
       _ <- validUTF8(validationParameters)
+      _ <- validateDuplicateHeaders(validationParameters)
       csvData <- loadCSV(validationParameters)
       _ <- validateRequired(csvData, validationParameters)
       _ <- validateMetadata(validationParameters, csvData)
@@ -149,6 +150,23 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
           IO.unit
         }
     }
+  }
+
+  private def validateDuplicateHeaders(validationParameters: ValidationParameters): IO[Unit] = {
+    val filePath = getFilePath(validationParameters)
+    val headersString = new CSVHandler().loadHeaders(filePath).getOrElse("") // .patch(0, ",", 0) //without prepended ',' on split first header won't match duplicates
+    val headers = headersString.split(",").toList
+    if (headers.size > headers.toSet.size) {
+      val duplicateHeaders = headers.groupBy(identity).collect { case (x, ys) if ys.lengthCompare(1) > 0 => x }
+      val errors = duplicateHeaders
+        .map(h => {
+          val duplicateFileError = FileError.DUPLICATE_HEADER.toString
+          Error(duplicateFileError, h, "duplicate", s"$duplicateFileError.$h.duplicate")
+        })
+        .toSet
+      val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, errors)
+      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.DUPLICATE_HEADER, List(validationErrors)), List.empty[FileRow]))
+    } else { IO.unit }
   }
 
   private def validateMetadata(validationParameters: ValidationParameters, csvData: List[FileRow]): IO[ErrorFileData] = {

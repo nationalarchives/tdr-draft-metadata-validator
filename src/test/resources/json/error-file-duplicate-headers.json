@@ -1,0 +1,32 @@
+{
+  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+  "date" : "$today",
+  "fileError" : "DUPLICATE_HEADER",
+  "validationErrors" : [
+    {
+      "assetId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+      "errors" : [
+        {
+          "validationProcess" : "DUPLICATE_HEADER",
+          "property" : "UUID",
+          "errorKey" : "duplicate",
+          "message" : "DUPLICATE_HEADER.UUID.duplicate"
+        },
+        {
+          "validationProcess" : "DUPLICATE_HEADER",
+          "property" : "Filename",
+          "errorKey" : "duplicate",
+          "message" : "DUPLICATE_HEADER.Filename.duplicate"
+        },
+        {
+          "validationProcess" : "DUPLICATE_HEADER",
+          "property" : "Filepath",
+          "errorKey" : "duplicate",
+          "message" : "DUPLICATE_HEADER.Filepath.duplicate"
+        }
+      ],
+      "data" : [
+      ]
+    }
+  ]
+}
