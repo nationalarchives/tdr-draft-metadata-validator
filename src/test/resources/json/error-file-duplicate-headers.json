@@ -16,13 +16,13 @@
           "validationProcess" : "DUPLICATE_HEADER",
           "property" : "Filename",
           "errorKey" : "duplicate",
-          "message" : "DUPLICATE_HEADER.Filename.duplicate"
+          "message" : "DUPLICATE_HEADER.file_name.duplicate"
         },
         {
           "validationProcess" : "DUPLICATE_HEADER",
           "property" : "Filepath",
           "errorKey" : "duplicate",
-          "message" : "DUPLICATE_HEADER.Filepath.duplicate"
+          "message" : "DUPLICATE_HEADER.file_path.duplicate"
         }
       ],
       "data" : [
