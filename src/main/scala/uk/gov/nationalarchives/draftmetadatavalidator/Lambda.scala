@@ -81,11 +81,12 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
   private def doValidation(validationParameters: ValidationParameters): IO[ErrorFileData] = {
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
+    val csvHandler = new CSVHandler()
     val validationProgram = for {
       _ <- s3Files.downloadFile(bucket, validationParameters)
       _ <- validUTF8(validationParameters)
-      _ <- validateDuplicateHeaders(validationParameters)
-      csvData <- loadCSV(validationParameters)
+      _ <- validateDuplicateHeaders(validationParameters, csvHandler)
+      csvData <- loadCSV(validationParameters, csvHandler)
       _ <- validateRequired(csvData, validationParameters)
       _ <- validateMetadata(validationParameters, csvData)
     } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
@@ -152,10 +153,9 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
   }
 
-  private def validateDuplicateHeaders(validationParameters: ValidationParameters): IO[Unit] = {
+  private def validateDuplicateHeaders(validationParameters: ValidationParameters, csvHandler: CSVHandler): IO[Unit] = {
     val filePath = getFilePath(validationParameters)
-    val headersString = new CSVHandler().loadHeaders(filePath).getOrElse("") // .patch(0, ",", 0) //without prepended ',' on split first header won't match duplicates
-    val headers = headersString.split(",").toList
+    val headers = csvHandler.loadHeaders(filePath).getOrElse(Nil)
     if (headers.size > headers.toSet.size) {
       val duplicateHeaders = headers.groupBy(identity).collect { case (x, ys) if ys.lengthCompare(1) > 0 => x }
       val errors = duplicateHeaders
@@ -209,7 +209,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     properties
   }
 
-  private def loadCSV(validationParameters: ValidationParameters): IO[List[FileRow]] = {
+  private def loadCSV(validationParameters: ValidationParameters, csvHandler: CSVHandler): IO[List[FileRow]] = {
 
     def invalidCSVFileErrorData = {
       val messageKey = "FILE_CHECK.CSV.INVALID"
@@ -219,7 +219,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       ErrorFileData(validationParameters, FileError.INVALID_CSV, List(validationErrors))
     }
 
-    val csvHandler = new CSVHandler()
     val filePath = getFilePath(validationParameters)
     IO(csvHandler.loadCSV(filePath, validationParameters.uniqueAssetIDKey)).handleErrorWith(err => {
       logger.error(s"Metadata Validation failed to load csv :${err.getMessage}")

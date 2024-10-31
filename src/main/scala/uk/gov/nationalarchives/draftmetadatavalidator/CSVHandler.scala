@@ -38,13 +38,14 @@ class CSVHandler {
     fileRows.toList
   }
 
-  def loadHeaders(filePath: String): Option[String] = {
-    val source = Source.fromFile(filePath)
-    try {
-      source.getLines.find(_ => true)
-    } finally {
-      source.close()
-    }
+  def loadHeaders(filePath: String): Option[List[String]] = {
+    CSVReader.open(filePath).readNext()
+//    val source = Source.fromFile(filePath)
+//    try {
+//      source.getLines.find(_ => true)
+//    } finally {
+//      source.close()
+//    }
   }
 
   def writeCsv(rows: List[List[String]], filePath: String): Unit = {
