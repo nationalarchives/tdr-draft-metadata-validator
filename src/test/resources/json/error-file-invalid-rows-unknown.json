@@ -1,0 +1,24 @@
+{
+  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+  "date" : "$today",
+  "fileError" : "VALIDATE_ROW",
+  "validationErrors" : [
+    {
+      "assetId" : "9d7fbffc-4012-40a8-89bf-314eabab78a8",
+      "errors" : [
+        {
+          "validationProcess" : "VALIDATE_ROW",
+          "property" : "",
+          "errorKey" : "unknown",
+          "message" : "VALIDATE_ROW.unknown"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "Filepath",
+          "value" : "test/unknown.txt"
+        }
+      ]
+    }
+  ]
+}
