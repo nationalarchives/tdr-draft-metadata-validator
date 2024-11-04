@@ -25,7 +25,7 @@ import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{ValidationExecutio
 import uk.gov.nationalarchives.draftmetadatavalidator.utils.MetadataUtils
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
-import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.convertToAlternateKey
+import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.{convertToAlternateKey, convertToValidationKey}
 import uk.gov.nationalarchives.tdr.validation.FileRow
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, REQUIRED_SCHEMA}
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
@@ -81,10 +81,12 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
   private def doValidation(validationParameters: ValidationParameters): IO[ErrorFileData] = {
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
+    val csvHandler = new CSVHandler()
     val validationProgram = for {
       _ <- s3Files.downloadFile(bucket, validationParameters)
       _ <- validUTF8(validationParameters)
-      csvData <- loadCSV(validationParameters)
+      _ <- validateDuplicateHeaders(validationParameters, csvHandler)
+      csvData <- loadCSV(validationParameters, csvHandler)
       _ <- validateRequired(csvData, validationParameters)
       _ <- validateMetadata(validationParameters, csvData)
     } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
@@ -151,6 +153,24 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
   }
 
+  private def validateDuplicateHeaders(validationParameters: ValidationParameters, csvHandler: CSVHandler): IO[Unit] = {
+    def duplicateError(header: String): Error = {
+      val errorKey = convertToValidationKey("tdrFileHeader", header)
+      val duplicateFileError = FileError.DUPLICATE_HEADER.toString
+      Error(duplicateFileError, header, "duplicate", s"$duplicateFileError.$errorKey.duplicate")
+    }
+
+    val filePath = getFilePath(validationParameters)
+    val headers = csvHandler.loadHeaders(filePath).getOrElse(Nil)
+    if (headers.size > headers.toSet.size) {
+      val duplicateHeaders = headers.groupBy(identity).collect {
+        case (identifier, values) if values.size > 1 => identifier
+      }
+      val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, duplicateHeaders.map(duplicateError).toSet)
+      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.DUPLICATE_HEADER, List(validationErrors)), List.empty[FileRow]))
+    } else { IO.unit }
+  }
+
   private def validateMetadata(validationParameters: ValidationParameters, csvData: List[FileRow]): IO[ErrorFileData] = {
     val validationErrors = schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters.alternateKey)
     if (validationErrors.nonEmpty) {
@@ -191,7 +211,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     properties
   }
 
-  private def loadCSV(validationParameters: ValidationParameters): IO[List[FileRow]] = {
+  private def loadCSV(validationParameters: ValidationParameters, csvHandler: CSVHandler): IO[List[FileRow]] = {
 
     def invalidCSVFileErrorData = {
       val messageKey = "FILE_CHECK.CSV.INVALID"
@@ -201,7 +221,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       ErrorFileData(validationParameters, FileError.INVALID_CSV, List(validationErrors))
     }
 
-    val csvHandler = new CSVHandler()
     val filePath = getFilePath(validationParameters)
     IO(csvHandler.loadCSV(filePath, validationParameters.uniqueAssetIDKey)).handleErrorWith(err => {
       logger.error(s"Metadata Validation failed to load csv :${err.getMessage}")

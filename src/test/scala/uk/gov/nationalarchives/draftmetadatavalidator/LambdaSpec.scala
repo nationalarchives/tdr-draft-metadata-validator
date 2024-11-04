@@ -80,6 +80,13 @@ class LambdaSpec extends ExternalServicesSpec {
     updateConsignmentStatusInput.statusValue must be(Some("Completed"))
   }
 
+  "handleRequest" should "download the draft metadata csv file, check for duplicate columns and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson()
+    mockS3GetResponse("sample-duplicate-headers.csv")
+    checkFileError("json/error-file-duplicate-headers.json")
+  }
+
   "handleRequest" should "download the draft metadata csv file, validate the required and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson()
