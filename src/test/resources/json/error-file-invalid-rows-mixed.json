@@ -1,57 +1,45 @@
 {
   "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
   "date" : "$today",
-  "fileError" : "SCHEMA_REQUIRED",
+  "fileError" : "INVALID_ROW",
   "validationErrors" : [
     {
-      "assetId" : "9d7fbffc-4012-40a8-89bf-314eabab78a8",
+      "assetId" : "c4d5e0f1-f6e1-4a77-a7c0-a4317404da00",
       "errors" : [
         {
-          "validationProcess" : "VALIDATE_ROW",
+          "validationProcess" : "INVALID_ROW",
           "property" : "",
-          "errorKey" : "unknown",
-          "message" : "VALIDATE_ROW.unknown"
+          "errorKey" : "missing",
+          "message" : "INVALID_ROW.missing"
         }
       ],
       "data" : [
-        {
-          "name" : "Filepath",
-          "value" : "test/unknown.txt"
-        }
       ]
     },
     {
       "assetId" : "a060c57d-1639-4828-9a7a-67a7c64dbf6c",
       "errors" : [
         {
-          "validationProcess" : "VALIDATE_ROW",
+          "validationProcess" : "INVALID_ROW",
           "property" : "",
           "errorKey" : "duplicate",
-          "message" : "VALIDATE_ROW.duplicate"
+          "message" : "INVALID_ROW.duplicate"
         }
       ],
       "data" : [
-        {
-          "name" : "Filepath",
-          "value" : "test/test3.txt"
-        }
       ]
     },
     {
-      "assetId" : "c4d5e0f1-f6e1-4a77-a7c0-a4317404da00",
+      "assetId" : "9d7fbffc-4012-40a8-89bf-314eabab78a8",
       "errors" : [
         {
-          "validationProcess" : "VALIDATE_ROW",
+          "validationProcess" : "INVALID_ROW",
           "property" : "",
-          "errorKey" : "missing",
-          "message" : "VALIDATE_ROW.missing"
+          "errorKey" : "unknown",
+          "message" : "INVALID_ROW.unknown"
         }
       ],
       "data" : [
-        {
-          "name" : "Filepath",
-          "value" : "test/test2.txt"
-        }
       ]
     }
   ]

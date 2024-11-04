@@ -101,6 +101,41 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/no-match-col-error.json")
   }
 
+  "handleRequest" should "download the a draft metadata csv file with duplicate file row errors, validate it and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson()
+    mockS3GetResponse("sample-invalid-rows-duplicate.csv")
+    checkFileError("json/error-file-invalid-rows-duplicate.json")
+  }
+
+  "handleRequest" should "download the a draft metadata csv file with missing file row errors, validate it and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson()
+    mockS3GetResponse("sample-invalid-rows-missing.csv")
+    checkFileError("json/error-file-invalid-rows-missing.json")
+  }
+
+  "handleRequest" should "download the a draft metadata csv file with unknown file row errors, validate it and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson()
+    mockS3GetResponse("sample-invalid-rows-unknown.csv")
+    checkFileError("json/error-file-invalid-rows-unknown.json")
+  }
+
+  "handleRequest" should "download the a draft metadata csv file with duplicate unknown file row errors, validate it and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson()
+    mockS3GetResponse("sample-invalid-rows-duplicate-unknown.csv")
+    checkFileError("json/error-file-invalid-rows-duplicate-unknown.json")
+  }
+
+  "handleRequest" should "download the a draft metadata csv file with different file row errors, validate it and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson()
+    mockS3GetResponse("sample-invalid-rows-mixed.csv")
+    checkFileError("json/error-file-invalid-rows-mixed.json")
+  }
+
   private def checkFileError(errorFile: String) = {
     mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava

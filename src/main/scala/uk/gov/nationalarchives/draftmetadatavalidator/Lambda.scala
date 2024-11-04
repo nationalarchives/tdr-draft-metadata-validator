@@ -85,6 +85,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       _ <- s3Files.downloadFile(bucket, validationParameters)
       _ <- validUTF8(validationParameters)
       csvData <- loadCSV(validationParameters)
+      _ <- if (validationParameters.validateRows) validateRows(validationParameters, csvData) else IO.unit
       _ <- validateRequired(csvData, validationParameters)
       _ <- validateMetadata(validationParameters, csvData)
     } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
@@ -148,6 +149,14 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
         } else {
           IO.unit
         }
+    }
+  }
+
+  private def validateRows(validationParameters: ValidationParameters, csvData: List[FileRow]): IO[Unit] = {
+    //TO DO: Retrieve persisted metadata
+    FileRowsValidator.validateRows(csvData = csvData.map(_.matchIdentifier)) match {
+      case errors if errors.nonEmpty => IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.INVALID_ROW, errors), csvData))
+      case _                         => IO.unit
     }
   }
 
@@ -283,7 +292,8 @@ object Lambda {
       schemaToValidate: Set[JsonSchemaDefinition],
       uniqueAssetIDKey: String,
       alternateKey: String,
-      requiredSchema: Option[JsonSchemaDefinition] = None
+      requiredSchema: Option[JsonSchemaDefinition] = None,
+      validateRows: Boolean = true
   )
   def getFilePath(draftMetadata: ValidationParameters) = s"""$rootDirectory/${draftMetadata.consignmentId}/$fileName"""
   def getErrorFilePath(draftMetadata: ValidationParameters) = s"""$rootDirectory/${draftMetadata.consignmentId}/$errorFileName"""
