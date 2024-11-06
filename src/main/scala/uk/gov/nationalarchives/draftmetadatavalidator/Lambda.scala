@@ -85,8 +85,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       _ <- s3Files.downloadFile(bucket, validationParameters)
       _ <- validUTF8(validationParameters)
       csvData <- loadCSV(validationParameters)
-      _ <- if (validationParameters.validateRows) validateRows(validationParameters, csvData) else IO.unit
       _ <- validateRequired(csvData, validationParameters)
+      _ <- validateDuplicateRows(validationParameters, csvData)
       _ <- validateMetadata(validationParameters, csvData)
     } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
 
@@ -152,24 +152,44 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
   }
 
-  private def validateRows(validationParameters: ValidationParameters, csvData: List[FileRow]): IO[Unit] = {
-    //TO DO: Retrieve persisted metadata
-    FileRowsValidator.validateRows(csvData = csvData.map(_.matchIdentifier)) match {
-      case errors if errors.nonEmpty => IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.INVALID_ROW, errors), csvData))
+  private def validateDuplicateRows(validationParameters: ValidationParameters, csvData: List[FileRow]): IO[Unit] = {
+    FileRowsValidator.validateDuplicateRows(csvData.map(_.matchIdentifier), messageProperties = messageProperties) match {
+      case errors if errors.nonEmpty => IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, errors), csvData))
       case _                         => IO.unit
     }
   }
 
+  private def validateRowsProgram(csvData: List[FileRow]): Map[String, Seq[Error]] = {
+    // TODO: Retrieve persisted metadata for consignment
+    val csvMatchIdentifiers = csvData.map(_.matchIdentifier) // Will be file path
+    val missingRowErrors =
+      FileRowsValidator.validateMissingRows(csvMatchIdentifiers = csvMatchIdentifiers, messageProperties = messageProperties)
+    val unknownRowErrors =
+      FileRowsValidator.validateUnknownRows(csvMatchIdentifiers = csvMatchIdentifiers, messageProperties = messageProperties)
+
+    (missingRowErrors ++ unknownRowErrors).groupBy(_._1).map { case (k, v) => (k, v.map(_._2)) }
+  }
+
   private def validateMetadata(validationParameters: ValidationParameters, csvData: List[FileRow]): IO[ErrorFileData] = {
     val validationErrors = schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters.alternateKey)
-    if (validationErrors.nonEmpty) {
-      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, validationErrors), csvData))
+    val rowValidationErrors = if (validationParameters.validateRows) validateRowsProgram(csvData) else Nil
+    val combinedValidationErrors = rowValidationErrors
+      .map(rve => {
+        val matchIdentifier = rve._1
+        validationErrors.find(_.assetId == matchIdentifier) match {
+          case Some(v) => v.copy(errors = v.errors ++ rve._2)
+          case None    => ValidationErrors(matchIdentifier, rve._2.toSet) // TODO Add the data to the ValidationErrors object
+        }
+      })
+      .toList
+    if (combinedValidationErrors.nonEmpty) {
+      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, combinedValidationErrors), csvData))
     } else {
       IO(ErrorFileData(validationParameters))
     }
   }
 
-  private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], alternateKey: String) = {
+  private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], alternateKey: String): List[ValidationErrors] = {
     MetadataValidationJsonSchema
       .validate(schema, csvData)
       .collect {

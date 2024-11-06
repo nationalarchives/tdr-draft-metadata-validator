@@ -1,16 +1,16 @@
 {
   "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
   "date" : "$today",
-  "fileError" : "INVALID_ROW",
+  "fileError" : "SCHEMA_VALIDATION",
   "validationErrors" : [
     {
       "assetId" : "9d7fbffc-4012-40a8-89bf-314eabab78a8",
       "errors" : [
         {
-          "validationProcess" : "INVALID_ROW",
+          "validationProcess" : "ROW_VALIDATION",
           "property" : "",
-          "errorKey" : "unknown",
-          "message" : "INVALID_ROW.unknown"
+          "errorKey" : "duplicate",
+          "message" : "ROW_VALIDATION.duplicate"
         }
       ],
       "data" : [

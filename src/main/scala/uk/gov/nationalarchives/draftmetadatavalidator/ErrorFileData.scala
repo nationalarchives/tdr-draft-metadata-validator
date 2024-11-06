@@ -9,7 +9,7 @@ import java.util.{Date, UUID}
 
 object FileError extends Enumeration {
   type FileError = Value
-  val UTF_8, INVALID_CSV, INVALID_ROW, SCHEMA_REQUIRED, SCHEMA_VALIDATION, UNKNOWN, None = Value
+  val UTF_8, INVALID_CSV, ROW_VALIDATION, SCHEMA_REQUIRED, SCHEMA_VALIDATION, UNKNOWN, None = Value
 }
 
 case class Error(validationProcess: String, property: String, errorKey: String, message: String)

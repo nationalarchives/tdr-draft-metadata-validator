@@ -80,7 +80,7 @@ class LambdaSpec extends ExternalServicesSpec {
     updateConsignmentStatusInput.statusValue must be(Some("Completed"))
   }
 
-  "handleRequest" should "download the draft metadata csv file, validate the required and save error file with errors to s3" in {
+  "handleRequest" should "download the draft metadata csv file, validate required columns and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson()
     mockS3GetResponse("sample-missing-required-column.csv")
@@ -108,6 +108,13 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/error-file-invalid-rows-duplicate.json")
   }
 
+  "handleRequest" should "download the a draft metadata csv file with validation errors and duplicate file row, validate it and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson()
+    mockS3GetResponse("sample-validation-error-invalid-rows-duplicate.csv")
+    checkFileError("json/error-file-validation-error-invalid-rows-duplicate.json")
+  }
+
   "handleRequest" should "download the a draft metadata csv file with missing file row errors, validate it and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson()
@@ -129,11 +136,11 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/error-file-invalid-rows-duplicate-unknown.json")
   }
 
-  "handleRequest" should "download the a draft metadata csv file with different file row errors, validate it and save error file with errors to s3" in {
+  "handleRequest" should "download the a draft metadata csv file validation and file row errors, validate it and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson()
-    mockS3GetResponse("sample-invalid-rows-mixed.csv")
-    checkFileError("json/error-file-invalid-rows-mixed.json")
+    mockS3GetResponse("sample-validation-errors-invalid-rows.csv")
+    checkFileError("json/error-file-validation-errors-invalid-rows.json")
   }
 
   private def checkFileError(errorFile: String) = {
