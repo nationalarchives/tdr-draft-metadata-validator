@@ -10,6 +10,7 @@ import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, AddOrUpdateFileMetadata, ConsignmentStatusInput}
 import sttp.client3._
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig.clientId
+import uk.gov.nationalarchives.draftmetadatavalidator.GraphQlApi.PersistedData
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 
@@ -26,12 +27,24 @@ class GraphQlApi(
     keycloakDeployment: TdrKeycloakDeployment,
     backend: SttpBackend[Identity, Any]
 ) {
+  // Temp data until retrieve data from DB
+  private val mockedPersistedData = Set(
+    PersistedData(UUID.fromString("cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c"), "test/test1.txt"),
+    PersistedData(UUID.fromString("c4d5e0f1-f6e1-4a77-a7c0-a4317404da00"), "test/test2.txt"),
+    PersistedData(UUID.fromString("a060c57d-1639-4828-9a7a-67a7c64dbf6c"), "test/test3.txt")
+  )
 
   def getCustomMetadata(consignmentId: UUID, clientSecret: String)(implicit executionContext: ExecutionContext): IO[List[cm.CustomMetadata]] = for {
     token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
     metadata <- customMetadataClient.getResult(token, cm.document, cm.Variables(consignmentId).some).toIO
     data <- IO.fromOption(metadata.data)(new RuntimeException("No custom metadata definitions found"))
   } yield data.customMetadata
+
+  def getPersistedIdentifiers(consignmentId: UUID, clientSecret: String)(implicit executionContext: ExecutionContext): IO[List[PersistedData]] = for {
+    token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
+    data = mockedPersistedData
+    persistedData <- IO(mockedPersistedData.toList)
+  } yield persistedData
 
   def updateConsignmentStatus(consignmentId: UUID, clientSecret: String, statusType: String, statusValue: String)(implicit executionContext: ExecutionContext): IO[Option[Int]] =
     for {
@@ -55,6 +68,9 @@ class GraphQlApi(
 }
 
 object GraphQlApi {
+  // Temp case class until retrieve data from DB
+  case class PersistedData(fileId: UUID, filePath: String)
+
   def apply(
       keycloak: KeycloakUtils,
       customMetadataClient: GraphQLClient[cm.Data, cm.Variables],

@@ -10,10 +10,82 @@
           "validationProcess" : "ROW_VALIDATION",
           "property" : "",
           "errorKey" : "unknown",
-          "message" : "ROW_VALIDATION.unknown"
+          "message" : "This file was listed in your metadata file but does not match to one of your uploaded files"
         }
       ],
       "data" : [
+        {
+          "name" : "FOI decision asserted",
+          "value" : ""
+        },
+        {
+          "name" : "Translated title of record",
+          "value" : ""
+        },
+        {
+          "name" : "Add alternative title without the file extension",
+          "value" : ""
+        },
+        {
+          "name" : "Alternative description",
+          "value" : ""
+        },
+        {
+          "name" : "Closure status",
+          "value" : "Open"
+        },
+        {
+          "name" : "UUID",
+          "value" : "9d7fbffc-4012-40a8-89bf-314eabab78a8"
+        },
+        {
+          "name" : "Description",
+          "value" : "eee"
+        },
+        {
+          "name" : "FOI exemption code",
+          "value" : ""
+        },
+        {
+          "name" : "Closure Period",
+          "value" : ""
+        },
+        {
+          "name" : "Language",
+          "value" : "English"
+        },
+        {
+          "name" : "Filename",
+          "value" : "unknown.txt"
+        },
+        {
+          "name" : "Date of the record",
+          "value" : ""
+        },
+        {
+          "name" : "Closure Start Date",
+          "value" : ""
+        },
+        {
+          "name" : "Is the title sensitive for the public?",
+          "value" : ""
+        },
+        {
+          "name" : "Former reference",
+          "value" : ""
+        },
+        {
+          "name" : "Date last modified",
+          "value" : "2024-03-26"
+        },
+        {
+          "name" : "Filepath",
+          "value" : "test/unknown.txt"
+        },
+        {
+          "name" : "Is the description sensitive for the public?",
+          "value" : ""
+        }
       ]
     }
   ]

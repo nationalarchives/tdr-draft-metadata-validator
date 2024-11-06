@@ -10,7 +10,7 @@
           "validationProcess" : "ROW_VALIDATION",
           "property" : "",
           "errorKey" : "duplicate",
-          "message" : "ROW_VALIDATION.duplicate"
+          "message" : "This file appears more than once in your metadata file. There must be only one row in your metadata file for each file you uploaded"
         }
       ],
       "data" : [

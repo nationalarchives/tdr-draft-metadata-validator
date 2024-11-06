@@ -10,10 +10,14 @@
           "validationProcess" : "ROW_VALIDATION",
           "property" : "",
           "errorKey" : "missing",
-          "message" : "ROW_VALIDATION.missing"
+          "message" : "This file was uploaded but is missing from your metadata file"
         }
       ],
       "data" : [
+        {
+          "name" : "Filepath",
+          "value" : "test/test2.txt"
+        }
       ]
     }
   ]
