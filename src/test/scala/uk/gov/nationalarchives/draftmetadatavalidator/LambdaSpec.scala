@@ -146,9 +146,9 @@ class LambdaSpec extends ExternalServicesSpec {
           AddOrUpdateMetadata("ClosurePeriod", ""),
           AddOrUpdateMetadata("FoiExemptionCode", ""),
           AddOrUpdateMetadata("FoiExemptionAsserted", ""),
-          AddOrUpdateMetadata("TitleClosed", ""),
+          AddOrUpdateMetadata("TitleClosed", "false"),
           AddOrUpdateMetadata("TitleAlternate", ""),
-          AddOrUpdateMetadata("DescriptionClosed", ""),
+          AddOrUpdateMetadata("DescriptionClosed", "false"),
           AddOrUpdateMetadata("DescriptionAlternate", ""),
           AddOrUpdateMetadata("Language", "English"),
           AddOrUpdateMetadata("file_name_translation", "")
@@ -185,9 +185,9 @@ class LambdaSpec extends ExternalServicesSpec {
           AddOrUpdateMetadata("ClosurePeriod", ""),
           AddOrUpdateMetadata("FoiExemptionCode", ""),
           AddOrUpdateMetadata("FoiExemptionAsserted", ""),
-          AddOrUpdateMetadata("TitleClosed", ""),
+          AddOrUpdateMetadata("TitleClosed", "false"),
           AddOrUpdateMetadata("TitleAlternate", ""),
-          AddOrUpdateMetadata("DescriptionClosed", ""),
+          AddOrUpdateMetadata("DescriptionClosed", "false"),
           AddOrUpdateMetadata("DescriptionAlternate", ""),
           AddOrUpdateMetadata("Language", "English"),
           AddOrUpdateMetadata("file_name_translation", "")
