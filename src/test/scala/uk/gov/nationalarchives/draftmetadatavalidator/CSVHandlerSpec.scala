@@ -15,7 +15,7 @@ class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
 
   "loadCSV with path and metadata names" should "read the file and return FileData with all the rows" in {
     val csvHandler = new CSVHandler
-    val fileData = csvHandler.loadCSV(filePath, metadataNames)
+    val fileData = csvHandler.loadCSV(filePath, metadataNames, "Filepath")
 
     val expected = FileData(
       List(

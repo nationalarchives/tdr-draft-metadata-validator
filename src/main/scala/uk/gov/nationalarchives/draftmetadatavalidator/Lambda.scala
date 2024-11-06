@@ -55,7 +55,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
     val consignmentId = extractConsignmentId(input)
     val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN)
-    val validationParameters: ValidationParameters = ValidationParameters(UUID.fromString(consignmentId), schemaToValidate, "Filepath", "tdrFileHeader", Some(REQUIRED_SCHEMA))
+    val validationParameters: ValidationParameters = ValidationParameters(UUID.fromString(consignmentId), schemaToValidate, "tdrFileHeader", Some(REQUIRED_SCHEMA))
 
     val csvHandler = new CSVHandler()
     val requestHandler: IO[APIGatewayProxyResponseEvent] = for {
@@ -217,7 +217,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
               case _       => List(Metadata("Filepath", matchIdentifier))
             }
             ValidationErrors(assetId.toString, rve._2.toSet, data)
-          // TODO Add the data to the missing ValidationErrors object
         }
       })
       .toList
@@ -271,25 +270,25 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
 
     val filePath = getFilePath(validationParameters)
-    IO(csvHandler.loadCSV(filePath, validationParameters.uniqueAssetIDKey)).handleErrorWith(err => {
+    IO(csvHandler.loadCSV(filePath, validationParameters.uniqueRowKey)).handleErrorWith(err => {
       logger.error(s"Metadata Validation failed to load csv :${err.getMessage}")
       IO.raiseError(ValidationExecutionError(invalidCSVFileErrorData, List.empty[FileRow]))
     })
   }
 
-  private def updateStatus(errorFileData: ErrorFileData, draftMetadata: ValidationParameters): IO[Option[Int]] = {
+  private def updateStatus(errorFileData: ErrorFileData, validationParameters: ValidationParameters): IO[Option[Int]] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     val status = if (errorFileData.validationErrors.isEmpty) "Completed" else "CompletedWithIssues"
-    graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", status)
+    graphQlApi.updateConsignmentStatus(validationParameters.consignmentId, clientSecret, "DraftMetadata", status)
   }
 
-  private def persistMetadata(draftMetadata: ValidationParameters, csvHandler: CSVHandler): IO[List[AddOrUpdateBulkFileMetadata]] = {
+  private def persistMetadata(validationParameters: ValidationParameters, csvHandler: CSVHandler): IO[List[AddOrUpdateBulkFileMetadata]] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     for {
-      customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
-      fileData <- IO(csvHandler.loadCSV(getFilePath(draftMetadata), getMetadataNames))
+      customMetadata <- graphQlApi.getCustomMetadata(validationParameters.consignmentId, clientSecret)
+      fileData <- IO(csvHandler.loadCSV(getFilePath(validationParameters), getMetadataNames, validationParameters.uniqueRowKey))
       addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData)
-      result <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
+      result <- graphQlApi.addOrUpdateBulkFileMetadata(validationParameters.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
     } yield result
   }
 
@@ -335,8 +334,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       "DescriptionClosed",
       "DescriptionAlternate",
       "Language",
-      "file_name_translation",
-      "UUID"
+      "file_name_translation"
     )
     columnOrder
   }
@@ -348,10 +346,10 @@ object Lambda {
   case class ValidationParameters(
       consignmentId: UUID,
       schemaToValidate: Set[JsonSchemaDefinition],
-      uniqueAssetIDKey: String,
       alternateKey: String,
       requiredSchema: Option[JsonSchemaDefinition] = None,
-      validateRows: Boolean = true
+      validateRows: Boolean = true,
+      uniqueRowKey: String = "Filepath"
   )
   def getFilePath(draftMetadata: ValidationParameters) = s"""$rootDirectory/${draftMetadata.consignmentId}/$fileName"""
   def getErrorFilePath(draftMetadata: ValidationParameters) = s"""$rootDirectory/${draftMetadata.consignmentId}/$errorFileName"""

@@ -8,15 +8,15 @@ import java.nio.file.{Files, Paths}
 
 class CSVHandler {
 
-  def loadCSV(filePath: String, metadataNames: List[String], matchIdentifier: String = "Filepath"): FileData = {
+  def loadCSV(filePath: String, metadataNames: List[String], uniqueRowKey: String): FileData = {
     val reader = CSVReader.open(filePath)
     val allRowsWithHeader = reader.all()
-    val matchIdentifierIndex = allRowsWithHeader.head.indexOf(matchIdentifier)
+    val uniqueKeyIndex = allRowsWithHeader.head.indexOf(uniqueRowKey)
     val fileRows = allRowsWithHeader match {
       case _ :: rows =>
         rows.map { data =>
           FileRow(
-            data(matchIdentifierIndex),
+            data(uniqueKeyIndex),
             metadataNames.dropRight(1).zipWithIndex.map { case (name, index) => Metadata(name, data(index)) }
           )
         }
