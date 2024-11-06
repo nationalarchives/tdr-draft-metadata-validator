@@ -37,6 +37,10 @@ class CSVHandler {
     fileRows.toList
   }
 
+  def loadHeaders(filePath: String): Option[List[String]] = {
+    CSVReader.open(filePath).readNext()
+  }
+
   def writeCsv(rows: List[List[String]], filePath: String): Unit = {
     val bas = new ByteArrayOutputStream()
     val writer = CSVWriter.open(bas)
