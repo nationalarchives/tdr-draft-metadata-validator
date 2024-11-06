@@ -1,6 +1,6 @@
-﻿Filepath,Filename,Date last modified,Date of the record,Description,Former reference,Closure status,Closure Start Date,Closure Period,FOI exemption code,FOI decision asserted,Is the title sensitive for the public?,Add alternative title without the file extension,Is the description sensitive for the public?,Alternative description,Language,Translated title of record,UUID
-test/test3.txt,test3.txt,2024-03-26,,eee,,Open,,,,,,,,,English,,a060c57d-1639-4828-9a7a-67a7c64dbf6c
-test/test2.txt,test2.txt,2024-03-26,,www,,Open,,,,,,,,,English,,c4d5e0f1-f6e1-4a77-a7c0-a4317404da00
-test/test1.txt,test1.txt,2024-03-26,,hello,,Closed,1990-01-01,33,27(1)|27(2),1990-01-01,Yes,title,No,,English,,cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c
-test/test2.txt,test2.txt,2024-03-26,,www,,Open,,,,,,,,,English,,c4d5e0f1-f6e1-4a77-a7c0-a4317404da00
-test/test3.txt,test3.txt,2024-03-26,,eee,,Open,,,,,,,,,English,,a060c57d-1639-4828-9a7a-67a7c64dbf6c
+﻿Filepath,Filename,Date last modified,Date of the record,Description,Former reference,Closure status,Closure Start Date,Closure Period,FOI exemption code,FOI decision asserted,Is the title sensitive for the public?,Add alternative title without the file extension,Is the description sensitive for the public?,Alternative description,Language,Translated title of record
+test/test3.txt,test3.txt,2024-03-26,,eee,,Open,,,,,,,,,English,
+test/test2.txt,test2.txt,2024-03-26,,www,,Open,,,,,,,,,English,
+test/test1.txt,test1.txt,2024-03-26,,hello,,Closed,1990-01-01,33,27(1)|27(2),1990-01-01,Yes,title,No,,English,
+test/test2.txt,test2.txt,2024-03-26,,www,,Open,,,,,,,,,English,
+test/test3.txt,test3.txt,2024-03-26,,eee,,Open,,,,,,,,,English,

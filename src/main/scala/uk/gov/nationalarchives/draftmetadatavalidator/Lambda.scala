@@ -21,15 +21,14 @@ import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend}
 import uk.gov.nationalarchives.aws.utils.s3.S3Clients._
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
-import uk.gov.nationalarchives.draftmetadatavalidator.GraphQlApi.PersistedData
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{ValidationExecutionError, ValidationParameters, getErrorFilePath, getFilePath}
 import uk.gov.nationalarchives.draftmetadatavalidator.utils.MetadataUtils
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.{convertToAlternateKey, convertToValidationKey}
-import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, REQUIRED_SCHEMA}
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
+import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.io.FileInputStream
 import java.net.URI
@@ -56,7 +55,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
     val consignmentId = extractConsignmentId(input)
     val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN)
-    val validationParameters: ValidationParameters = ValidationParameters(UUID.fromString(consignmentId), schemaToValidate, "UUID", "tdrFileHeader", Some(REQUIRED_SCHEMA))
+    val validationParameters: ValidationParameters = ValidationParameters(UUID.fromString(consignmentId), schemaToValidate, "Filepath", "tdrFileHeader", Some(REQUIRED_SCHEMA))
 
     val csvHandler = new CSVHandler()
     val requestHandler: IO[APIGatewayProxyResponseEvent] = for {
@@ -88,10 +87,11 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       _ <- validUTF8(validationParameters)
       _ <- validateDuplicateHeaders(validationParameters, csvHandler)
       csvData <- loadCSV(validationParameters, csvHandler)
-      _ <- validateRequired(csvData, validationParameters)
-      _ <- validateDuplicateRows(validationParameters, csvData)
       persistedData <- graphQlApi.getPersistedIdentifiers(validationParameters.consignmentId, getClientSecret(clientSecretPath, endpoint))
-      _ <- validateMetadata(validationParameters, csvData, persistedData)
+      pd = persistedData.map(e => e.filePath -> e.fileId).toMap
+      _ <- validateRequired(csvData, validationParameters, pd)
+      _ <- validateDuplicateRows(validationParameters, csvData, pd)
+      _ <- validateMetadata(validationParameters, csvData, pd)
     } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
 
     // all validations will raise ValidationExecutionError if they do not pass
@@ -143,13 +143,13 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     inputParameters.get("consignmentId").toString
   }
 
-  private def validateRequired(csvData: List[FileRow], validationParameters: ValidationParameters): IO[Unit] = {
+  private def validateRequired(csvData: List[FileRow], validationParameters: ValidationParameters, persistedData: Map[String, UUID]): IO[Unit] = {
     validationParameters.requiredSchema match {
       case None => IO.unit
       case Some(schema) =>
-        val validationErrors = schemaValidate(Set(schema), List(csvData.head), validationParameters.alternateKey)
+        val validationErrors = schemaValidate(Set(schema), List(csvData.head), validationParameters.alternateKey, persistedData: Map[String, UUID])
         if (validationErrors.nonEmpty) {
-          IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_REQUIRED, validationErrors.toList), csvData))
+          IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_REQUIRED, validationErrors), csvData))
         } else {
           IO.unit
         }
@@ -174,41 +174,49 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     } else { IO.unit }
   }
 
-  private def validateDuplicateRows(validationParameters: ValidationParameters, csvData: List[FileRow]): IO[Unit] = {
-    FileRowsValidator.validateDuplicateRows(csvData.map(_.matchIdentifier), messageProperties = messageProperties) match {
-      case errors if errors.nonEmpty => IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, errors), csvData))
-      case _                         => IO.unit
-    }
+  private def validateDuplicateRows(validationParameters: ValidationParameters, csvData: List[FileRow], persistedData: Map[String, UUID]): IO[Unit] = {
+
+    val duplicateRowErrors = FileRowsValidator.validateDuplicateRows(csvData.map(_.matchIdentifier), messageProperties)
+
+    if (duplicateRowErrors.nonEmpty) {
+      val validationErrors = duplicateRowErrors
+        .map(dre => {
+          val assetId = persistedData.getOrElse(dre._1, dre._1).toString
+          ValidationErrors(assetId, Set(dre._2))
+        })
+        .toList
+      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, validationErrors), csvData))
+    } else IO.unit
   }
 
-  private def validateRowsProgram(csvData: List[FileRow], persistedData: List[PersistedData]): Map[String, Seq[Error]] = {
-    // TODO: Retrieve persisted metadata for consignment
+  private def validateRowsProgram(csvData: List[FileRow], persistedData: Map[String, UUID]): Map[String, Seq[Error]] = {
     val csvMatchIdentifiers = csvData.map(_.matchIdentifier) // Will be file path
 
     val missingRowErrors =
-      FileRowsValidator.validateMissingRows(persistedData.toSet, csvMatchIdentifiers, messageProperties)
+      FileRowsValidator.validateMissingRows(persistedData, csvMatchIdentifiers, messageProperties)
     val unknownRowErrors =
-      FileRowsValidator.validateUnknownRows(persistedData.toSet, csvMatchIdentifiers, messageProperties)
+      FileRowsValidator.validateUnknownRows(persistedData, csvMatchIdentifiers, messageProperties)
 
     (missingRowErrors ++ unknownRowErrors).groupBy(_._1).map { case (k, v) => (k, v.map(_._2)) }
   }
 
-  private def validateMetadata(validationParameters: ValidationParameters, csvData: List[FileRow], persistedData: List[PersistedData]): IO[ErrorFileData] = {
-    val validationErrors = schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters.alternateKey)
+  private def validateMetadata(validationParameters: ValidationParameters, csvData: List[FileRow], persistedData: Map[String, UUID]): IO[ErrorFileData] = {
+    val validationErrors = schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters.alternateKey, persistedData)
     val rowValidationErrors =
       if (validationParameters.validateRows) validateRowsProgram(csvData, persistedData) else Nil
 
     val combinedValidationErrors = rowValidationErrors
       .map(rve => {
         val matchIdentifier = rve._1
+        val assetId = persistedData.getOrElse(matchIdentifier, matchIdentifier)
         validationErrors.find(_.assetId == matchIdentifier) match {
           case Some(v) => v.copy(errors = v.errors ++ rve._2)
           case None =>
             val data = csvData.find(_.matchIdentifier == matchIdentifier) match {
               case Some(v) => v.metadata
-              case _       => Nil
+              case _       => List(Metadata("Filepath", matchIdentifier))
             }
-            ValidationErrors(matchIdentifier, rve._2.toSet, data)
+            ValidationErrors(assetId.toString, rve._2.toSet, data)
           // TODO Add the data to the missing ValidationErrors object
         }
       })
@@ -220,7 +228,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
   }
 
-  private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], alternateKey: String): List[ValidationErrors] = {
+  private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], alternateKey: String, persistedData: Map[String, UUID]): List[ValidationErrors] = {
     MetadataValidationJsonSchema
       .validate(schema, csvData)
       .collect {
@@ -239,7 +247,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
           })
           val errorProperties = errors.map(_.property) :+ "Filepath"
           val data = csvData.find(_.matchIdentifier == result._1).get.metadata.filter(p => errorProperties.contains(p.name))
-          ValidationErrors(result._1, errors.toSet, data)
+          val assetId = persistedData.getOrElse(result._1, result._1)
+          ValidationErrors(assetId.toString, errors.toSet, data)
       }
       .toList
   }

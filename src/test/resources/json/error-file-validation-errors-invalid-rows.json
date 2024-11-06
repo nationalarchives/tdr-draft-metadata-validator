@@ -4,7 +4,24 @@
   "fileError" : "SCHEMA_VALIDATION",
   "validationErrors" : [
     {
-      "assetId" : "9d7fbffc-4012-40a8-89bf-314eabab78a8",
+      "assetId" : "c4d5e0f1-f6e1-4a77-a7c0-a4317404da00",
+      "errors" : [
+        {
+          "validationProcess" : "ROW_VALIDATION",
+          "property" : "",
+          "errorKey" : "missing",
+          "message" : "This file was uploaded but is missing from your metadata file"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "Filepath",
+          "value" : "test/test2.txt"
+        }
+      ]
+    },
+    {
+      "assetId" : "test/unknown.txt",
       "errors" : [
         {
           "validationProcess" : "SCHEMA_BASE",
@@ -27,23 +44,6 @@
         {
           "name" : "Filepath",
           "value" : "test/unknown.txt"
-        }
-      ]
-    },
-    {
-      "assetId" : "c4d5e0f1-f6e1-4a77-a7c0-a4317404da00",
-      "errors" : [
-        {
-          "validationProcess" : "ROW_VALIDATION",
-          "property" : "",
-          "errorKey" : "missing",
-          "message" : "This file was uploaded but is missing from your metadata file"
-        }
-      ],
-      "data" : [
-        {
-          "name" : "Filepath",
-          "value" : "test/test2.txt"
         }
       ]
     }

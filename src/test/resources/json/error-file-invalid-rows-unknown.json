@@ -4,7 +4,7 @@
   "fileError" : "SCHEMA_VALIDATION",
   "validationErrors" : [
     {
-      "assetId" : "9d7fbffc-4012-40a8-89bf-314eabab78a8",
+      "assetId" : "test/unknown.txt",
       "errors" : [
         {
           "validationProcess" : "ROW_VALIDATION",
@@ -33,10 +33,6 @@
         {
           "name" : "Closure status",
           "value" : "Open"
-        },
-        {
-          "name" : "UUID",
-          "value" : "9d7fbffc-4012-40a8-89bf-314eabab78a8"
         },
         {
           "name" : "Description",

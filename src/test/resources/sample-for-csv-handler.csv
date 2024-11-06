@@ -1,4 +1,4 @@
-Filename,Filepath,Date last modified,Closure status,Closure Period,UUID
-file1.jpg,aa/file.jpg,2020-05-29,Closed,10,16b2f65c-ec50-494b-824b-f8c08e6b575c
-file2.jpg,aa/file.jpg,2020-05-29,Open,,18449d9b-6a86-40b4-8855-b872a79bebad
-file3.jpg,aa/file.jpg,2020-05-29,Open,,61b49923-daf7-4140-98f1-58ba6cbed61f
+Filename,Filepath,Date last modified,Closure status,Closure Period
+file1.jpg,aa/file1.jpg,2020-05-29,Closed,10
+file2.jpg,bb/file2.jpg,2020-05-29,Open,
+file3.jpg,cc/file3.jpg,2020-05-29,Open,

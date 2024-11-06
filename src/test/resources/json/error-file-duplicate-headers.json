@@ -8,12 +8,6 @@
       "errors" : [
         {
           "validationProcess" : "DUPLICATE_HEADER",
-          "property" : "UUID",
-          "errorKey" : "duplicate",
-          "message" : "DUPLICATE_HEADER.UUID.duplicate"
-        },
-        {
-          "validationProcess" : "DUPLICATE_HEADER",
           "property" : "Filename",
           "errorKey" : "duplicate",
           "message" : "DUPLICATE_HEADER.file_name.duplicate"

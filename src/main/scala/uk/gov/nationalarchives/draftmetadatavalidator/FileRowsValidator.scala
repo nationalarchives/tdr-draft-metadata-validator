@@ -13,16 +13,16 @@ object FileRowsValidator {
   private val missingErrorKey = s"$invalidRowErrorKey.missing"
 
   def validateMissingRows(
-      persistedData: Set[PersistedData],
+      persistedData: Map[String, UUID],
       csvMatchIdentifiers: List[String],
       messageProperties: Properties
   ): Seq[(String, Error)] = {
+
     def missingRow(matchIdentifier: String): Boolean = {
       !csvMatchIdentifiers.contains(matchIdentifier)
     }
 
-    persistedData
-      .map(_.fileId.toString)
+    persistedData.keys
       .collect {
         case s if missingRow(s) => Map(s -> Error(invalidRowErrorKey, "", "missing", messageProperties.getProperty(missingErrorKey, missingErrorKey)))
       }
@@ -31,11 +31,11 @@ object FileRowsValidator {
   }
 
   def validateUnknownRows(
-      persistedData: Set[PersistedData],
+      persistedData: Map[String, UUID],
       csvMatchIdentifiers: List[String],
       messageProperties: Properties
   ): Seq[(String, Error)] = {
-    val persistedMatchIdentifiers = persistedData.map(_.fileId.toString)
+    val persistedMatchIdentifiers = persistedData.keys.toSeq
     def unknownRow(matchIdentifier: String): Boolean = {
       !persistedMatchIdentifiers.contains(matchIdentifier)
     }
@@ -50,20 +50,18 @@ object FileRowsValidator {
       .toSeq
   }
 
-  def validateDuplicateRows(matchIdentifiers: List[String], messageProperties: Properties): List[ValidationErrors] = {
+  def validateDuplicateRows(matchIdentifiers: List[String], messageProperties: Properties): Seq[(String, Error)] = {
     def duplicateRow(values: List[Any]): Boolean = {
       values.size > 1
     }
 
-    val duplicateRowErrors = matchIdentifiers
+    matchIdentifiers
       .groupBy(identity)
       .collect {
         case (identifier, values) if duplicateRow(values) =>
           Map(identifier -> Error(invalidRowErrorKey, "", "duplicate", messageProperties.getProperty(duplicateErrorKey, duplicateErrorKey)))
       }
       .flatten
-      .toMap
-
-    duplicateRowErrors.map(err => ValidationErrors(err._1, Set(err._2))).toList
+      .toSeq
   }
 }
