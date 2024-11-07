@@ -1,6 +1,8 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import com.github.tototoshi.csv.{CSVReader, CSVWriter}
+import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.ValidationParameters
+import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.io.ByteArrayOutputStream
@@ -8,6 +10,7 @@ import java.nio.file.{Files, Paths}
 
 class CSVHandler {
 
+  @deprecated
   def loadCSV(filePath: String, metadataNames: List[String]): FileData = {
     val reader = CSVReader.open(filePath)
     val allRowsWithHeader = reader.all()
@@ -30,11 +33,20 @@ class CSVHandler {
     * @return
     *   List of FileRows
     */
-  def loadCSV(filePath: String, uniqueRowKey: String): List[FileRow] = {
+  def loadCSV(filePath: String, inputHeaderKey: String, outputHeaderKey: String, uniqueAssetIdKey: String): List[FileRow] = {
+    val convertHeaders: (String, String) => (String, String) = { 
+      case (originalHeader, value) => 
+        (SchemaUtils.convertToAlternateKey(outputHeaderKey, SchemaUtils.convertToValidationKey(inputHeaderKey, originalHeader)), value)
+    }
     val reader = CSVReader.open(filePath)
-    val all: Seq[Map[String, String]] = reader.allWithHeaders()
-    val fileRows = all.map(row => FileRow(row(uniqueRowKey), row.map(columnHeaderValue => Metadata(columnHeaderValue._1, columnHeaderValue._2)).toList))
-    fileRows.toList
+    val all: Seq[Map[String, String]] = reader.allWithHeaders().map(_.map({ case (k,v) => convertHeaders(k,v) }))
+    all.map { row => 
+      FileRow(
+        matchIdentifier = row(SchemaUtils.convertToAlternateKey(outputHeaderKey, uniqueAssetIdKey)), 
+        metadata = row.collect { 
+          case (columnHeader, value) if columnHeader.nonEmpty => Metadata(columnHeader, value)}.toList
+      )
+    }.toList
   }
 
   def loadHeaders(filePath: String): Option[List[String]] = {
@@ -49,4 +61,5 @@ class CSVHandler {
   }
 }
 
+@deprecated
 case class FileData(allRowsWithHeader: List[List[String]], fileRows: List[FileRow])

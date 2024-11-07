@@ -13,9 +13,9 @@ import java.util.UUID
 
 object MetadataUtils {
 
-  def filterProtectedFields(customMetadata: List[CustomMetadata], fileData: FileData): List[AddOrUpdateFileMetadata] = {
+  def filterProtectedFields(customMetadata: List[CustomMetadata], fileRows: List[FileRow]): List[AddOrUpdateFileMetadata] = {
     val filterProtectedMetadata = customMetadata.filter(!_.editable).map(_.name)
-    val updatedFileRows = fileData.fileRows.map { fileMetadata =>
+    val updatedFileRows = fileRows.map { fileMetadata =>
       val filteredMetadata = fileMetadata.metadata.filterNot(metadata => filterProtectedMetadata.contains(metadata.name))
       fileMetadata.copy(metadata = filteredMetadata)
     }

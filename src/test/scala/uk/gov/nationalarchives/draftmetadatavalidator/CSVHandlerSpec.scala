@@ -11,40 +11,55 @@ import java.nio.file.{Files, Path}
 class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
 
   val filePath: String = getClass.getResource("/sample-for-csv-handler.csv").getPath
+  val fileWithReversedColumnOrderPath: String = getClass.getResource("/sample-for-csv-handler-columns-reversed.csv").getPath
+  val fileWithUnsupportedColumnPath: String = getClass.getResource("/sample-for-csv-handler-unsupported-column.csv").getPath
   val metadataNames: List[String] = List("Filename", "Filepath", "end_date", "ClosureStatus", "ClosurePeriod")
-
-  "loadCSV with path and metadata names" should "read the file and return FileData with all the rows" in {
+  
+  "loadCSV with output alternate key of tdrDataLoadHeader" should "read the file and return expected FileRows with correct names for DB persistence" in {
     val csvHandler = new CSVHandler
-    val fileData = csvHandler.loadCSV(filePath, metadataNames)
+    val fileData: Seq[FileRow] = csvHandler.loadCSV(filePath, "tdrFileHeader", "tdrDataLoadHeader", "UUID")
 
-    val expected = FileData(
-      List(
-        List("Filename", "Filepath", "Date last modified", "Closure status", "Closure Period", "UUID"),
-        List("file1.jpg", "aa/file.jpg", "2020-05-29", "Closed", "10", "16b2f65c-ec50-494b-824b-f8c08e6b575c"),
-        List("file2.jpg", "aa/file.jpg", "2020-05-29", "Open", "", "18449d9b-6a86-40b4-8855-b872a79bebad"),
-        List("file3.jpg", "aa/file.jpg", "2020-05-29", "Open", "", "61b49923-daf7-4140-98f1-58ba6cbed61f")
+    val expected = List(
+      FileRow(
+        "16b2f65c-ec50-494b-824b-f8c08e6b575c", 
+        List(
+          Metadata("UUID", "16b2f65c-ec50-494b-824b-f8c08e6b575c"), 
+          Metadata("ClientSideOriginalFilepath", "aa/file.jpg"),
+          Metadata("ClientSideFileLastModifiedDate", "2020-05-29"),
+          Metadata("Filename", "file1.jpg"),
+          Metadata("ClosurePeriod", "10"),
+          Metadata("ClosureType", "Closed")
+        )
       ),
-      List(
-        FileRow(
-          "16b2f65c-ec50-494b-824b-f8c08e6b575c",
-          List(Metadata("Filename", "file1.jpg"), Metadata("Filepath", "aa/file.jpg"), Metadata("end_date", "2020-05-29"), Metadata("ClosureStatus", "Closed"))
-        ),
-        FileRow(
-          "18449d9b-6a86-40b4-8855-b872a79bebad",
-          List(Metadata("Filename", "file2.jpg"), Metadata("Filepath", "aa/file.jpg"), Metadata("end_date", "2020-05-29"), Metadata("ClosureStatus", "Open"))
-        ),
-        FileRow(
-          "61b49923-daf7-4140-98f1-58ba6cbed61f",
-          List(Metadata("Filename", "file3.jpg"), Metadata("Filepath", "aa/file.jpg"), Metadata("end_date", "2020-05-29"), Metadata("ClosureStatus", "Open"))
+      FileRow(
+        "18449d9b-6a86-40b4-8855-b872a79bebad", 
+        List(
+          Metadata("UUID", "18449d9b-6a86-40b4-8855-b872a79bebad"),
+          Metadata("ClientSideOriginalFilepath", "aa/file.jpg"),
+          Metadata("ClientSideFileLastModifiedDate", "2020-05-29"),
+          Metadata("Filename", "file2.jpg"),
+          Metadata("ClosurePeriod", ""),
+          Metadata("ClosureType", "Open")
+        )
+      ), 
+      FileRow(
+        "61b49923-daf7-4140-98f1-58ba6cbed61f", 
+        List(
+          Metadata("UUID", "61b49923-daf7-4140-98f1-58ba6cbed61f"), 
+          Metadata("ClientSideOriginalFilepath", "aa/file.jpg"),
+          Metadata("ClientSideFileLastModifiedDate", "2020-05-29"),
+          Metadata("Filename", "file3.jpg"), 
+          Metadata("ClosurePeriod", ""), 
+          Metadata("ClosureType", "Open")
         )
       )
     )
     fileData should be(expected)
   }
 
-  "loadCSV with path " should "read the file and return FileRows" in {
+  "loadCSV with matching input and output header keys" should "read the file and return expected FileRows using names from the input file headers" in {
     val csvHandler = new CSVHandler
-    val fileRows = csvHandler.loadCSV(filePath, "UUID")
+    val fileRows = csvHandler.loadCSV(filePath, "tdrFileHeader", "tdrFileHeader", "UUID")
 
     val expected = List(
       FileRow(
@@ -83,6 +98,91 @@ class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
     )
 
     fileRows should be(expected)
+  }
+
+  "loadCSV output" should "return expected values regardless of column order" in {
+    val csvHandler = new CSVHandler
+    val originalFileData: Seq[FileRow] = csvHandler.loadCSV(filePath, "tdrFileHeader", "tdrDataLoadHeader", "UUID")
+    val reversedColumnFileData: Seq[FileRow] = csvHandler.loadCSV(fileWithReversedColumnOrderPath, "tdrFileHeader", "tdrDataLoadHeader", "UUID")
+    val expected = List(
+      FileRow(
+        "16b2f65c-ec50-494b-824b-f8c08e6b575c",
+        List(
+          Metadata("UUID", "16b2f65c-ec50-494b-824b-f8c08e6b575c"),
+          Metadata("ClientSideOriginalFilepath", "aa/file.jpg"),
+          Metadata("ClientSideFileLastModifiedDate", "2020-05-29"),
+          Metadata("Filename", "file1.jpg"),
+          Metadata("ClosurePeriod", "10"),
+          Metadata("ClosureType", "Closed")
+        )
+      ),
+      FileRow(
+        "18449d9b-6a86-40b4-8855-b872a79bebad",
+        List(
+          Metadata("UUID", "18449d9b-6a86-40b4-8855-b872a79bebad"),
+          Metadata("ClientSideOriginalFilepath", "aa/file.jpg"),
+          Metadata("ClientSideFileLastModifiedDate", "2020-05-29"),
+          Metadata("Filename", "file2.jpg"),
+          Metadata("ClosurePeriod", ""),
+          Metadata("ClosureType", "Open")
+        )
+      ),
+      FileRow(
+        "61b49923-daf7-4140-98f1-58ba6cbed61f",
+        List(
+          Metadata("UUID", "61b49923-daf7-4140-98f1-58ba6cbed61f"),
+          Metadata("ClientSideOriginalFilepath", "aa/file.jpg"),
+          Metadata("ClientSideFileLastModifiedDate", "2020-05-29"),
+          Metadata("Filename", "file3.jpg"),
+          Metadata("ClosurePeriod", ""),
+          Metadata("ClosureType", "Open")
+        )
+      )
+    )
+    originalFileData shouldBe expected
+    reversedColumnFileData shouldBe expected
+  }
+
+  // TODO: We may want to throw an error in this case in future to avoid valid data silently being ignored due to column name typos
+  "loadCSV output" should "ignore unsupported columns" in {
+    val csvHandler = new CSVHandler
+    val fileData: Seq[FileRow] = csvHandler.loadCSV(fileWithUnsupportedColumnPath, "tdrFileHeader", "tdrDataLoadHeader", "UUID")
+    val expected = List(
+      FileRow(
+        "16b2f65c-ec50-494b-824b-f8c08e6b575c",
+        List(
+          Metadata("UUID", "16b2f65c-ec50-494b-824b-f8c08e6b575c"),
+          Metadata("ClientSideOriginalFilepath", "aa/file.jpg"),
+          Metadata("ClientSideFileLastModifiedDate", "2020-05-29"),
+          Metadata("Filename", "file1.jpg"),
+          Metadata("ClosurePeriod", "10"),
+          Metadata("ClosureType", "Closed")
+        )
+      ),
+      FileRow(
+        "18449d9b-6a86-40b4-8855-b872a79bebad",
+        List(
+          Metadata("UUID", "18449d9b-6a86-40b4-8855-b872a79bebad"),
+          Metadata("ClientSideOriginalFilepath", "aa/file.jpg"),
+          Metadata("ClientSideFileLastModifiedDate", "2020-05-29"),
+          Metadata("Filename", "file2.jpg"),
+          Metadata("ClosurePeriod", ""),
+          Metadata("ClosureType", "Open")
+        )
+      ),
+      FileRow(
+        "61b49923-daf7-4140-98f1-58ba6cbed61f",
+        List(
+          Metadata("UUID", "61b49923-daf7-4140-98f1-58ba6cbed61f"),
+          Metadata("ClientSideOriginalFilepath", "aa/file.jpg"),
+          Metadata("ClientSideFileLastModifiedDate", "2020-05-29"),
+          Metadata("Filename", "file3.jpg"),
+          Metadata("ClosurePeriod", ""),
+          Metadata("ClosureType", "Open")
+        )
+      )
+    )
+    fileData shouldBe expected
   }
 
   "writeCsv" should "read the file and return FileData with all the rows" in {
