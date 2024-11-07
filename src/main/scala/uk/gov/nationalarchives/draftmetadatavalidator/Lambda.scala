@@ -229,12 +229,14 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
 
     val filePath = getFilePath(validationParameters)
-    IO(csvHandler.loadCSV(
-      filePath,
-      validationParameters.clientAlternateKey,
-      validationParameters.clientAlternateKey,
-      validationParameters.uniqueAssetIDKey
-    )).handleErrorWith(err => {
+    IO(
+      csvHandler.loadCSV(
+        filePath,
+        validationParameters.clientAlternateKey,
+        validationParameters.clientAlternateKey,
+        validationParameters.uniqueAssetIDKey
+      )
+    ).handleErrorWith(err => {
       logger.error(s"Metadata Validation failed to load csv :${err.getMessage}")
       IO.raiseError(ValidationExecutionError(invalidCSVFileErrorData, List.empty[FileRow]))
     })
@@ -251,11 +253,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val csvHandler = new CSVHandler()
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
-      fileData <- IO(csvHandler.loadCSV(
-        getFilePath(draftMetadata),
-        draftMetadata.clientAlternateKey,
-        draftMetadata.persistenceAlternateKey, 
-        draftMetadata.uniqueAssetIDKey))
+      fileData <- IO(csvHandler.loadCSV(getFilePath(draftMetadata), draftMetadata.clientAlternateKey, draftMetadata.persistenceAlternateKey, draftMetadata.uniqueAssetIDKey))
       addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData)
       result <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
     } yield result
@@ -318,7 +316,7 @@ object Lambda {
       consignmentId: UUID,
       schemaToValidate: Set[JsonSchemaDefinition],
       uniqueAssetIDKey: String,
-      clientAlternateKey: String, 
+      clientAlternateKey: String,
       persistenceAlternateKey: String,
       requiredSchema: Option[JsonSchemaDefinition] = None
   )

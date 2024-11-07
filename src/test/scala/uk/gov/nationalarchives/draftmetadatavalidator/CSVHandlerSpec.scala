@@ -14,16 +14,16 @@ class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
   val fileWithReversedColumnOrderPath: String = getClass.getResource("/sample-for-csv-handler-columns-reversed.csv").getPath
   val fileWithUnsupportedColumnPath: String = getClass.getResource("/sample-for-csv-handler-unsupported-column.csv").getPath
   val metadataNames: List[String] = List("Filename", "Filepath", "end_date", "ClosureStatus", "ClosurePeriod")
-  
+
   "loadCSV with output alternate key of tdrDataLoadHeader" should "read the file and return expected FileRows with correct names for DB persistence" in {
     val csvHandler = new CSVHandler
     val fileData: Seq[FileRow] = csvHandler.loadCSV(filePath, "tdrFileHeader", "tdrDataLoadHeader", "UUID")
 
     val expected = List(
       FileRow(
-        "16b2f65c-ec50-494b-824b-f8c08e6b575c", 
+        "16b2f65c-ec50-494b-824b-f8c08e6b575c",
         List(
-          Metadata("UUID", "16b2f65c-ec50-494b-824b-f8c08e6b575c"), 
+          Metadata("UUID", "16b2f65c-ec50-494b-824b-f8c08e6b575c"),
           Metadata("ClientSideOriginalFilepath", "aa/file.jpg"),
           Metadata("ClientSideFileLastModifiedDate", "2020-05-29"),
           Metadata("Filename", "file1.jpg"),
@@ -32,7 +32,7 @@ class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
         )
       ),
       FileRow(
-        "18449d9b-6a86-40b4-8855-b872a79bebad", 
+        "18449d9b-6a86-40b4-8855-b872a79bebad",
         List(
           Metadata("UUID", "18449d9b-6a86-40b4-8855-b872a79bebad"),
           Metadata("ClientSideOriginalFilepath", "aa/file.jpg"),
@@ -41,15 +41,15 @@ class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
           Metadata("ClosurePeriod", ""),
           Metadata("ClosureType", "Open")
         )
-      ), 
+      ),
       FileRow(
-        "61b49923-daf7-4140-98f1-58ba6cbed61f", 
+        "61b49923-daf7-4140-98f1-58ba6cbed61f",
         List(
-          Metadata("UUID", "61b49923-daf7-4140-98f1-58ba6cbed61f"), 
+          Metadata("UUID", "61b49923-daf7-4140-98f1-58ba6cbed61f"),
           Metadata("ClientSideOriginalFilepath", "aa/file.jpg"),
           Metadata("ClientSideFileLastModifiedDate", "2020-05-29"),
-          Metadata("Filename", "file3.jpg"), 
-          Metadata("ClosurePeriod", ""), 
+          Metadata("Filename", "file3.jpg"),
+          Metadata("ClosurePeriod", ""),
           Metadata("ClosureType", "Open")
         )
       )

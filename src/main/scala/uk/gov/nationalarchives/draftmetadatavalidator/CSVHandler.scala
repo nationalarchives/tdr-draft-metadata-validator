@@ -34,17 +34,17 @@ class CSVHandler {
     *   List of FileRows
     */
   def loadCSV(filePath: String, inputHeaderKey: String, outputHeaderKey: String, uniqueAssetIdKey: String): List[FileRow] = {
-    val convertHeaders: (String, String) => (String, String) = { 
-      case (originalHeader, value) => 
-        (SchemaUtils.convertToAlternateKey(outputHeaderKey, SchemaUtils.convertToValidationKey(inputHeaderKey, originalHeader)), value)
+    val convertHeaders: (String, String) => (String, String) = { case (originalHeader, value) =>
+      (SchemaUtils.convertToAlternateKey(outputHeaderKey, SchemaUtils.convertToValidationKey(inputHeaderKey, originalHeader)), value)
     }
     val reader = CSVReader.open(filePath)
-    val all: Seq[Map[String, String]] = reader.allWithHeaders().map(_.map({ case (k,v) => convertHeaders(k,v) }))
-    all.map { row => 
+    val all: Seq[Map[String, String]] = reader.allWithHeaders().map(_.map({ case (k, v) => convertHeaders(k, v) }))
+    all.map { row =>
       FileRow(
-        matchIdentifier = row(SchemaUtils.convertToAlternateKey(outputHeaderKey, uniqueAssetIdKey)), 
-        metadata = row.collect { 
-          case (columnHeader, value) if columnHeader.nonEmpty => Metadata(columnHeader, value)}.toList
+        matchIdentifier = row(SchemaUtils.convertToAlternateKey(outputHeaderKey, uniqueAssetIdKey)),
+        metadata = row.collect {
+          case (columnHeader, value) if columnHeader.nonEmpty => Metadata(columnHeader, value)
+        }.toList
       )
     }.toList
   }
