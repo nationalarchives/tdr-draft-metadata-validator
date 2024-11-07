@@ -13,16 +13,16 @@ object FileRowsValidator {
   private val missingErrorKey = s"$invalidRowErrorKey.missing"
 
   def validateMissingRows(
-      persistedData: Map[String, UUID],
-      csvMatchIdentifiers: List[String],
+      persistedRowKeyToFiledId: Map[String, UUID],
+      sourceUniqueRowKeys: List[String],
       messageProperties: Properties
   ): Seq[(String, Error)] = {
 
-    def missingRow(matchIdentifier: String): Boolean = {
-      !csvMatchIdentifiers.contains(matchIdentifier)
+    def missingRow(persistedUniqueRowKey: String): Boolean = {
+      !sourceUniqueRowKeys.contains(persistedUniqueRowKey)
     }
 
-    persistedData.keys
+    persistedRowKeyToFiledId.keys
       .collect {
         case s if missingRow(s) => Map(s -> Error(invalidRowErrorKey, "", "missing", messageProperties.getProperty(missingErrorKey, missingErrorKey)))
       }
@@ -31,16 +31,16 @@ object FileRowsValidator {
   }
 
   def validateUnknownRows(
-      persistedData: Map[String, UUID],
-      csvMatchIdentifiers: List[String],
+      persistedRowKeyToFiledId: Map[String, UUID],
+      sourceUniqueRowKeys: List[String],
       messageProperties: Properties
   ): Seq[(String, Error)] = {
-    val persistedMatchIdentifiers = persistedData.keys.toSeq
-    def unknownRow(matchIdentifier: String): Boolean = {
-      !persistedMatchIdentifiers.contains(matchIdentifier)
+    val persistedUniqueRowKey = persistedRowKeyToFiledId.keys.toSeq
+    def unknownRow(sourceUniqueRowKey: String): Boolean = {
+      !persistedUniqueRowKey.contains(sourceUniqueRowKey)
     }
 
-    csvMatchIdentifiers
+    sourceUniqueRowKeys
       .groupBy(identity)
       .collect {
         case (identifier, _) if unknownRow(identifier) =>
@@ -50,12 +50,12 @@ object FileRowsValidator {
       .toSeq
   }
 
-  def validateDuplicateRows(matchIdentifiers: List[String], messageProperties: Properties): Seq[(String, Error)] = {
+  def validateDuplicateRows(sourceUniqueRowKeys: List[String], messageProperties: Properties): Seq[(String, Error)] = {
     def duplicateRow(values: List[Any]): Boolean = {
       values.size > 1
     }
 
-    matchIdentifiers
+    sourceUniqueRowKeys
       .groupBy(identity)
       .collect {
         case (identifier, values) if duplicateRow(values) =>

@@ -23,18 +23,20 @@ class MetadataUtilsSpec extends AnyFlatSpec with BeforeAndAfterEach {
       TestUtils.createCustomMetadata("ClosureStatus", "Closure status", 3, DataType.Text)
     )
 
-    val fileId = "16b2f65c-ec50-494b-824b-f8c08e6b575c"
+    val fileId = "cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c"
     val fileData = FileData(
       List(
-        List("Filename", "Closure status", "Closure Period", "SHA256ClientSideChecksum", "UUID"),
-        List("file1.jpg", "Closed", "10", "ChecksumValue", fileId)
+        List("Filename", "Filepath", "Closure status", "Closure Period", "SHA256ClientSideChecksum"),
+        List("file1.jpg", "test/file1.jpg", "Closed", "10", "ChecksumValue")
       ),
       List(
-        FileRow(fileId, List(Metadata("ClosurePeriod", "10"), Metadata("SHA256ClientSideChecksum", "ChecksumValue"), Metadata("ClosureStatus", "Closed")))
+        FileRow("test/file1.jpg", List(Metadata("ClosurePeriod", "10"), Metadata("SHA256ClientSideChecksum", "ChecksumValue"), Metadata("ClosureStatus", "Closed")))
       )
     )
 
-    val filterProtectedFields = MetadataUtils.filterProtectedFields(customMetadata, fileData)
+    val uniqueRowKeyToFileId = Map("test/file1.jpg" -> UUID.fromString(fileId))
+
+    val filterProtectedFields = MetadataUtils.filterProtectedFields(customMetadata, fileData, uniqueRowKeyToFileId)
     val expected: List[AddOrUpdateFileMetadata] = List(
       AddOrUpdateFileMetadata(
         UUID.fromString(fileId),

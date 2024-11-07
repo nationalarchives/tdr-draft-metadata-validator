@@ -13,19 +13,24 @@ import java.util.UUID
 
 object MetadataUtils {
 
-  def filterProtectedFields(customMetadata: List[CustomMetadata], fileData: FileData): List[AddOrUpdateFileMetadata] = {
+  def filterProtectedFields(customMetadata: List[CustomMetadata], fileData: FileData, uniqueRowKeyToFiledId: Map[String, UUID]): List[AddOrUpdateFileMetadata] = {
     val filterProtectedMetadata = customMetadata.filter(!_.editable).map(_.name)
     val updatedFileRows = fileData.fileRows.map { fileMetadata =>
       val filteredMetadata = fileMetadata.metadata.filterNot(metadata => filterProtectedMetadata.contains(metadata.name))
       fileMetadata.copy(metadata = filteredMetadata)
     }
-    convertDataToBulkFileMetadataInput(updatedFileRows, customMetadata)
+    convertDataToBulkFileMetadataInput(updatedFileRows, customMetadata, uniqueRowKeyToFiledId)
   }
 
-  private def convertDataToBulkFileMetadataInput(fileRows: List[FileRow], customMetadata: List[CustomMetadata]): List[AddOrUpdateFileMetadata] = {
+  private def convertDataToBulkFileMetadataInput(
+      fileRows: List[FileRow],
+      customMetadata: List[CustomMetadata],
+      uniqueRowKeyToFiledId: Map[String, UUID]
+  ): List[AddOrUpdateFileMetadata] = {
     fileRows.collect { case fileRow =>
+      val fileId = uniqueRowKeyToFiledId.getOrElse(fileRow.matchIdentifier, throw new RuntimeException(s"${fileRow.matchIdentifier} missing file id"))
       AddOrUpdateFileMetadata(
-        UUID.fromString(fileRow.matchIdentifier),
+        fileId,
         fileRow.metadata.collect {
           case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get)
           case m                     => List(AddOrUpdateMetadata(m.name, ""))

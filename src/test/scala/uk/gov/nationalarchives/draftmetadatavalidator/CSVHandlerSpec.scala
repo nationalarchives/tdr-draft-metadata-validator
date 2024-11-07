@@ -27,15 +27,33 @@ class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
       List(
         FileRow(
           "aa/file1.jpg",
-          List(Metadata("Filename", "file1.jpg"), Metadata("Filepath", "aa/file1.jpg"), Metadata("end_date", "2020-05-29"), Metadata("ClosureStatus", "Closed"))
+          List(
+            Metadata("Filename", "file1.jpg"),
+            Metadata("Filepath", "aa/file1.jpg"),
+            Metadata("end_date", "2020-05-29"),
+            Metadata("ClosureStatus", "Closed"),
+            Metadata("ClosurePeriod", "10")
+          )
         ),
         FileRow(
           "bb/file2.jpg",
-          List(Metadata("Filename", "file2.jpg"), Metadata("Filepath", "bb/file2.jpg"), Metadata("end_date", "2020-05-29"), Metadata("ClosureStatus", "Open"))
+          List(
+            Metadata("Filename", "file2.jpg"),
+            Metadata("Filepath", "bb/file2.jpg"),
+            Metadata("end_date", "2020-05-29"),
+            Metadata("ClosureStatus", "Open"),
+            Metadata("ClosurePeriod", "")
+          )
         ),
         FileRow(
           "cc/file3.jpg",
-          List(Metadata("Filename", "file3.jpg"), Metadata("Filepath", "cc/file3.jpg"), Metadata("end_date", "2020-05-29"), Metadata("ClosureStatus", "Open"))
+          List(
+            Metadata("Filename", "file3.jpg"),
+            Metadata("Filepath", "cc/file3.jpg"),
+            Metadata("end_date", "2020-05-29"),
+            Metadata("ClosureStatus", "Open"),
+            Metadata("ClosurePeriod", "")
+          )
         )
       )
     )
