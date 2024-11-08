@@ -8,7 +8,7 @@ import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 import java.io.ByteArrayOutputStream
 import java.nio.file.{Files, Paths}
 
-class CSVHandler {
+object CSVHandler {
 
   /** Reads a CSV file into a list of FileRows The FileRow.fileName
     * @param filePath

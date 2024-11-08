@@ -6,6 +6,8 @@ import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
+import graphql.codegen.GetConsignmentFilesMetadata.getConsignmentFilesMetadata.GetConsignment
+import graphql.codegen.GetConsignmentFilesMetadata.{getConsignmentFilesMetadata, getConsignmentFilesMetadata => gcfm}
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import io.circe.Encoder
@@ -25,6 +27,7 @@ import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{ValidationExecutio
 import uk.gov.nationalarchives.draftmetadatavalidator.utils.MetadataUtils
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
+import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.{convertToAlternateKey, convertToValidationKey}
 import uk.gov.nationalarchives.tdr.validation.FileRow
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, REQUIRED_SCHEMA}
@@ -50,7 +53,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   private val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
   private val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
-  private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient)
+  private val getConsignmentFilesMetadataClient = new GraphQLClient[gcfm.Data, gcfm.Variables](apiUrl)
+  private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, getConsignmentFilesMetadataClient)
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
     val consignmentId = extractConsignmentId(input)
@@ -58,7 +62,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     val validationParameters: ValidationParameters = ValidationParameters(
       consignmentId = UUID.fromString(consignmentId),
       schemaToValidate = schemaToValidate,
-      uniqueAssetIDKey = "UUID",
+      uniqueAssetIDKey = "file_path",
       clientAlternateKey = "tdrFileHeader",
       persistenceAlternateKey = "tdrDataLoadHeader",
       requiredSchema = Some(REQUIRED_SCHEMA)
@@ -66,8 +70,20 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
     val requestHandler: IO[APIGatewayProxyResponseEvent] = for {
       errorFileData <- doValidation(validationParameters)
+      fileIdData <- graphQlApi.getConsignmentFilesMetadata(
+        consignmentId = UUID.fromString(consignmentId), 
+        clientSecret = getClientSecret(clientSecretPath, endpoint), 
+        databaseMetadataHeaders = List(
+          SchemaUtils.convertToAlternateKey(validationParameters.persistenceAlternateKey, validationParameters.uniqueAssetIDKey), 
+          "FileType"
+        )
+      )
+      lookupData = IdentityUtils.buildLookupMaps(
+        clientMetadata = errorFileData.loadedRows, 
+        persistedFileMetadata = fileIdData.flatMap(_.getConsignment.flatMap(_.files)).toSeq, validationParameters = validationParameters
+      )
       _ <- writeErrorFileDataToFile(validationParameters, errorFileData)
-      _ <- if (errorFileData.validationErrors.isEmpty) persistMetadata(validationParameters) else IO.unit
+      _ <- if (errorFileData.validationErrors.isEmpty) persistMetadata(validationParameters, lookupData.clientIdToPersistenceId) else IO.unit
       _ <- updateStatus(errorFileData, validationParameters)
     } yield {
       val response = new APIGatewayProxyResponseEvent()
@@ -88,15 +104,14 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
   private def doValidation(validationParameters: ValidationParameters): IO[ErrorFileData] = {
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
-    val csvHandler = new CSVHandler()
     val validationProgram = for {
       _ <- s3Files.downloadFile(bucket, validationParameters)
       _ <- validUTF8(validationParameters)
-      _ <- validateDuplicateHeaders(validationParameters, csvHandler)
-      csvData <- loadCSV(validationParameters, csvHandler)
+      _ <- validateDuplicateHeaders(validationParameters)
+      csvData <- loadCSV(validationParameters)
       _ <- validateRequired(csvData, validationParameters)
       _ <- validateMetadata(validationParameters, csvData)
-    } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
+    } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors], csvData)
 
     // all validations will raise ValidationExecutionError if they do not pass
     validationProgram.handleError({
@@ -160,7 +175,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
   }
 
-  private def validateDuplicateHeaders(validationParameters: ValidationParameters, csvHandler: CSVHandler): IO[Unit] = {
+  private def validateDuplicateHeaders(validationParameters: ValidationParameters): IO[Unit] = {
     def duplicateError(header: String): Error = {
       val errorKey = convertToValidationKey(validationParameters.clientAlternateKey, header)
       val duplicateFileError = FileError.DUPLICATE_HEADER.toString
@@ -168,7 +183,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     }
 
     val filePath = getFilePath(validationParameters)
-    val headers = csvHandler.loadHeaders(filePath).getOrElse(Nil)
+    val headers = CSVHandler.loadHeaders(filePath).getOrElse(Nil)
     if (headers.size > headers.toSet.size) {
       val duplicateHeaders = headers.groupBy(identity).collect {
         case (identifier, values) if values.size > 1 => identifier
@@ -218,7 +233,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     properties
   }
 
-  private def loadCSV(validationParameters: ValidationParameters, csvHandler: CSVHandler): IO[List[FileRow]] = {
+  private def loadCSV(validationParameters: ValidationParameters): IO[List[FileRow]] = {
 
     def invalidCSVFileErrorData = {
       val messageKey = "FILE_CHECK.CSV.INVALID"
@@ -230,7 +245,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
     val filePath = getFilePath(validationParameters)
     IO(
-      csvHandler.loadCSV(
+      CSVHandler.loadCSV(
         filePath,
         validationParameters.clientAlternateKey,
         validationParameters.clientAlternateKey,
@@ -248,13 +263,12 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", status)
   }
 
-  private def persistMetadata(draftMetadata: ValidationParameters): IO[List[AddOrUpdateBulkFileMetadata]] = {
+  private def persistMetadata(draftMetadata: ValidationParameters, clientIdToPersistenceId: Map[String, Option[UUID]]): IO[List[AddOrUpdateBulkFileMetadata]] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
-    val csvHandler = new CSVHandler()
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
-      fileData <- IO(csvHandler.loadCSV(getFilePath(draftMetadata), draftMetadata.clientAlternateKey, draftMetadata.persistenceAlternateKey, draftMetadata.uniqueAssetIDKey))
-      addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData)
+      fileData <- IO(CSVHandler.loadCSV(getFilePath(draftMetadata), draftMetadata.clientAlternateKey, draftMetadata.persistenceAlternateKey, draftMetadata.uniqueAssetIDKey))
+      addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData, clientIdToPersistenceId)
       result <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
     } yield result
   }

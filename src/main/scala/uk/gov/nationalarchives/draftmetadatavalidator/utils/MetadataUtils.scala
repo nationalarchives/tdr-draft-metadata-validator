@@ -12,16 +12,16 @@ import java.util.UUID
 
 object MetadataUtils {
 
-  def filterProtectedFields(customMetadata: List[CustomMetadata], fileRows: List[FileRow]): List[AddOrUpdateFileMetadata] = {
+  def filterProtectedFields(customMetadata: List[CustomMetadata], fileRows: List[FileRow], clientIdToPersistenceId: Map[String, Option[UUID]]): List[AddOrUpdateFileMetadata] = {
     val filterProtectedMetadata = customMetadata.filter(!_.editable).map(_.name)
     val updatedFileRows = fileRows.map { fileMetadata =>
       val filteredMetadata = fileMetadata.metadata.filterNot(metadata => filterProtectedMetadata.contains(metadata.name))
       fileMetadata.copy(metadata = filteredMetadata)
     }
-    convertDataToBulkFileMetadataInput(updatedFileRows, customMetadata)
+    convertDataToBulkFileMetadataInput(updatedFileRows, customMetadata, clientIdToPersistenceId: Map[String, Option[UUID]])
   }
 
-  private def convertDataToBulkFileMetadataInput(fileRows: List[FileRow], customMetadata: List[CustomMetadata]): List[AddOrUpdateFileMetadata] = {
+  private def convertDataToBulkFileMetadataInput(fileRows: List[FileRow], customMetadata: List[CustomMetadata], clientIdToPersistenceId: Map[String, Option[UUID]]): List[AddOrUpdateFileMetadata] = {
     fileRows.collect { case fileRow =>
       AddOrUpdateFileMetadata(
         UUID.fromString(fileRow.matchIdentifier),
