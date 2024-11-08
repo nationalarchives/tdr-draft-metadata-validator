@@ -24,17 +24,11 @@ class MetadataUtilsSpec extends AnyFlatSpec with BeforeAndAfterEach {
     )
 
     val fileId = "16b2f65c-ec50-494b-824b-f8c08e6b575c"
-    val fileData = FileData(
-      List(
-        List("Filename", "Closure status", "Closure Period", "SHA256ClientSideChecksum", "UUID"),
-        List("file1.jpg", "Closed", "10", "ChecksumValue", fileId)
-      ),
-      List(
-        FileRow(fileId, List(Metadata("ClosurePeriod", "10"), Metadata("SHA256ClientSideChecksum", "ChecksumValue"), Metadata("ClosureStatus", "Closed")))
-      )
+    val fileRows = List(
+      FileRow(fileId, List(Metadata("ClosurePeriod", "10"), Metadata("SHA256ClientSideChecksum", "ChecksumValue"), Metadata("ClosureStatus", "Closed")))
     )
 
-    val filterProtectedFields = MetadataUtils.filterProtectedFields(customMetadata, fileData)
+    val filterProtectedFields = MetadataUtils.filterProtectedFields(customMetadata, fileRows)
     val expected: List[AddOrUpdateFileMetadata] = List(
       AddOrUpdateFileMetadata(
         UUID.fromString(fileId),
