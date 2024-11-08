@@ -10,26 +10,15 @@ import java.nio.file.{Files, Paths}
 
 class CSVHandler {
 
-  @deprecated
-  def loadCSV(filePath: String, metadataNames: List[String]): FileData = {
-    val reader = CSVReader.open(filePath)
-    val allRowsWithHeader = reader.all()
-    val fileRows = allRowsWithHeader match {
-      case _ :: rows =>
-        rows.map { data =>
-          FileRow(
-            data.last,
-            metadataNames.dropRight(1).zipWithIndex.map { case (name, index) => Metadata(name, data(index)) }
-          )
-        }
-    }
-    FileData(allRowsWithHeader, fileRows)
-  }
-
-  /** Reads a CSV file into a list of FileRows The FileRow.fileName is the identifier for the row and has been used to store the UUID in above loadCSV def (expecting the UUID to be
-    * in the last column). What the identifier to be used is to be decided FileRow metadata key(header) unaltered and the value maintained as a string
+  /** Reads a CSV file into a list of FileRows The FileRow.fileName
     * @param filePath
-    *   path to csv uniqueRowKey each row will be keyed to a column value that is unique
+    *   path to the csv data
+    * @param inputHeaderKey
+    *   the alternateKey in the metadata schema to the header in the source data
+    * @param outputHeaderKey
+    *   the alternateKey in the metadata schema to the value to be used for Metadata.name in the output FileRows
+    * @param uniqueAssetIdKey
+    *   the name of the metadata schema property to be used to uniquely identify metadata entries
     * @return
     *   List of FileRows
     */
@@ -60,6 +49,3 @@ class CSVHandler {
     Files.writeString(Paths.get(filePath), bas.toString("UTF-8"))
   }
 }
-
-@deprecated
-case class FileData(allRowsWithHeader: List[List[String]], fileRows: List[FileRow])

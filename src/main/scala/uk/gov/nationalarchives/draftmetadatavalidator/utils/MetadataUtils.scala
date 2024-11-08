@@ -3,7 +3,6 @@ package uk.gov.nationalarchives.draftmetadatavalidator.utils
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.types.DataType.{Boolean, DateTime, Text}
 import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata}
-import uk.gov.nationalarchives.draftmetadatavalidator.FileData
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.sql.Timestamp

@@ -282,31 +282,6 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     ssmClient.getParameter(getParameterRequest).parameter().value()
   }
 
-  @deprecated
-  private def getMetadataNames: List[String] = {
-    // This is a temporary change to fix the issue related to order of the columns. We should use the schema to get the DB property name
-    val columnOrder = List(
-      "ClientSideOriginalFilepath",
-      "Filename",
-      "ClientSideFileLastModifiedDate",
-      "end_date",
-      "description",
-      "former_reference_department",
-      "ClosureType",
-      "ClosureStartDate",
-      "ClosurePeriod",
-      "FoiExemptionCode",
-      "FoiExemptionAsserted",
-      "TitleClosed",
-      "TitleAlternate",
-      "DescriptionClosed",
-      "DescriptionAlternate",
-      "Language",
-      "file_name_translation",
-      "UUID"
-    )
-    columnOrder
-  }
 }
 
 object Lambda {
