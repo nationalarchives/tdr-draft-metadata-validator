@@ -14,19 +14,18 @@ object FileError extends Enumeration {
 
 case class Error(validationProcess: String, property: String, errorKey: String, message: String)
 case class ValidationErrors(assetId: String, errors: Set[Error], data: List[Metadata] = List.empty[Metadata])
-case class ErrorFileData(consignmentId: UUID, date: String, fileError: FileError, validationErrors: List[ValidationErrors], loadedRows: List[FileRow])
+case class ErrorFileData(consignmentId: UUID, date: String, fileError: FileError, validationErrors: List[ValidationErrors])
 
 object ErrorFileData {
 
   def apply(
     draftMetadata: ValidationParameters, 
     fileError: FileError = FileError.None, 
-    validationErrors: List[ValidationErrors] = Nil,
-    loadedRows: List[FileRow] = List.empty)
-  : ErrorFileData = {
+    validationErrors: List[ValidationErrors] = Nil
+  ): ErrorFileData = {
 
     val pattern = "yyyy-MM-dd"
     val dateFormat = new SimpleDateFormat(pattern)
-    ErrorFileData(draftMetadata.consignmentId, dateFormat.format(new Date), fileError, validationErrors, loadedRows)
+    ErrorFileData(draftMetadata.consignmentId, dateFormat.format(new Date), fileError, validationErrors)
   }
 }
