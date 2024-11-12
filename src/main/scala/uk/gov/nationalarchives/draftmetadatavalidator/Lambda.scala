@@ -141,7 +141,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
         if (bytesArray sameElements utf8BOM) {
           IO.unit
         } else
-          IO.raiseError(ValidationExecutionError(utf8FileErrorData))
+          IO.raiseError(ValidationExecutionError(utf8FileErrorData, List.empty[FileRow]))
       }
     }
 
@@ -166,7 +166,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       case Some(schema) =>
         val validationErrors = schemaValidate(Set(schema), List(csvData.head), validationParameters.clientAlternateKey)
         if (validationErrors.nonEmpty) {
-          IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_REQUIRED, validationErrors.toList)))
+          IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_REQUIRED, validationErrors.toList), csvData))
         } else {
           IO.unit
         }
@@ -187,14 +187,14 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
         case (identifier, values) if values.size > 1 => identifier
       }
       val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, duplicateHeaders.map(duplicateError).toSet)
-      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.DUPLICATE_HEADER, List(validationErrors))))
+      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.DUPLICATE_HEADER, List(validationErrors)), List.empty[FileRow]))
     } else { IO.unit }
   }
 
   private def validateMetadata(validationParameters: ValidationParameters, csvData: List[FileRow]): IO[ErrorFileData] = {
     val validationErrors = schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters.clientAlternateKey)
     if (validationErrors.nonEmpty) {
-      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, validationErrors)))
+      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, validationErrors), csvData))
     } else {
       IO(ErrorFileData(validationParameters))
     }
@@ -251,7 +251,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       )
     ).handleErrorWith(err => {
       logger.error(s"Metadata Validation failed to load csv :${err.getMessage}")
-      IO.raiseError(ValidationExecutionError(invalidCSVFileErrorData))
+      IO.raiseError(ValidationExecutionError(invalidCSVFileErrorData, List.empty[FileRow]))
     })
   }
 
@@ -298,7 +298,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
 object Lambda {
 
-  case class ValidationExecutionError(errorFileData: ErrorFileData) extends Throwable
+  case class ValidationExecutionError(errorFileData: ErrorFileData, csvData: List[FileRow]) extends Throwable
   case class ValidationParameters(
       consignmentId: UUID,
       schemaToValidate: Set[JsonSchemaDefinition],
