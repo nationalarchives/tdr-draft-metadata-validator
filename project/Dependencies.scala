@@ -17,7 +17,7 @@ object Dependencies {
   lazy val typeSafeConfig = "com.typesafe" % "config" % "1.4.3"
   lazy val awsLambda = "com.amazonaws" % "aws-lambda-java-core" % "1.2.3"
   lazy val awsLambdaJavaEvents = "com.amazonaws" % "aws-lambda-java-events" % "3.14.0"
-  lazy val awsSso =   "software.amazon.awssdk" % "sso" % "2.27.24"
+  lazy val awsSso = "software.amazon.awssdk" % "sso" % "2.27.24"
   lazy val awsSSoidc = "software.amazon.awssdk" % "ssooidc" % "2.27.24"
   lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % "0.1.219"
   lazy val awsSsm = "software.amazon.awssdk" % "ssm" % "2.26.27"

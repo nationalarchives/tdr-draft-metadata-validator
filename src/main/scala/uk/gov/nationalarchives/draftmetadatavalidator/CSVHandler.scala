@@ -1,7 +1,6 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import com.github.tototoshi.csv.{CSVReader, CSVWriter}
-import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.ValidationParameters
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 

@@ -22,16 +22,17 @@ class MetadataUtilsSpec extends AnyFlatSpec with BeforeAndAfterEach {
       TestUtils.createCustomMetadata("SHA256ClientSideChecksum", "Checksum", 2, DataType.Text, editable = false),
       TestUtils.createCustomMetadata("ClosureStatus", "Closure status", 3, DataType.Text)
     )
-
-    val fileId = "16b2f65c-ec50-494b-824b-f8c08e6b575c"
+    val clientFileId = "test/test.docx"
+    val persistenceFileId = "16b2f65c-ec50-494b-824b-f8c08e6b575c"
+    val clientIdPersistenceIdMap = Map(clientFileId -> UUID.fromString(persistenceFileId))
     val fileRows = List(
-      FileRow(fileId, List(Metadata("ClosurePeriod", "10"), Metadata("SHA256ClientSideChecksum", "ChecksumValue"), Metadata("ClosureStatus", "Closed")))
+      FileRow(clientFileId, List(Metadata("ClosurePeriod", "10"), Metadata("SHA256ClientSideChecksum", "ChecksumValue"), Metadata("ClosureStatus", "Closed")))
     )
 
-    val filterProtectedFields = MetadataUtils.filterProtectedFields(customMetadata, fileRows)
+    val filterProtectedFields = MetadataUtils.filterProtectedFields(customMetadata, fileRows, clientIdPersistenceIdMap)
     val expected: List[AddOrUpdateFileMetadata] = List(
       AddOrUpdateFileMetadata(
-        UUID.fromString(fileId),
+        UUID.fromString(persistenceFileId),
         List(AddOrUpdateMetadata("ClosurePeriod", "10"), AddOrUpdateMetadata("ClosureStatus", "Closed"))
       )
     )

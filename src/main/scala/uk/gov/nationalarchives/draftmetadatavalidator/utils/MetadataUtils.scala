@@ -21,7 +21,11 @@ object MetadataUtils {
     convertDataToBulkFileMetadataInput(updatedFileRows, customMetadata, clientIdToPersistenceId)
   }
 
-  private def convertDataToBulkFileMetadataInput(fileRows: List[FileRow], customMetadata: List[CustomMetadata], clientIdToPersistenceId: Map[String, UUID]): List[AddOrUpdateFileMetadata] = {
+  private def convertDataToBulkFileMetadataInput(
+      fileRows: List[FileRow],
+      customMetadata: List[CustomMetadata],
+      clientIdToPersistenceId: Map[String, UUID]
+  ): List[AddOrUpdateFileMetadata] = {
     fileRows.collect { case fileRow =>
       val persistenceId = clientIdToPersistenceId
         .getOrElse(fileRow.matchIdentifier, throw new RuntimeException("Unexpected state: db identifier unavailable"))

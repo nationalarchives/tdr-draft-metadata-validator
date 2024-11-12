@@ -54,7 +54,8 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   private val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
   private val getConsignmentFilesMetadataClient = new GraphQLClient[gcfm.Data, gcfm.Variables](apiUrl)
-  private val graphQlApi: GraphQlApi = GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, getConsignmentFilesMetadataClient)
+  private val graphQlApi: GraphQlApi =
+    GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, getConsignmentFilesMetadataClient)
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
     val consignmentId = extractConsignmentId(input)
@@ -70,10 +71,10 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
 
     val requestHandler: IO[APIGatewayProxyResponseEvent] = for {
       fileIdData <- graphQlApi.getConsignmentFilesMetadata(
-        consignmentId = UUID.fromString(consignmentId), 
-        clientSecret = getClientSecret(clientSecretPath, endpoint), 
+        consignmentId = UUID.fromString(consignmentId),
+        clientSecret = getClientSecret(clientSecretPath, endpoint),
         databaseMetadataHeaders = List(
-          SchemaUtils.convertToAlternateKey(validationParameters.persistenceAlternateKey, validationParameters.uniqueAssetIDKey), 
+          SchemaUtils.convertToAlternateKey(validationParameters.persistenceAlternateKey, validationParameters.uniqueAssetIDKey),
           "FileType"
         )
       )
