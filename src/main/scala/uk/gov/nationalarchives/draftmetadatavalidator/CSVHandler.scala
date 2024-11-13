@@ -1,14 +1,13 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import com.github.tototoshi.csv.{CSVReader, CSVWriter}
-import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.ValidationParameters
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.io.ByteArrayOutputStream
 import java.nio.file.{Files, Paths}
 
-class CSVHandler {
+object CSVHandler {
 
   /** Reads a CSV file into a list of FileRows The FileRow.fileName
     * @param filePath

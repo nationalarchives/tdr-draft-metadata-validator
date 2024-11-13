@@ -12,23 +12,30 @@ import java.util.UUID
 
 object MetadataUtils {
 
-  def filterProtectedFields(customMetadata: List[CustomMetadata], fileRows: List[FileRow]): List[AddOrUpdateFileMetadata] = {
+  def filterProtectedFields(customMetadata: List[CustomMetadata], fileRows: List[FileRow], clientIdToPersistenceId: Map[String, UUID]): List[AddOrUpdateFileMetadata] = {
     val filterProtectedMetadata = customMetadata.filter(!_.editable).map(_.name)
     val updatedFileRows = fileRows.map { fileMetadata =>
       val filteredMetadata = fileMetadata.metadata.filterNot(metadata => filterProtectedMetadata.contains(metadata.name))
       fileMetadata.copy(metadata = filteredMetadata)
     }
-    convertDataToBulkFileMetadataInput(updatedFileRows, customMetadata)
+    convertDataToBulkFileMetadataInput(updatedFileRows, customMetadata, clientIdToPersistenceId)
   }
 
-  private def convertDataToBulkFileMetadataInput(fileRows: List[FileRow], customMetadata: List[CustomMetadata]): List[AddOrUpdateFileMetadata] = {
-    fileRows.collect { case fileRow =>
+  private def convertDataToBulkFileMetadataInput(
+      fileRows: List[FileRow],
+      customMetadata: List[CustomMetadata],
+      clientIdToPersistenceId: Map[String, UUID]
+  ): List[AddOrUpdateFileMetadata] = {
+    fileRows.map { fileRow =>
+      val persistenceId = clientIdToPersistenceId
+        .getOrElse(fileRow.matchIdentifier, throw new RuntimeException("Unexpected state: db identifier unavailable"))
       AddOrUpdateFileMetadata(
-        UUID.fromString(fileRow.matchIdentifier),
-        fileRow.metadata.collect {
-          case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get)
-          case m                     => List(AddOrUpdateMetadata(m.name, ""))
-        }.flatten
+        persistenceId,
+        fileRow.metadata.flatMap {
+          case m if m.value.nonEmpty =>
+            customMetadata.find(_.name == m.name).map(cm => createAddOrUpdateMetadata(m, cm)).getOrElse(List.empty)
+          case m => List(AddOrUpdateMetadata(m.name, ""))
+        }
       )
     }
   }

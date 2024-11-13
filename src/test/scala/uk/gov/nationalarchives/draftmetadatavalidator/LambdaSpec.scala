@@ -45,7 +45,24 @@ class LambdaSpec extends ExternalServicesSpec {
 
   "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 and save metadata to db if it has no errors" in {
     authOkJson()
-    graphqlOkJson(true)
+    val testFileIdMetadata = Seq(
+      TestFileIdMetadata(
+        fileId = UUID.fromString("a060c57d-1639-4828-9a7a-67a7c64dbf6c"),
+        clientId = "test/test3.txt",
+        persistedIdHeader = "ClientSideOriginalFilepath"
+      ),
+      TestFileIdMetadata(
+        fileId = UUID.fromString("cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c"),
+        clientId = "test/test1.txt",
+        persistedIdHeader = "ClientSideOriginalFilepath"
+      ),
+      TestFileIdMetadata(
+        fileId = UUID.fromString("c4d5e0f1-f6e1-4a77-a7c0-a4317404da00"),
+        clientId = "test/test2.txt",
+        persistedIdHeader = "ClientSideOriginalFilepath"
+      )
+    )
+    graphqlOkJson(true, testFileIdMetadata)
     mockS3GetResponse("sample.csv")
     mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava
