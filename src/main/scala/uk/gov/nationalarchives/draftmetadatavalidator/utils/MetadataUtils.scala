@@ -26,13 +26,14 @@ object MetadataUtils {
       customMetadata: List[CustomMetadata],
       clientIdToPersistenceId: Map[String, UUID]
   ): List[AddOrUpdateFileMetadata] = {
-    fileRows.collect { case fileRow =>
+    fileRows.map { fileRow =>
       val persistenceId = clientIdToPersistenceId
         .getOrElse(fileRow.matchIdentifier, throw new RuntimeException("Unexpected state: db identifier unavailable"))
       AddOrUpdateFileMetadata(
         persistenceId,
         fileRow.metadata.collect {
-          case m if m.value.nonEmpty => createAddOrUpdateMetadata(m, customMetadata.find(_.name == m.name).get)
+          case m if m.value.nonEmpty => 
+            customMetadata.find(_.name == m.name).map(cm => createAddOrUpdateMetadata(m, cm)).getOrElse(List.empty)
           case m                     => List(AddOrUpdateMetadata(m.name, ""))
         }.flatten
       )
