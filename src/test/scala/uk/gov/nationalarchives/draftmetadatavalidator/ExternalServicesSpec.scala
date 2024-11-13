@@ -34,7 +34,7 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
 
   def graphQlUrl: String = wiremockGraphqlServer.url(graphQlPath)
 
-  def graphqlOkJson(saveMetadata: Boolean = false): Unit = {
+  def graphqlOkJson(saveMetadata: Boolean = false, testFileIdMetadata: Seq[TestFileIdMetadata] = Seq.empty): Unit = {
     wiremockGraphqlServer.stubFor(
       post(urlEqualTo(graphQlPath))
         .withRequestBody(containing("customMetadata"))
@@ -46,6 +46,22 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
         .withRequestBody(containing("updateConsignmentStatus"))
         .willReturn(ok("""{"data": {"updateConsignmentStatus": 1}}""".stripMargin))
     )
+
+    val filesMetadataJson = s"""{
+      "data": {
+        "getConsignment": {
+          "files": [${testFileIdMetadata.map(_.asJson).mkString(",\n")}],
+          "consignmentReference": ""
+        }
+      }
+    }"""
+
+    wiremockGraphqlServer.stubFor(
+      post(urlEqualTo(graphQlPath))
+        .withRequestBody(containing("getConsignmentFilesMetadata"))
+        .willReturn(ok(filesMetadataJson))
+    )
+
     if (saveMetadata) {
       wiremockGraphqlServer.stubFor(
         post(urlEqualTo(graphQlPath))

@@ -45,7 +45,24 @@ class LambdaSpec extends ExternalServicesSpec {
 
   "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 and save metadata to db if it has no errors" in {
     authOkJson()
-    graphqlOkJson(true)
+    val testFileIdMetadata = Seq(
+      TestFileIdMetadata(
+        fileId = UUID.fromString("a060c57d-1639-4828-9a7a-67a7c64dbf6c"),
+        clientId = "test/test3.txt",
+        persistedIdHeader = "ClientSideOriginalFilepath"
+      ),
+      TestFileIdMetadata(
+        fileId = UUID.fromString("cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c"),
+        clientId = "test/test1.txt",
+        persistedIdHeader = "ClientSideOriginalFilepath"
+      ),
+      TestFileIdMetadata(
+        fileId = UUID.fromString("c4d5e0f1-f6e1-4a77-a7c0-a4317404da00"),
+        clientId = "test/test2.txt",
+        persistedIdHeader = "ClientSideOriginalFilepath"
+      )
+    )
+    graphqlOkJson(true, testFileIdMetadata)
     mockS3GetResponse("sample.csv")
     mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava
@@ -138,59 +155,59 @@ class LambdaSpec extends ExternalServicesSpec {
       AddOrUpdateFileMetadata(
         UUID.fromString("a060c57d-1639-4828-9a7a-67a7c64dbf6c"),
         List(
-          AddOrUpdateMetadata("end_date", ""),
-          AddOrUpdateMetadata("description", "eee"),
-          AddOrUpdateMetadata("former_reference_department", ""),
-          AddOrUpdateMetadata("ClosureType", "Open"),
-          AddOrUpdateMetadata("ClosureStartDate", ""),
-          AddOrUpdateMetadata("ClosurePeriod", ""),
+          AddOrUpdateMetadata("DescriptionClosed", "false"),
           AddOrUpdateMetadata("FoiExemptionCode", ""),
-          AddOrUpdateMetadata("FoiExemptionAsserted", ""),
-          AddOrUpdateMetadata("TitleClosed", ""),
-          AddOrUpdateMetadata("TitleAlternate", ""),
-          AddOrUpdateMetadata("DescriptionClosed", ""),
           AddOrUpdateMetadata("DescriptionAlternate", ""),
+          AddOrUpdateMetadata("former_reference_department", ""),
+          AddOrUpdateMetadata("ClosurePeriod", ""),
+          AddOrUpdateMetadata("TitleAlternate", ""),
+          AddOrUpdateMetadata("TitleClosed", "false"),
+          AddOrUpdateMetadata("file_name_translation", ""),
+          AddOrUpdateMetadata("ClosureType", "Open"),
+          AddOrUpdateMetadata("description", "eee"),
+          AddOrUpdateMetadata("FoiExemptionAsserted", ""),
+          AddOrUpdateMetadata("ClosureStartDate", ""),
           AddOrUpdateMetadata("Language", "English"),
-          AddOrUpdateMetadata("file_name_translation", "")
+          AddOrUpdateMetadata("end_date", "")
         )
       ),
       AddOrUpdateFileMetadata(
         UUID.fromString("cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c"),
         List(
-          AddOrUpdateMetadata("end_date", ""),
-          AddOrUpdateMetadata("description", "hello"),
-          AddOrUpdateMetadata("former_reference_department", ""),
-          AddOrUpdateMetadata("ClosureType", "Closed"),
-          AddOrUpdateMetadata("ClosureStartDate", "1990-01-01 00:00:00.0"),
-          AddOrUpdateMetadata("ClosurePeriod", "33"),
+          AddOrUpdateMetadata("DescriptionClosed", "false"),
           AddOrUpdateMetadata("FoiExemptionCode", "27(1)"),
           AddOrUpdateMetadata("FoiExemptionCode", "27(2)"),
-          AddOrUpdateMetadata("FoiExemptionAsserted", "1990-01-01 00:00:00.0"),
-          AddOrUpdateMetadata("TitleClosed", "true"),
-          AddOrUpdateMetadata("TitleAlternate", "title"),
-          AddOrUpdateMetadata("DescriptionClosed", "false"),
           AddOrUpdateMetadata("DescriptionAlternate", ""),
+          AddOrUpdateMetadata("former_reference_department", ""),
+          AddOrUpdateMetadata("ClosurePeriod", "33"),
+          AddOrUpdateMetadata("TitleAlternate", "title"),
+          AddOrUpdateMetadata("TitleClosed", "true"),
+          AddOrUpdateMetadata("file_name_translation", ""),
+          AddOrUpdateMetadata("ClosureType", "Closed"),
+          AddOrUpdateMetadata("description", "hello"),
+          AddOrUpdateMetadata("FoiExemptionAsserted", "1990-01-01 00:00:00.0"),
+          AddOrUpdateMetadata("ClosureStartDate", "1990-01-01 00:00:00.0"),
           AddOrUpdateMetadata("Language", "English"),
-          AddOrUpdateMetadata("file_name_translation", "")
+          AddOrUpdateMetadata("end_date", "")
         )
       ),
       AddOrUpdateFileMetadata(
         UUID.fromString("c4d5e0f1-f6e1-4a77-a7c0-a4317404da00"),
         List(
-          AddOrUpdateMetadata("end_date", ""),
-          AddOrUpdateMetadata("description", "www"),
-          AddOrUpdateMetadata("former_reference_department", ""),
-          AddOrUpdateMetadata("ClosureType", "Open"),
-          AddOrUpdateMetadata("ClosureStartDate", ""),
-          AddOrUpdateMetadata("ClosurePeriod", ""),
+          AddOrUpdateMetadata("DescriptionClosed", "false"),
           AddOrUpdateMetadata("FoiExemptionCode", ""),
-          AddOrUpdateMetadata("FoiExemptionAsserted", ""),
-          AddOrUpdateMetadata("TitleClosed", ""),
-          AddOrUpdateMetadata("TitleAlternate", ""),
-          AddOrUpdateMetadata("DescriptionClosed", ""),
           AddOrUpdateMetadata("DescriptionAlternate", ""),
+          AddOrUpdateMetadata("former_reference_department", ""),
+          AddOrUpdateMetadata("ClosurePeriod", ""),
+          AddOrUpdateMetadata("TitleAlternate", ""),
+          AddOrUpdateMetadata("TitleClosed", "false"),
+          AddOrUpdateMetadata("file_name_translation", ""),
+          AddOrUpdateMetadata("ClosureType", "Open"),
+          AddOrUpdateMetadata("description", "www"),
+          AddOrUpdateMetadata("FoiExemptionAsserted", ""),
+          AddOrUpdateMetadata("ClosureStartDate", ""),
           AddOrUpdateMetadata("Language", "English"),
-          AddOrUpdateMetadata("file_name_translation", "")
+          AddOrUpdateMetadata("end_date", "")
         )
       )
     )
