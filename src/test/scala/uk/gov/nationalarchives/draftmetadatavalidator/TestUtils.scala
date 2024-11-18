@@ -25,6 +25,9 @@ object TestUtils {
       Option(exportOrdinal),
       allowExport = allowExport
     )
+
+  def testFileIdMetadata(clientIds: Seq[String]): Seq[TestFileIdMetadata] =
+    clientIds.map(id => TestFileIdMetadata(UUID.randomUUID(), "ClientSideOriginalFilepath", id))
 }
 
 case class TestFileIdMetadata(fileId: UUID, persistedIdHeader: String, clientId: String) {

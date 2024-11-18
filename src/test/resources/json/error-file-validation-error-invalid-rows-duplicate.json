@@ -1,0 +1,115 @@
+{
+  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+  "date" : "2024-11-18",
+  "fileError" : "SCHEMA_VALIDATION",
+  "validationErrors" : [
+    {
+      "assetId" : "test/test2.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
+          "property" : "Is the title sensitive for the public?",
+          "errorKey" : "const",
+          "message" : "Must be No for an open record"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "Is the title sensitive for the public?",
+          "errorKey" : "type",
+          "message" : "Must be Yes or No"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "Date last modified",
+          "errorKey" : "format.date",
+          "message" : "We are unable to recognise this as a valid date format, please provide a date in the format yyyy-mm-dd"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "Is the description sensitive for the public?",
+          "errorKey" : "type",
+          "message" : "Must be Yes or No"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
+          "property" : "Is the description sensitive for the public?",
+          "errorKey" : "const",
+          "message" : "Must be No for an open record"
+        },
+        {
+          "validationProcess" : "ROW_VALIDATION",
+          "property" : "",
+          "errorKey" : "duplicate",
+          "message" : "This file appears more than once in your metadata file. There must be only one row in your metadata file for each file you uploaded"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "Filepath",
+          "value" : "test/test2.txt"
+        },
+        {
+          "name" : "Is the title sensitive for the public?",
+          "value" : ""
+        },
+        {
+          "name" : "Date last modified",
+          "value" : "hhhh"
+        },
+        {
+          "name" : "Is the description sensitive for the public?",
+          "value" : ""
+        }
+      ]
+    },
+    {
+      "assetId" : "test/test3.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
+          "property" : "Is the title sensitive for the public?",
+          "errorKey" : "const",
+          "message" : "Must be No for an open record"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "Is the title sensitive for the public?",
+          "errorKey" : "type",
+          "message" : "Must be Yes or No"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "Is the description sensitive for the public?",
+          "errorKey" : "type",
+          "message" : "Must be Yes or No"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
+          "property" : "Is the description sensitive for the public?",
+          "errorKey" : "const",
+          "message" : "Must be No for an open record"
+        },
+        {
+          "validationProcess" : "ROW_VALIDATION",
+          "property" : "",
+          "errorKey" : "duplicate",
+          "message" : "This file appears more than once in your metadata file. There must be only one row in your metadata file for each file you uploaded"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "Filepath",
+          "value" : "test/test3.txt"
+        },
+        {
+          "name" : "Is the title sensitive for the public?",
+          "value" : ""
+        },
+        {
+          "name" : "Is the description sensitive for the public?",
+          "value" : ""
+        }
+      ]
+    }
+  ]
+}
