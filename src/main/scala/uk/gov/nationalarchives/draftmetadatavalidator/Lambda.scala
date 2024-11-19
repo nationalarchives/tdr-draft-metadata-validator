@@ -2,14 +2,13 @@ package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
 import cats.effect.kernel.Resource
-import cats.Semigroup
 import cats.syntax.semigroup._
 import ValidationErrors._
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.GetConsignmentFilesMetadata.{getConsignmentFilesMetadata, getConsignmentFilesMetadata => gcfm}
+import graphql.codegen.GetConsignmentFilesMetadata.{getConsignmentFilesMetadata => gcfm}
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import io.circe.Encoder

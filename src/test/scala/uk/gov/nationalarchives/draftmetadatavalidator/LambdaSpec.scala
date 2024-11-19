@@ -147,7 +147,7 @@ class LambdaSpec extends ExternalServicesSpec {
     authOkJson()
     graphqlOkJson(testFileIdMetadata = fileIdMetadata)
     mockS3GetResponse("sample-invalid-rows-unknown.csv")
-    checkFileError("json/error-file-invalid-rows-unknown.json")
+    checkFileError("json/error-file-validation-error-invalid-rows-unknown.json")
   }
 
   "handleRequest" should "download the draft metadata csv file with duplicate unknown file row errors, validate it and save error file with errors to s3" in {

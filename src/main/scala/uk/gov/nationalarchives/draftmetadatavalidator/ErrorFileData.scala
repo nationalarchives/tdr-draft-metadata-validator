@@ -17,7 +17,7 @@ case class Error(validationProcess: String, property: String, errorKey: String, 
 case class ValidationErrors(assetId: String, errors: Set[Error], data: List[Metadata] = List.empty[Metadata])
 
 object ValidationErrors {
-  implicit val validationErrorsListSemigroup: Semigroup[List[ValidationErrors]] =
+  implicit val combineValidationErrors: Semigroup[List[ValidationErrors]] =
     Semigroup.instance[List[ValidationErrors]] { (validationErrors, moreValidationErrors) =>
       (validationErrors ++ moreValidationErrors)
         .groupBy(_.assetId)
