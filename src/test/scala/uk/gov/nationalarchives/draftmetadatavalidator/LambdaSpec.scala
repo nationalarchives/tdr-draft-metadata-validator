@@ -12,6 +12,7 @@ import io.circe.parser.decode
 import org.mockito.MockitoSugar.mock
 import org.scalatest.matchers.must.Matchers.{be, convertToAnyMustWrapper}
 import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
+import uk.gov.nationalarchives.draftmetadatavalidator.TestUtils.testFileIdMetadata
 
 import java.nio.file.{Files, Paths}
 import java.text.SimpleDateFormat
@@ -45,24 +46,8 @@ class LambdaSpec extends ExternalServicesSpec {
 
   "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 and save metadata to db if it has no errors" in {
     authOkJson()
-    val testFileIdMetadata = Seq(
-      TestFileIdMetadata(
-        fileId = UUID.fromString("a060c57d-1639-4828-9a7a-67a7c64dbf6c"),
-        clientId = "test/test3.txt",
-        persistedIdHeader = "ClientSideOriginalFilepath"
-      ),
-      TestFileIdMetadata(
-        fileId = UUID.fromString("cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c"),
-        clientId = "test/test1.txt",
-        persistedIdHeader = "ClientSideOriginalFilepath"
-      ),
-      TestFileIdMetadata(
-        fileId = UUID.fromString("c4d5e0f1-f6e1-4a77-a7c0-a4317404da00"),
-        clientId = "test/test2.txt",
-        persistedIdHeader = "ClientSideOriginalFilepath"
-      )
-    )
-    graphqlOkJson(true, testFileIdMetadata)
+    val fileIdMetadata = testFileIdMetadata(Seq("test/test1.txt", "test/test2.txt", "test/test3.txt"))
+    graphqlOkJson(true, fileIdMetadata)
     mockS3GetResponse("sample.csv")
     mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava
@@ -91,15 +76,16 @@ class LambdaSpec extends ExternalServicesSpec {
     val addOrUpdateBulkFileMetadataInput = request2.variables.addOrUpdateBulkFileMetadataInput
 
     addOrUpdateBulkFileMetadataInput.fileMetadata.size should be(3)
-    addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput)
+    addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput(fileIdMetadata))
 
     updateConsignmentStatusInput.statusType must be("DraftMetadata")
     updateConsignmentStatusInput.statusValue must be(Some("Completed"))
   }
 
   "handleRequest" should "download the draft metadata csv file, check for schema errors and save error file with errors to s3" in {
+    val fileIdMetadata = testFileIdMetadata(Seq("test/test1.txt", "test/test2.txt", "test/test3.txt"))
     authOkJson()
-    graphqlOkJson()
+    graphqlOkJson(testFileIdMetadata = fileIdMetadata)
     mockS3GetResponse("invalid-sample.csv")
     checkFileError("json/error-file.json")
   }
@@ -132,6 +118,54 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/no-match-col-error.json")
   }
 
+  "handleRequest" should "download the draft metadata csv file with duplicate file row errors, validate it and save error file with errors to s3" in {
+    val fileIdMetadata = testFileIdMetadata(Seq("test/test1.txt", "test/test2.txt", "test/test3.txt"))
+    authOkJson()
+    graphqlOkJson(testFileIdMetadata = fileIdMetadata)
+    mockS3GetResponse("sample-invalid-rows-duplicate.csv")
+    checkFileError("json/error-file-invalid-rows-duplicate.json")
+  }
+
+  "handleRequest" should "download the draft metadata csv file with validation errors and duplicate file rows, validate it and save error file with errors to s3" in {
+    val fileIdMetadata = testFileIdMetadata(Seq("test/test1.txt", "test/test2.txt", "test/test3.txt"))
+    authOkJson()
+    graphqlOkJson(testFileIdMetadata = fileIdMetadata)
+    mockS3GetResponse("sample-validation-error-invalid-rows-duplicate.csv")
+    checkFileError("json/error-file-validation-error-invalid-rows-duplicate.json")
+  }
+
+  "handleRequest" should "download the draft metadata csv file with missing file row errors, validate it and save error file with errors to s3" in {
+    val fileIdMetadata = testFileIdMetadata(Seq("test/test1.txt", "test/test2.txt", "test/test3.txt"))
+    authOkJson()
+    graphqlOkJson(testFileIdMetadata = fileIdMetadata)
+    mockS3GetResponse("sample-invalid-rows-missing.csv")
+    checkFileError("json/error-file-invalid-rows-missing.json")
+  }
+
+  "handleRequest" should "download the draft metadata csv file with unknown file row errors, validate it and save error file with errors to s3" in {
+    val fileIdMetadata = testFileIdMetadata(Seq("test/test1.txt", "test/test2.txt", "test/test3.txt"))
+    authOkJson()
+    graphqlOkJson(testFileIdMetadata = fileIdMetadata)
+    mockS3GetResponse("sample-invalid-rows-unknown.csv")
+    checkFileError("json/error-file-validation-error-invalid-rows-unknown.json")
+  }
+
+  "handleRequest" should "download the draft metadata csv file with duplicate unknown file row errors, validate it and save error file with errors to s3" in {
+    val fileIdMetadata = testFileIdMetadata(Seq("test/test1.txt", "test/test2.txt", "test/test3.txt"))
+    authOkJson()
+    graphqlOkJson(testFileIdMetadata = fileIdMetadata)
+    mockS3GetResponse("sample-invalid-rows-duplicate-unknown.csv")
+    checkFileError("json/error-file-invalid-rows-duplicate-unknown.json")
+  }
+
+  "handleRequest" should "download the draft metadata csv with file validation and file row errors, validate it and save error file with errors to s3" in {
+    val fileIdMetadata = testFileIdMetadata(Seq("test/test1.txt", "test/test2.txt", "test/test3.txt"))
+    authOkJson()
+    graphqlOkJson(testFileIdMetadata = fileIdMetadata)
+    mockS3GetResponse("sample-validation-errors-invalid-rows.csv")
+    checkFileError("json/error-file-validation-errors-invalid-rows.json")
+  }
+
   private def checkFileError(errorFile: String) = {
     mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava
@@ -157,10 +191,10 @@ class LambdaSpec extends ExternalServicesSpec {
     updateConsignmentStatusInput.statusValue must be(Some("CompletedWithIssues"))
   }
 
-  private def expectedFileMetadataInput: List[AddOrUpdateFileMetadata] = {
+  private def expectedFileMetadataInput(fileIdMetadata: Seq[TestFileIdMetadata]): List[AddOrUpdateFileMetadata] = {
     List(
       AddOrUpdateFileMetadata(
-        UUID.fromString("a060c57d-1639-4828-9a7a-67a7c64dbf6c"),
+        fileIdMetadata.find(_.clientId == "test/test3.txt").get.fileId,
         List(
           AddOrUpdateMetadata("DescriptionClosed", "false"),
           AddOrUpdateMetadata("FoiExemptionCode", ""),
@@ -179,7 +213,7 @@ class LambdaSpec extends ExternalServicesSpec {
         )
       ),
       AddOrUpdateFileMetadata(
-        UUID.fromString("cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c"),
+        fileIdMetadata.find(_.clientId == "test/test1.txt").get.fileId,
         List(
           AddOrUpdateMetadata("DescriptionClosed", "false"),
           AddOrUpdateMetadata("FoiExemptionCode", "27(1)"),
@@ -199,7 +233,7 @@ class LambdaSpec extends ExternalServicesSpec {
         )
       ),
       AddOrUpdateFileMetadata(
-        UUID.fromString("c4d5e0f1-f6e1-4a77-a7c0-a4317404da00"),
+        fileIdMetadata.find(_.clientId == "test/test2.txt").get.fileId,
         List(
           AddOrUpdateMetadata("DescriptionClosed", "false"),
           AddOrUpdateMetadata("FoiExemptionCode", ""),
