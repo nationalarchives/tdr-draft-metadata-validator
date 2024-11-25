@@ -26,5 +26,5 @@ object Dependencies {
   lazy val circeGeneric = "io.circe" %% "circe-generic" % circeVersion
   lazy val circeParser = "io.circe" %% "circe-parser" % circeVersion
   lazy val circeGenericExtras = "io.circe" %% "circe-generic-extras" % "0.14.3"
-
+  lazy val  utf8Validator = "uk.gov.nationalarchives" % "utf8-validator" % "1.2"
 }
