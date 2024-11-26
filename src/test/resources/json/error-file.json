@@ -4,7 +4,28 @@
   "fileError" : "SCHEMA_VALIDATION",
   "validationErrors" : [
     {
-      "assetId" : "a060c57d-1639-4828-9a7a-67a7c64dbf6c",
+      "assetId" : "test/test1.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "FOI exemption code",
+          "errorKey" : "enum",
+          "message" : "Must be a pipe delimited list of valid FOI codes, (eg. 31|33). Please see the guidance for more detail on valid codes"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "FOI exemption code",
+          "value" : "78|27(1)|27(2)"
+        },
+        {
+          "name" : "Filepath",
+          "value" : "test/test1.txt"
+        }
+      ]
+    },
+    {
+      "assetId" : "test/test3.txt",
       "errors" : [
         {
           "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
@@ -61,27 +82,6 @@
         {
           "name" : "Filepath",
           "value" : "test/test3.txt"
-        }
-      ]
-    },
-    {
-      "assetId" : "cbf2cba5-f1dc-45bd-ae6d-2b042336ce6c",
-      "errors" : [
-        {
-          "validationProcess" : "SCHEMA_BASE",
-          "property" : "FOI exemption code",
-          "errorKey" : "enum",
-          "message" : "This must be a pipe delimited list of valid FOI codes, (eg. 31|33). Please see the guidance for more detail on valid codes"
-        }
-      ],
-      "data" : [
-        {
-          "name" : "FOI exemption code",
-          "value" : "78|27(1)|27(2)"
-        },
-        {
-          "name" : "Filepath",
-          "value" : "test/test1.txt"
         }
       ]
     }

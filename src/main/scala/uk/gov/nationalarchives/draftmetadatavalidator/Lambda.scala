@@ -2,12 +2,13 @@ package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
 import cats.effect.kernel.Resource
+import cats.syntax.semigroup._
+import ValidationErrors._
 import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
 import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.GetConsignmentFilesMetadata.getConsignmentFilesMetadata.GetConsignment
-import graphql.codegen.GetConsignmentFilesMetadata.{getConsignmentFilesMetadata, getConsignmentFilesMetadata => gcfm}
+import graphql.codegen.GetConsignmentFilesMetadata.{getConsignmentFilesMetadata => gcfm}
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import io.circe.Encoder
@@ -78,10 +79,10 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
           "FileType"
         )
       )
-      clientToPersistenceIdMap = IdentityUtils.buildClientToPersistenceIdMap(fileIdData, validationParameters)
-      errorFileData <- doValidation(validationParameters)
+      clientToPersistenceId = IdentityUtils.buildClientToPersistenceIdMap(fileIdData, validationParameters)
+      errorFileData <- doValidation(validationParameters, clientToPersistenceId)
       _ <- writeErrorFileDataToFile(validationParameters, errorFileData)
-      _ <- if (errorFileData.validationErrors.isEmpty) persistMetadata(validationParameters, clientToPersistenceIdMap) else IO.unit
+      _ <- if (errorFileData.validationErrors.isEmpty) persistMetadata(validationParameters, clientToPersistenceId) else IO.unit
       _ <- updateStatus(errorFileData, validationParameters)
     } yield {
       val response = new APIGatewayProxyResponseEvent()
@@ -100,7 +101,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       .unsafeRunSync()(cats.effect.unsafe.implicits.global)
   }
 
-  private def doValidation(validationParameters: ValidationParameters): IO[ErrorFileData] = {
+  private def doValidation(validationParameters: ValidationParameters, clientIdToPersistenceId: Map[String, UUID]): IO[ErrorFileData] = {
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     val validationProgram = for {
       _ <- s3Files.downloadFile(bucket, validationParameters)
@@ -108,7 +109,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       _ <- validateDuplicateHeaders(validationParameters)
       csvData <- loadCSV(validationParameters)
       _ <- validateRequired(csvData, validationParameters)
-      _ <- validateMetadata(validationParameters, csvData)
+      _ <- validateRows(validationParameters, csvData, clientIdToPersistenceId, validationParameters.checkAgainstUploadedRecords)
     } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
 
     // all validations will raise ValidationExecutionError if they do not pass
@@ -191,16 +192,27 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
     } else { IO.unit }
   }
 
-  private def validateMetadata(validationParameters: ValidationParameters, csvData: List[FileRow]): IO[ErrorFileData] = {
-    val validationErrors = schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters.clientAlternateKey)
-    if (validationErrors.nonEmpty) {
-      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, validationErrors), csvData))
-    } else {
-      IO(ErrorFileData(validationParameters))
-    }
+  private def validateRows(
+      validationParameters: ValidationParameters,
+      csvData: List[FileRow],
+      clientIdToPersistenceId: Map[String, UUID],
+      checkAgainstUploadedRecords: Boolean
+  ): IO[ErrorFileData] = {
+    def skipUnless(toggle: Boolean): List[ValidationErrors] => IO[List[ValidationErrors]] = validated => if (toggle) IO(validated) else IO(List.empty)
+    for {
+      duplicateRowErrors <- IO(RowValidator.validateMissingRows(clientIdToPersistenceId, csvData, messageProperties, validationParameters))
+      missingRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateDuplicateRows(csvData, messageProperties, validationParameters))
+      unknownRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateUnknownRows(clientIdToPersistenceId, csvData, messageProperties, validationParameters))
+      rowSchemaErrors <- IO(schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters.clientAlternateKey))
+      combinedErrors = duplicateRowErrors |+| missingRowErrors |+| unknownRowErrors |+| rowSchemaErrors
+      result <-
+        if (combinedErrors.nonEmpty)
+          IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, combinedErrors), csvData))
+        else IO.pure(ErrorFileData(validationParameters))
+    } yield result
   }
 
-  private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], alternateKey: String) = {
+  private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], alternateKey: String): List[ValidationErrors] = {
     MetadataValidationJsonSchema
       .validate(schema, csvData)
       .collect {
@@ -305,7 +317,8 @@ object Lambda {
       uniqueAssetIDKey: String,
       clientAlternateKey: String,
       persistenceAlternateKey: String,
-      requiredSchema: Option[JsonSchemaDefinition] = None
+      requiredSchema: Option[JsonSchemaDefinition] = None,
+      checkAgainstUploadedRecords: Boolean = true
   )
   def getFilePath(draftMetadata: ValidationParameters) = s"""$rootDirectory/${draftMetadata.consignmentId}/$fileName"""
   def getErrorFilePath(draftMetadata: ValidationParameters) = s"""$rootDirectory/${draftMetadata.consignmentId}/$errorFileName"""

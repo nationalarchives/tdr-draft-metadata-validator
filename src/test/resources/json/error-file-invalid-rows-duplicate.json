@@ -1,0 +1,41 @@
+{
+  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+  "date" : "$today",
+  "fileError" : "SCHEMA_VALIDATION",
+  "validationErrors" : [
+    {
+      "assetId" : "test/test2.txt",
+      "errors" : [
+        {
+          "validationProcess" : "ROW_VALIDATION",
+          "property" : "",
+          "errorKey" : "duplicate",
+          "message" : "This file appears more than once in your metadata file. There must be only one row in your metadata file for each file you uploaded"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "Filepath",
+          "value" : "test/test2.txt"
+        }
+      ]
+    },
+    {
+      "assetId" : "test/test3.txt",
+      "errors" : [
+        {
+          "validationProcess" : "ROW_VALIDATION",
+          "property" : "",
+          "errorKey" : "duplicate",
+          "message" : "This file appears more than once in your metadata file. There must be only one row in your metadata file for each file you uploaded"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "Filepath",
+          "value" : "test/test3.txt"
+        }
+      ]
+    }
+  ]
+}
