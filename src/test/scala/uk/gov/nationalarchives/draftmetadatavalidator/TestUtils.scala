@@ -5,6 +5,8 @@ import graphql.codegen.types.DataType
 import graphql.codegen.types.DataType.Text
 import graphql.codegen.types.PropertyType.Defined
 
+import java.util.UUID
+
 object TestUtils {
 
   def createCustomMetadata(name: String, fullName: String, exportOrdinal: Int, dataType: DataType = Text, allowExport: Boolean = true, editable: Boolean = true): CustomMetadata =
@@ -23,4 +25,23 @@ object TestUtils {
       Option(exportOrdinal),
       allowExport = allowExport
     )
+}
+
+case class TestFileIdMetadata(fileId: UUID, persistedIdHeader: String, clientId: String) {
+  val asJson: String =
+    s"""{
+       |  "fileId": "$fileId",
+       |  "fileName": "$clientId",
+       |  "fileMetadata": [
+       |    {
+       |      "name": "$persistedIdHeader",
+       |      "value": "$clientId"
+       |    },
+       |    {
+       |      "name": "FileType",
+       |      "value": "File"
+       |    }
+       |  ],
+       |  "fileStatuses": []
+       |}""".stripMargin
 }

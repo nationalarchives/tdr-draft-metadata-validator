@@ -4,7 +4,7 @@
   "fileError" : "SCHEMA_REQUIRED",
   "validationErrors" : [
     {
-      "assetId" : "a060c57d-1639-4828-9a7a-67a7c64dbf6c",
+      "assetId" : "test/test3.txt",
       "errors" : [
         {
           "validationProcess" : "SCHEMA_REQUIRED",
