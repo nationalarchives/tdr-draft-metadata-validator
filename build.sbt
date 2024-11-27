@@ -25,6 +25,7 @@ lazy val root = (project in file("."))
       circeGeneric,
       circeCore,
       circeParser,
+      utf8Validator,
       scalaTest % Test,
       mockitoScala % Test,
       mockitoScalaTest % Test
