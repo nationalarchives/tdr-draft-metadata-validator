@@ -53,8 +53,7 @@ class LambdaSpec extends ExternalServicesSpec {
     mockS3GetResponse("sample.csv")
     mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava
-    val response = new Lambda().handleRequest(input, mockContext)
-//    response.getStatusCode should equal(200)
+    new Lambda().handleRequest(input, mockContext)
 
     val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala.filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT).toList
     s3Interactions.size shouldBe 1
