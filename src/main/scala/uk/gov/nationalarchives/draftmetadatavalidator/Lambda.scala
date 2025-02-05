@@ -85,6 +85,7 @@ class Lambda {
       _ <- updateStatus(errorFileData, validationParameters)
     } yield ()
 
+    logger.info(s"Metadata validation was run for $consignmentId")
     resultIO.unsafeRunSync()(cats.effect.unsafe.implicits.global)
   }
 
