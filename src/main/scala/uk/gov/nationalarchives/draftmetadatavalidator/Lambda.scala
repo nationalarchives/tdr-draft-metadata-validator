@@ -3,9 +3,7 @@ package uk.gov.nationalarchives.draftmetadatavalidator
 import cats.effect.IO
 import cats.effect.kernel.Resource
 import cats.syntax.semigroup._
-import ValidationErrors._
-import com.amazonaws.services.lambda.runtime.events.APIGatewayProxyResponseEvent
-import com.amazonaws.services.lambda.runtime.{Context, RequestHandler}
+import com.amazonaws.services.lambda.runtime.Context
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.GetConsignmentFilesMetadata.{getConsignmentFilesMetadata => gcfm}
@@ -25,6 +23,7 @@ import uk.gov.nationalarchives.aws.utils.s3.S3Clients._
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{ValidationExecutionError, ValidationParameters, getErrorFilePath, getFilePath}
+import uk.gov.nationalarchives.draftmetadatavalidator.ValidationErrors._
 import uk.gov.nationalarchives.draftmetadatavalidator.utils.MetadataUtils
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
@@ -42,7 +41,7 @@ import java.util.{Properties, UUID}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.Source
 
-class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayProxyResponseEvent] {
+class Lambda {
 
   implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
   implicit val keycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment(authUrl, "tdr", timeToLiveSecs)
@@ -58,7 +57,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
   private val graphQlApi: GraphQlApi =
     GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, getConsignmentFilesMetadataClient)
 
-  def handleRequest(input: java.util.Map[String, Object], context: Context): APIGatewayProxyResponseEvent = {
+  def handleRequest(input: java.util.Map[String, Object], context: Context): Unit = {
     val consignmentId = extractConsignmentId(input)
     val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN)
     val validationParameters: ValidationParameters = ValidationParameters(
@@ -70,7 +69,7 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       requiredSchema = Some(REQUIRED_SCHEMA)
     )
 
-    val requestHandler: IO[APIGatewayProxyResponseEvent] = for {
+    val resultIO = for {
       fileIdData <- graphQlApi.getConsignmentFilesMetadata(
         consignmentId = UUID.fromString(consignmentId),
         clientSecret = getClientSecret(clientSecretPath, endpoint),
@@ -84,21 +83,9 @@ class Lambda extends RequestHandler[java.util.Map[String, Object], APIGatewayPro
       _ <- writeErrorFileDataToFile(validationParameters, errorFileData)
       _ <- if (errorFileData.validationErrors.isEmpty) persistMetadata(validationParameters, clientToPersistenceId) else IO.unit
       _ <- updateStatus(errorFileData, validationParameters)
-    } yield {
-      val response = new APIGatewayProxyResponseEvent()
-      response.setStatusCode(200)
-      response
-    }
+    } yield ()
 
-    requestHandler
-      .handleErrorWith(error => {
-        logger.error(s"Unexpected validation problem:${error.getMessage}")
-        val unexpectedFailureResponse = new APIGatewayProxyResponseEvent()
-        unexpectedFailureResponse.setStatusCode(500)
-        unexpectedFailureResponse.withBody(s"Unexpected validation problem:${error.getMessage}")
-        IO(unexpectedFailureResponse)
-      })
-      .unsafeRunSync()(cats.effect.unsafe.implicits.global)
+    resultIO.unsafeRunSync()(cats.effect.unsafe.implicits.global)
   }
 
   private def doValidation(validationParameters: ValidationParameters, clientIdToPersistenceId: Map[String, UUID]): IO[ErrorFileData] = {

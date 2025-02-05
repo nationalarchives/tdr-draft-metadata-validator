@@ -1,18 +1,20 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import com.amazonaws.services.lambda.runtime.Context
-import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, put, urlEqualTo}
+import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.RequestMethod
 import com.github.tomakehurst.wiremock.stubbing.{ServeEvent, StubMapping}
-import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
+import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, AddOrUpdateFileMetadata, AddOrUpdateMetadata, ConsignmentStatusInput}
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import org.mockito.MockitoSugar.mock
-import org.scalatest.matchers.must.Matchers.{be, convertToAnyMustWrapper}
+import org.scalatest.matchers.must.Matchers.{be, convertToAnyMustWrapper, include}
 import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
+import sttp.model.StatusCode
 import uk.gov.nationalarchives.draftmetadatavalidator.TestUtils.testFileIdMetadata
+import uk.gov.nationalarchives.tdr.error.HttpException
 
 import java.nio.file.{Files, Paths}
 import java.text.SimpleDateFormat
@@ -51,8 +53,7 @@ class LambdaSpec extends ExternalServicesSpec {
     mockS3GetResponse("sample.csv")
     mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava
-    val response = new Lambda().handleRequest(input, mockContext)
-    response.getStatusCode should equal(200)
+    new Lambda().handleRequest(input, mockContext)
 
     val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala.filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT).toList
     s3Interactions.size shouldBe 1
@@ -81,6 +82,33 @@ class LambdaSpec extends ExternalServicesSpec {
 
     updateConsignmentStatusInput.statusType must be("DraftMetadata")
     updateConsignmentStatusInput.statusValue must be(Some("Completed"))
+  }
+
+  "handleRequest" should "return 500 response and throw an error message when a call to the api fails" in {
+    authOkJson()
+    val fileIdMetadata = testFileIdMetadata(Seq("test/test1.txt", "test/test2.txt", "test/test3.txt"))
+    graphqlOkJson(testFileIdMetadata = fileIdMetadata)
+    mockS3GetResponse("sample.csv")
+    mockS3ErrorFilePutResponse()
+
+    wiremockGraphqlServer.stubFor(
+      post(urlEqualTo(graphQlPath))
+        .withRequestBody(containing("addOrUpdateBulkFileMetadata"))
+        .willReturn(serverError().withBody("Failed to persist metadata"))
+    )
+
+    val input = Map("consignmentId" -> consignmentId).asJava
+    val exception = intercept[HttpException] {
+      new Lambda().handleRequest(input, mockContext)
+    }
+
+    val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala
+      .filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT)
+      .toList
+    s3Interactions.size shouldBe 1
+
+    exception.code should equal(StatusCode(500))
+    exception.getMessage should include("Failed to persist metadata")
   }
 
   "handleRequest" should "download the draft metadata csv file, check for schema errors and save error file with errors to s3" in {
@@ -170,8 +198,7 @@ class LambdaSpec extends ExternalServicesSpec {
   private def checkFileError(errorFile: String) = {
     mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava
-    val response = new Lambda().handleRequest(input, mockContext)
-    response.getStatusCode should equal(200)
+    new Lambda().handleRequest(input, mockContext)
 
     val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala.filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT).toList
     s3Interactions.size shouldBe 1
