@@ -40,6 +40,7 @@ import java.util
 import java.util.{Properties, UUID}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.Source
+import scala.jdk.CollectionConverters.MapHasAsJava
 
 class Lambda {
 
@@ -57,7 +58,8 @@ class Lambda {
   private val graphQlApi: GraphQlApi =
     GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, getConsignmentFilesMetadataClient)
 
-  def handleRequest(input: java.util.Map[String, Object], context: Context): Unit = {
+  def handleRequest(input: java.util.Map[String, Object], context: Context): java.util.Map[String, Object] = {
+    val startTime = System.currentTimeMillis()
     val consignmentId = extractConsignmentId(input)
     val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN)
     val validationParameters: ValidationParameters = ValidationParameters(
@@ -87,6 +89,10 @@ class Lambda {
 
     logger.info(s"Metadata validation was run for $consignmentId")
     resultIO.unsafeRunSync()(cats.effect.unsafe.implicits.global)
+    Map[String, Object](
+      "consignmentId" -> consignmentId,
+      "validationTime" -> s"${(System.currentTimeMillis() - startTime) / 1000.0} seconds"
+    ).asJava
   }
 
   private def doValidation(validationParameters: ValidationParameters, clientIdToPersistenceId: Map[String, UUID]): IO[ErrorFileData] = {
