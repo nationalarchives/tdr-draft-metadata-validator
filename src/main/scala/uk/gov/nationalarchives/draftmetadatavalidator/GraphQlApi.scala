@@ -97,7 +97,6 @@ class GraphQlApi(
   implicit class FutureUtils[T](f: Future[T]) {
     def toIO: IO[T] = IO.fromFuture(IO(f))
   }
-
 }
 
 object GraphQlApi {

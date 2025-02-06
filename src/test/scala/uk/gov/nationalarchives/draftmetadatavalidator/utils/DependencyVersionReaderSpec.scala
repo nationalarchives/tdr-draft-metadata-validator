@@ -7,6 +7,7 @@ import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.BASE_S
 class DependencyVersionReaderSpec extends AnyFlatSpec {
 
   "dependencies version reader" should "read version of the da-metadata-schema" in {
+
     val containingFilePath = BASE_SCHEMA.schemaLocation
     val version: Option[String] = findDependencyVersion(containingFilePath)
     assert(version.isDefined)
