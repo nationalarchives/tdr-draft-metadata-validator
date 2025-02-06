@@ -17,6 +17,8 @@ import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import sangria.ast.Document
 import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend}
+import uk.gov.nationalarchives.tdr.GraphQLClient.Extensions
+import uk.gov.nationalarchives.tdr.error.GraphQlError
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.{GraphQLClient, GraphQlResponse}
 
@@ -47,19 +49,20 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
 
   "getCustomMetadata" should "throw an exception when no custom metadata are found" in {
     val api = getGraphQLAPI
+    val graphQlError = GraphQLClient.Error("Unable to get custom metadata", Nil, Nil, Some(Extensions(Some("NOT_AUTHORISED"))))
 
     doAnswer(() => Future(new BearerAccessToken("token")))
       .when(keycloak)
       .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
 
-    doAnswer(() => Future(GraphQlResponse[cm.Data](None, Nil)))
+    doAnswer(() => Future(GraphQlResponse[cm.Data](None, List(GraphQlError(graphQlError)))))
       .when(customMetadataClient)
       .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[cm.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
 
     val exception = intercept[RuntimeException] {
       api.getCustomMetadata(consignmentId, "secret").unsafeRunSync()
     }
-    exception.getMessage should equal(s"No custom metadata definitions found")
+    exception.getMessage should equal(s"Unable to get custom metadata")
   }
 
   "getCustomMetadata" should "return the custom metadata" in {
@@ -80,12 +83,13 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
 
   "updateConsignmentStatus" should "throw an exception when the api fails to update the consignment status" in {
     val api = getGraphQLAPI
+    val graphQlError = GraphQLClient.Error("Unable to update consignment status", Nil, Nil, Some(Extensions(Some("NOT_AUTHORISED"))))
 
     doAnswer(() => Future(new BearerAccessToken("token")))
       .when(keycloak)
       .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
 
-    doAnswer(() => Future(GraphQlResponse[ucs.Data](None, Nil)))
+    doAnswer(() => Future(GraphQlResponse[ucs.Data](None, List(GraphQlError(graphQlError)))))
       .when(updateConsignmentStatusClient)
       .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[ucs.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
 
@@ -115,12 +119,13 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
 
   "addOrUpdateBulkFileMetadata" should "throw an exception when the api fails to add or update the file metadata" in {
     val api = getGraphQLAPI
+    val graphQlError = GraphQLClient.Error("Unable to add or update bulk file metadata", Nil, Nil, Some(Extensions(Some("NOT_AUTHORISED"))))
 
     doAnswer(() => Future(new BearerAccessToken("token")))
       .when(keycloak)
       .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
 
-    doAnswer(() => Future(GraphQlResponse[ucs.Data](None, Nil)))
+    doAnswer(() => Future(GraphQlResponse[ucs.Data](None, List(GraphQlError(graphQlError)))))
       .when(addOrUpdateBulkFileMetadataClient)
       .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[afm.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
 

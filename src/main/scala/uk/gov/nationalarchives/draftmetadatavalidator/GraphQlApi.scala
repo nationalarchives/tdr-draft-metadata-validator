@@ -34,14 +34,18 @@ class GraphQlApi(
   def getCustomMetadata(consignmentId: UUID, clientSecret: String)(implicit executionContext: ExecutionContext): IO[List[cm.CustomMetadata]] = for {
     token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
     metadata <- customMetadataClient.getResult(token, cm.document, cm.Variables(consignmentId).some).toIO
-    data <- IO.fromOption(metadata.data)(new RuntimeException("No custom metadata definitions found"))
+    data <- IO.fromOption(metadata.data)(
+      new RuntimeException(metadata.errors.map(_.message).headOption.getOrElse("No custom metadata definitions found"))
+    )
   } yield data.customMetadata
 
   def updateConsignmentStatus(consignmentId: UUID, clientSecret: String, statusType: String, statusValue: String)(implicit executionContext: ExecutionContext): IO[Option[Int]] =
     for {
       token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
       metadata <- updateConsignmentStatus.getResult(token, ucs.document, ucs.Variables(ConsignmentStatusInput(consignmentId, statusType, statusValue.some)).some).toIO
-      data <- IO.fromOption(metadata.data)(new RuntimeException("Unable to update consignment status"))
+      data <- IO.fromOption(metadata.data)(
+        new RuntimeException(metadata.errors.map(_.message).headOption.getOrElse("Unable to update consignment status"))
+      )
     } yield data.updateConsignmentStatus
 
   def addOrUpdateBulkFileMetadata(consignmentId: UUID, clientSecret: String, fileMetadata: List[AddOrUpdateFileMetadata])(implicit
@@ -49,8 +53,10 @@ class GraphQlApi(
   ): IO[List[AddOrUpdateBulkFileMetadata]] =
     for {
       token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
-      metadata <- addOrUpdateBulkFileMetadata.getResult(token, afm.document, afm.Variables(AddOrUpdateBulkFileMetadataInput(consignmentId, fileMetadata)).some).toIO
-      data <- IO.fromOption(metadata.data)(new RuntimeException("Unable to add or update bulk file metadata"))
+      metadata <- addOrUpdateBulkFileMetadata.getResult(token, afm.document, afm.Variables(AddOrUpdateBulkFileMetadataInput(consignmentId, fileMetadata, Some(true))).some).toIO
+      data <- IO.fromOption(metadata.data)(
+        new RuntimeException(metadata.errors.map(_.message).headOption.getOrElse("Unable to add or update bulk file metadata"))
+      )
     } yield data.addOrUpdateBulkFileMetadata
 
   def getConsignmentFilesMetadata(consignmentId: UUID, clientSecret: String, databaseMetadataHeaders: List[String]): IO[Option[gcfm.Data]] = {
