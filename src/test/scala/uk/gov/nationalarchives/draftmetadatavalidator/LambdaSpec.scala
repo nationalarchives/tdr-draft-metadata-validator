@@ -73,11 +73,12 @@ class LambdaSpec extends ExternalServicesSpec {
 
     val addOrUpdateBulkFileMetadataEvent = getServeEvent("addOrUpdateBulkFileMetadata").get
     val request2: AddOrUpdateBulkFileMetadataGraphqlRequestData = decode[AddOrUpdateBulkFileMetadataGraphqlRequestData](addOrUpdateBulkFileMetadataEvent.getRequest.getBodyAsString)
-      .getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil))))
+      .getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil, None))))
     val addOrUpdateBulkFileMetadataInput = request2.variables.addOrUpdateBulkFileMetadataInput
 
     addOrUpdateBulkFileMetadataInput.fileMetadata.size should be(3)
     addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput(fileIdMetadata))
+    addOrUpdateBulkFileMetadataInput.skipValidation should be(Some(true))
 
     updateConsignmentStatusInput.statusType must be("DraftMetadata")
     updateConsignmentStatusInput.statusValue must be(Some("Completed"))
