@@ -7,8 +7,9 @@ import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.A
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.GetConsignmentFilesMetadata.{getConsignmentFilesMetadata => gcfm}
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
+import graphql.codegen.UpdateConsignmentSchemaLibraryVersion.{updateConsignmentSchemaLibraryVersion => ucslv}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, AddOrUpdateFileMetadata, ConsignmentStatusInput, FileFilters, FileMetadataFilters}
+import graphql.codegen.types._
 import sttp.client3._
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig.clientId
 import uk.gov.nationalarchives.tdr.GraphQLClient
@@ -22,7 +23,8 @@ class GraphQlApi(
     customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
     updateConsignmentStatus: GraphQLClient[ucs.Data, ucs.Variables],
     addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
-    getConsignmentFileMetadata: GraphQLClient[gcfm.Data, gcfm.Variables]
+    getConsignmentFileMetadata: GraphQLClient[gcfm.Data, gcfm.Variables],
+    updateConsignmentSchemaLibraryVersion: GraphQLClient[ucslv.Data, ucslv.Variables]
 )(implicit
     logger: Logger,
     keycloakDeployment: TdrKeycloakDeployment,
@@ -78,9 +80,18 @@ class GraphQlApi(
     } yield metadata.data
   }
 
+  def updateConsignmentSchemaLibraryVersion(consignmentId: UUID, clientSecret: String, schemeVersion: String)(implicit executionContext: ExecutionContext): IO[Option[Int]] = {
+    for {
+      token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
+      metadata <- updateConsignmentSchemaLibraryVersion.getResult(token, ucslv.document, ucslv.Variables(UpdateSchemaLibraryVersionInput(consignmentId, schemeVersion)).some).toIO
+      data <- IO.fromOption(metadata.data)(new RuntimeException("Unable to update consignment schema library version"))
+    } yield data.updateConsignmentSchemaLibraryVersion
+  }
+
   implicit class FutureUtils[T](f: Future[T]) {
     def toIO: IO[T] = IO.fromFuture(IO(f))
   }
+
 }
 
 object GraphQlApi {
@@ -89,12 +100,17 @@ object GraphQlApi {
       customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
       updateConsignmentStatus: GraphQLClient[ucs.Data, ucs.Variables],
       addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
-      getConsignmentFilesMetadata: GraphQLClient[gcfm.Data, gcfm.Variables]
+      getConsignmentFilesMetadata: GraphQLClient[gcfm.Data, gcfm.Variables],
+      updateConsignmentSchemaLibraryVersion: GraphQLClient[ucslv.Data, ucslv.Variables]
   )(implicit
       backend: SttpBackend[Identity, Any],
       keycloakDeployment: TdrKeycloakDeployment
   ): GraphQlApi = {
     val logger: Logger = Logger[GraphQlApi]
-    new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatus, addOrUpdateBulkFileMetadata, getConsignmentFilesMetadata)(logger, keycloakDeployment, backend)
+    new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatus, addOrUpdateBulkFileMetadata, getConsignmentFilesMetadata, updateConsignmentSchemaLibraryVersion)(
+      logger,
+      keycloakDeployment,
+      backend
+    )
   }
 }

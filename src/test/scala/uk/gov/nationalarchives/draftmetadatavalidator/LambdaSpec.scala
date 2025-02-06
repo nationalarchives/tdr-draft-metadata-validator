@@ -5,8 +5,9 @@ import com.github.tomakehurst.wiremock.client.WireMock.{aResponse, get, put, url
 import com.github.tomakehurst.wiremock.http.RequestMethod
 import com.github.tomakehurst.wiremock.stubbing.{ServeEvent, StubMapping}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
+import graphql.codegen.UpdateConsignmentSchemaLibraryVersion.{updateConsignmentSchemaLibraryVersion => ucslv}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, AddOrUpdateFileMetadata, AddOrUpdateMetadata, ConsignmentStatusInput}
+import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, AddOrUpdateFileMetadata, AddOrUpdateMetadata, ConsignmentStatusInput, UpdateSchemaLibraryVersionInput}
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import org.mockito.MockitoSugar.mock
@@ -75,11 +76,19 @@ class LambdaSpec extends ExternalServicesSpec {
       .getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil))))
     val addOrUpdateBulkFileMetadataInput = request2.variables.addOrUpdateBulkFileMetadataInput
 
+    val updateConsignmentSchemaLibraryVersionEvent: ServeEvent = getServeEvent("updateSchemaLibraryVersion").get
+    val request3: UpdateConsignmentSchemaLibraryVersionGraphqlRequestData =
+      decode[UpdateConsignmentSchemaLibraryVersionGraphqlRequestData](updateConsignmentSchemaLibraryVersionEvent.getRequest.getBodyAsString)
+        .getOrElse(UpdateConsignmentSchemaLibraryVersionGraphqlRequestData("", ucslv.Variables(UpdateSchemaLibraryVersionInput(UUID.fromString(consignmentId.toString), "failed"))))
+    val updateConsignmentSchemaLibraryVersion = request3.variables.updateSchemaLibraryVersionInput
+
     addOrUpdateBulkFileMetadataInput.fileMetadata.size should be(3)
     addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput(fileIdMetadata))
 
     updateConsignmentStatusInput.statusType must be("DraftMetadata")
     updateConsignmentStatusInput.statusValue must be(Some("Completed"))
+    updateConsignmentSchemaLibraryVersion.schemaLibraryVersion mustNot be("failed")
+    updateConsignmentSchemaLibraryVersion.schemaLibraryVersion mustNot be("Failed to get schema library version")
   }
 
   "handleRequest" should "download the draft metadata csv file, check for schema errors and save error file with errors to s3" in {
@@ -256,4 +265,5 @@ class LambdaSpec extends ExternalServicesSpec {
 }
 
 case class UpdateConsignmentStatusGraphqlRequestData(query: String, variables: ucs.Variables)
+case class UpdateConsignmentSchemaLibraryVersionGraphqlRequestData(query: String, variables: ucslv.Variables)
 case class AddOrUpdateBulkFileMetadataGraphqlRequestData(query: String, variables: afm.Variables)

@@ -1,7 +1,7 @@
 package uk.gov.nationalarchives.draftmetadatavalidator.utils
 
-import java.util.jar.JarFile
 import java.io.File
+import java.util.jar.JarFile
 import scala.util.Try
 
 object DependencyVersionReader {
@@ -16,16 +16,9 @@ object DependencyVersionReader {
   }
 
   private def findJarFilePath(containingFilePath: String): Option[String] = {
-    val classLoader = getClass.getClassLoader
-    val resources = classLoader.getResources(containingFilePath)
-    if (resources.hasMoreElements) {
-      val url = resources.nextElement()
-      val path = url.getPath
-      val jarPath = path.substring(5, path.indexOf("!"))
-      Some(jarPath)
-    } else {
-      None
-    }
+    val filePath = if (!containingFilePath.startsWith("/")) containingFilePath else containingFilePath.substring(1)
+    val resource = Option(getClass.getClassLoader.getResource(filePath))
+    resource.map(resourceValue => resourceValue.getPath.substring(5, resourceValue.getPath.indexOf("!")))
   }
 
   def findDependencyVersion(containingFilePath: String): Option[String] = {
