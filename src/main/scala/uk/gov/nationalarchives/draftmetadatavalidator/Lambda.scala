@@ -92,7 +92,7 @@ class Lambda {
       errorFileData <- doValidation(validationParameters, clientToPersistenceId)
       _ <- writeErrorFileDataToFile(validationParameters, errorFileData)
       _ <- if (errorFileData.validationErrors.isEmpty) persistMetadata(validationParameters, clientToPersistenceId) else IO.unit
-      _ <- updateConsignmentSchemaLibraryVersion(errorFileData, validationParameters)
+      _ <- updateConsignmentSchemaLibraryVersion(validationParameters)
       _ <- updateStatus(errorFileData, validationParameters)
     } yield ()
 
@@ -276,7 +276,7 @@ class Lambda {
     graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", status)
   }
 
-  private def updateConsignmentSchemaLibraryVersion(errorFileData: ErrorFileData, parameters: ValidationParameters): IO[Option[Int]] = {
+  private def updateConsignmentSchemaLibraryVersion(parameters: ValidationParameters): IO[Option[Int]] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     graphQlApi.updateConsignmentSchemaLibraryVersion(
       parameters.consignmentId,
