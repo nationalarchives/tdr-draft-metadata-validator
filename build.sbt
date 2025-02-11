@@ -21,6 +21,7 @@ lazy val root = (project in file("."))
       authUtils,
       s3Utils,
       log4catsSlf4j,
+      slf4jSimple,
       circeGenericExtras,
       circeGeneric,
       circeCore,

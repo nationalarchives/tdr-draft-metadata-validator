@@ -80,6 +80,7 @@ class Lambda {
     )
 
     val resultIO = for {
+      _ <- logger.info(s"Metadata validation was run for $consignmentId")
       fileIdData <- graphQlApi.getConsignmentFilesMetadata(
         consignmentId = UUID.fromString(consignmentId),
         clientSecret = getClientSecret(clientSecretPath, endpoint),
@@ -96,7 +97,6 @@ class Lambda {
       _ <- updateStatus(errorFileData, validationParameters)
     } yield ()
 
-    logger.info(s"Metadata validation was run for $consignmentId")
     resultIO.unsafeRunSync()(cats.effect.unsafe.implicits.global)
     Map[String, Object](
       "consignmentId" -> consignmentId,
