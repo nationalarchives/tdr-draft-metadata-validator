@@ -10,7 +10,7 @@ import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata, DataType}
-import graphql.codegen.UpdateConsignmentSchemaLibraryVersion.{updateConsignmentSchemaLibraryVersion => ucslv}
+import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
@@ -40,7 +40,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   private val addOrUpdateBulkFileMetadataClient = mock[GraphQLClient[afm.Data, afm.Variables]]
   private val consignmentFilesMetadataClient = mock[GraphQLClient[gcfm.Data, gcfm.Variables]]
   private val keycloak = mock[KeycloakUtils]
-  private val updateConsignmentSchemaLibraryVersion = mock[GraphQLClient[ucslv.Data, ucslv.Variables]]
+  private val updateConsignmentMetadataSchemaLibraryVersion = mock[GraphQLClient[ucslv.Data, ucslv.Variables]]
 
   val customMetadata: List[CustomMetadata] = List(
     TestUtils.createCustomMetadata("ClosureType", "Closure status", 1, DataType.Text),
@@ -158,7 +158,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
     response should equal(expected)
   }
 
-  "updateConsignmentSchemaLibraryVersion" should "update the consignment schema library version" in {
+  "updateConsignmentMetadataSchemaLibraryVersion" should "update the consignment schema library version" in {
 
     val consignmentId = UUID.randomUUID()
     val api: GraphQlApi = getGraphQLAPI
@@ -168,10 +168,10 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
       .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
 
     doAnswer(() => Future(GraphQlResponse[ucslv.Data](Option(ucslv.Data(Some(1))), Nil)))
-      .when(updateConsignmentSchemaLibraryVersion)
+      .when(updateConsignmentMetadataSchemaLibraryVersion)
       .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[ucslv.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
 
-    val response = api.updateConsignmentSchemaLibraryVersion(consignmentId, "secret", "value").unsafeRunSync()
+    val response = api.updateConsignmentMetadataSchemaLibraryVersion(consignmentId, "secret", "value").unsafeRunSync()
 
     response should equal(Some(1))
   }
@@ -183,7 +183,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
       updateConsignmentStatusClient,
       addOrUpdateBulkFileMetadataClient,
       consignmentFilesMetadataClient,
-      updateConsignmentSchemaLibraryVersion
+      updateConsignmentMetadataSchemaLibraryVersion
     )
   }
 }

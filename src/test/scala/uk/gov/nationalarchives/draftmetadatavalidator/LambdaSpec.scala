@@ -5,9 +5,9 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.RequestMethod
 import com.github.tomakehurst.wiremock.stubbing.{ServeEvent, StubMapping}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.UpdateConsignmentSchemaLibraryVersion.{updateConsignmentSchemaLibraryVersion => ucslv}
+import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, AddOrUpdateFileMetadata, AddOrUpdateMetadata, ConsignmentStatusInput, UpdateSchemaLibraryVersionInput}
+import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, AddOrUpdateFileMetadata, AddOrUpdateMetadata, ConsignmentStatusInput, UpdateMetadataSchemaLibraryVersionInput}
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import org.mockito.MockitoSugar.mock
@@ -77,11 +77,16 @@ class LambdaSpec extends ExternalServicesSpec {
       .getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil, None))))
     val addOrUpdateBulkFileMetadataInput = request2.variables.addOrUpdateBulkFileMetadataInput
 
-    val updateConsignmentSchemaLibraryVersionEvent: ServeEvent = getServeEvent("updateSchemaLibraryVersion").get
-    val request3: UpdateConsignmentSchemaLibraryVersionGraphqlRequestData =
-      decode[UpdateConsignmentSchemaLibraryVersionGraphqlRequestData](updateConsignmentSchemaLibraryVersionEvent.getRequest.getBodyAsString)
-        .getOrElse(UpdateConsignmentSchemaLibraryVersionGraphqlRequestData("", ucslv.Variables(UpdateSchemaLibraryVersionInput(UUID.fromString(consignmentId.toString), "failed"))))
-    val updateConsignmentSchemaLibraryVersion = request3.variables.updateSchemaLibraryVersionInput
+    val updateConsignmentMetadataSchemaLibraryVersionEvent: ServeEvent = getServeEvent("updateMetadataSchemaLibraryVersion").get
+    val request3: UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData =
+      decode[UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData](updateConsignmentMetadataSchemaLibraryVersionEvent.getRequest.getBodyAsString)
+        .getOrElse(
+          UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData(
+            "",
+            ucslv.Variables(UpdateMetadataSchemaLibraryVersionInput(UUID.fromString(consignmentId.toString), "failed"))
+          )
+        )
+    val updateConsignmentMetadataSchemaLibraryVersion = request3.variables.updateMetadataSchemaLibraryVersionInput
 
     addOrUpdateBulkFileMetadataInput.fileMetadata.size should be(3)
     addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput(fileIdMetadata))
@@ -89,8 +94,8 @@ class LambdaSpec extends ExternalServicesSpec {
 
     updateConsignmentStatusInput.statusType must be("DraftMetadata")
     updateConsignmentStatusInput.statusValue must be(Some("Completed"))
-    updateConsignmentSchemaLibraryVersion.schemaLibraryVersion mustNot be("failed")
-    updateConsignmentSchemaLibraryVersion.schemaLibraryVersion mustNot be("Failed to get schema library version")
+    updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("failed")
+    updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("Failed to get schema library version")
   }
 
   "handleRequest" should "return 500 response and throw an error message when a call to the api fails" in {
@@ -293,5 +298,5 @@ class LambdaSpec extends ExternalServicesSpec {
 }
 
 case class UpdateConsignmentStatusGraphqlRequestData(query: String, variables: ucs.Variables)
-case class UpdateConsignmentSchemaLibraryVersionGraphqlRequestData(query: String, variables: ucslv.Variables)
+case class UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData(query: String, variables: ucslv.Variables)
 case class AddOrUpdateBulkFileMetadataGraphqlRequestData(query: String, variables: afm.Variables)
