@@ -4,9 +4,10 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.RequestMethod
 import com.github.tomakehurst.wiremock.stubbing.{ServeEvent, StubMapping}
-import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, AddOrUpdateFileMetadata, AddOrUpdateMetadata, ConsignmentStatusInput}
+import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
+import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
+import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, AddOrUpdateFileMetadata, AddOrUpdateMetadata, ConsignmentStatusInput, UpdateMetadataSchemaLibraryVersionInput}
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import org.mockito.MockitoSugar.mock
@@ -76,12 +77,25 @@ class LambdaSpec extends ExternalServicesSpec {
       .getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil, None))))
     val addOrUpdateBulkFileMetadataInput = request2.variables.addOrUpdateBulkFileMetadataInput
 
+    val updateConsignmentMetadataSchemaLibraryVersionEvent: ServeEvent = getServeEvent("updateMetadataSchemaLibraryVersion").get
+    val request3: UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData =
+      decode[UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData](updateConsignmentMetadataSchemaLibraryVersionEvent.getRequest.getBodyAsString)
+        .getOrElse(
+          UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData(
+            "",
+            ucslv.Variables(UpdateMetadataSchemaLibraryVersionInput(UUID.fromString(consignmentId.toString), "failed"))
+          )
+        )
+    val updateConsignmentMetadataSchemaLibraryVersion = request3.variables.updateMetadataSchemaLibraryVersionInput
+
     addOrUpdateBulkFileMetadataInput.fileMetadata.size should be(3)
     addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput(fileIdMetadata))
     addOrUpdateBulkFileMetadataInput.skipValidation should be(Some(true))
 
     updateConsignmentStatusInput.statusType must be("DraftMetadata")
     updateConsignmentStatusInput.statusValue must be(Some("Completed"))
+    updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("failed")
+    updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("Failed to get schema library version")
   }
 
   "handleRequest" should "return 500 response and throw an error message when a call to the api fails" in {
@@ -284,4 +298,5 @@ class LambdaSpec extends ExternalServicesSpec {
 }
 
 case class UpdateConsignmentStatusGraphqlRequestData(query: String, variables: ucs.Variables)
+case class UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData(query: String, variables: ucslv.Variables)
 case class AddOrUpdateBulkFileMetadataGraphqlRequestData(query: String, variables: afm.Variables)

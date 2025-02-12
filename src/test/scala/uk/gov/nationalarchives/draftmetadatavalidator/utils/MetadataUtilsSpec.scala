@@ -1,4 +1,4 @@
-package uk.gov.nationalarchives.draftmetadatavalidator
+package uk.gov.nationalarchives.draftmetadatavalidator.utils
 
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata, DataType}
@@ -6,7 +6,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.must.Matchers.be
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
-import uk.gov.nationalarchives.draftmetadatavalidator.utils.MetadataUtils
+import uk.gov.nationalarchives.draftmetadatavalidator.TestUtils
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.util.UUID

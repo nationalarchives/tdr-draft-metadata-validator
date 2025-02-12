@@ -10,6 +10,7 @@ import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata, DataType}
+import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
@@ -33,12 +34,13 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
 
   implicit val tdrKeycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment("authUrl", "realm", 60)
 
-  val consignmentId = UUID.randomUUID()
-  val customMetadataClient: GraphQLClient[cm.Data, cm.Variables] = mock[GraphQLClient[cm.Data, cm.Variables]]
-  val updateConsignmentStatusClient = mock[GraphQLClient[ucs.Data, ucs.Variables]]
-  val addOrUpdateBulkFileMetadataClient = mock[GraphQLClient[afm.Data, afm.Variables]]
-  val consignmentFilesMetadataClient = mock[GraphQLClient[gcfm.Data, gcfm.Variables]]
-  val keycloak = mock[KeycloakUtils]
+  private val consignmentId = UUID.randomUUID()
+  private val customMetadataClient: GraphQLClient[cm.Data, cm.Variables] = mock[GraphQLClient[cm.Data, cm.Variables]]
+  private val updateConsignmentStatusClient = mock[GraphQLClient[ucs.Data, ucs.Variables]]
+  private val addOrUpdateBulkFileMetadataClient = mock[GraphQLClient[afm.Data, afm.Variables]]
+  private val consignmentFilesMetadataClient = mock[GraphQLClient[gcfm.Data, gcfm.Variables]]
+  private val keycloak = mock[KeycloakUtils]
+  private val updateConsignmentMetadataSchemaLibraryVersion = mock[GraphQLClient[ucslv.Data, ucslv.Variables]]
 
   val customMetadata: List[CustomMetadata] = List(
     TestUtils.createCustomMetadata("ClosureType", "Closure status", 1, DataType.Text),
@@ -46,7 +48,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   )
 
   "getCustomMetadata" should "throw an exception when no custom metadata are found" in {
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, consignmentFilesMetadataClient)
+    val api = getGraphQLAPI
     val graphQlError = GraphQLClient.Error("Unable to get custom metadata", Nil, Nil, Some(Extensions(Some("NOT_AUTHORISED"))))
 
     doAnswer(() => Future(new BearerAccessToken("token")))
@@ -64,7 +66,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   }
 
   "getCustomMetadata" should "return the custom metadata" in {
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, consignmentFilesMetadataClient)
+    val api = getGraphQLAPI
 
     doAnswer(() => Future(new BearerAccessToken("token")))
       .when(keycloak)
@@ -80,7 +82,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   }
 
   "updateConsignmentStatus" should "throw an exception when the api fails to update the consignment status" in {
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, consignmentFilesMetadataClient)
+    val api = getGraphQLAPI
     val graphQlError = GraphQLClient.Error("Unable to update consignment status", Nil, Nil, Some(Extensions(Some("NOT_AUTHORISED"))))
 
     doAnswer(() => Future(new BearerAccessToken("token")))
@@ -100,7 +102,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   "updateConsignmentStatus" should "update the consignment status with status type and value" in {
 
     val consignmentId = UUID.randomUUID()
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, consignmentFilesMetadataClient)
+    val api = getGraphQLAPI
 
     doAnswer(() => Future(new BearerAccessToken("token")))
       .when(keycloak)
@@ -116,7 +118,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   }
 
   "addOrUpdateBulkFileMetadata" should "throw an exception when the api fails to add or update the file metadata" in {
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, consignmentFilesMetadataClient)
+    val api = getGraphQLAPI
     val graphQlError = GraphQLClient.Error("Unable to add or update bulk file metadata", Nil, Nil, Some(Extensions(Some("NOT_AUTHORISED"))))
 
     doAnswer(() => Future(new BearerAccessToken("token")))
@@ -138,7 +140,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
 
     val consignmentId = UUID.randomUUID()
     val fileId = UUID.randomUUID()
-    val api = new GraphQlApi(keycloak, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, consignmentFilesMetadataClient)
+    val api = getGraphQLAPI
 
     doAnswer(() => Future(new BearerAccessToken("token")))
       .when(keycloak)
@@ -154,5 +156,34 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
     val response = api.addOrUpdateBulkFileMetadata(consignmentId, "secret", fileMetadata).unsafeRunSync()
 
     response should equal(expected)
+  }
+
+  "updateConsignmentMetadataSchemaLibraryVersion" should "update the consignment schema library version" in {
+
+    val consignmentId = UUID.randomUUID()
+    val api: GraphQlApi = getGraphQLAPI
+
+    doAnswer(() => Future(new BearerAccessToken("token")))
+      .when(keycloak)
+      .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
+
+    doAnswer(() => Future(GraphQlResponse[ucslv.Data](Option(ucslv.Data(Some(1))), Nil)))
+      .when(updateConsignmentMetadataSchemaLibraryVersion)
+      .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[ucslv.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
+
+    val response = api.updateConsignmentMetadataSchemaLibraryVersion(consignmentId, "secret", "value").unsafeRunSync()
+
+    response should equal(Some(1))
+  }
+
+  private def getGraphQLAPI = {
+    new GraphQlApi(
+      keycloak,
+      customMetadataClient,
+      updateConsignmentStatusClient,
+      addOrUpdateBulkFileMetadataClient,
+      consignmentFilesMetadataClient,
+      updateConsignmentMetadataSchemaLibraryVersion
+    )
   }
 }

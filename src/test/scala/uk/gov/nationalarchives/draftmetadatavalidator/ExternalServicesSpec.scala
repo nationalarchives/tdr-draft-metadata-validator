@@ -47,6 +47,12 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
         .willReturn(ok("""{"data": {"updateConsignmentStatus": 1}}""".stripMargin))
     )
 
+    wiremockGraphqlServer.stubFor(
+      post(urlEqualTo(graphQlPath))
+        .withRequestBody(containing("updateMetadataSchemaLibraryVersion"))
+        .willReturn(ok("""{"data": {"updateMetadataSchemaLibraryVersion": 1}}""".stripMargin))
+    )
+
     val filesMetadataJson = s"""{
       "data": {
         "getConsignment": {
