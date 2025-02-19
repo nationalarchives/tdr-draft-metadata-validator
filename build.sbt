@@ -30,7 +30,12 @@ lazy val root = (project in file("."))
       mockitoScala % Test,
       mockitoScalaTest % Test
     ),
-    assembly / assemblyJarName := "draft-metadata-validator.jar"
+    assembly / assemblyJarName := "draft-metadata-validator.jar",
+    Compile / resourceGenerators += Def.task {
+      val file = (Compile / resourceManaged).value / "metadata-schema-version.conf"
+      IO.write(file, s"""metadataSchemaVersion = "$metadataSchemaVersion"""")
+      Seq(file)
+    }.taskValue
   )
 
 (assembly / assemblyMergeStrategy) := {
