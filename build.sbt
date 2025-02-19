@@ -1,6 +1,6 @@
 import Dependencies._
 
-ThisBuild / scalaVersion := "2.13.15"
+ThisBuild / scalaVersion := "2.13.16"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / organization := "uk.gov.nationalarchives"
 
@@ -21,6 +21,7 @@ lazy val root = (project in file("."))
       authUtils,
       s3Utils,
       log4catsSlf4j,
+      slf4jSimple,
       circeGenericExtras,
       circeGeneric,
       circeCore,
