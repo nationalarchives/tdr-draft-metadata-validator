@@ -278,10 +278,12 @@ class Lambda {
 
   private def updateConsignmentMetadataSchemaLibraryVersion(parameters: ValidationParameters): IO[Option[Int]] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
+    val metadataSchemaLibraryVersion =
+      DependencyVersionReader.findDependencyVersion(parameters.schemaToValidate.head.schemaLocation).getOrElse("Failed to get schema library version")
     graphQlApi.updateConsignmentMetadataSchemaLibraryVersion(
       parameters.consignmentId,
       clientSecret,
-      DependencyVersionReader.findDependencyVersion(parameters.schemaToValidate.head.schemaLocation).getOrElse("Failed to get schema library version")
+      metadataSchemaLibraryVersion
     )
   }
 

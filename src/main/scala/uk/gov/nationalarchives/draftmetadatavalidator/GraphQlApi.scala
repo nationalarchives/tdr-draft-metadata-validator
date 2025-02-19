@@ -86,9 +86,7 @@ class GraphQlApi(
     } yield metadata.data
   }
 
-  def updateConsignmentMetadataSchemaLibraryVersion(consignmentId: UUID, clientSecret: String, schemeVersion: String)(implicit
-      executionContext: ExecutionContext
-  ): IO[Option[Int]] = {
+  def updateConsignmentMetadataSchemaLibraryVersion(consignmentId: UUID, clientSecret: String, schemeVersion: String): IO[Option[Int]] = {
     for {
       token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
       metadata <- updateConsignmentMetadataSchemaLibraryVersion
