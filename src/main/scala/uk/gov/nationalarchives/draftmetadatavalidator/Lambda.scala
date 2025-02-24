@@ -8,6 +8,7 @@ import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.A
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.GetConsignmentFilesMetadata.{getConsignmentFilesMetadata => gcfm}
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
+import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import io.circe.Encoder
 import io.circe.generic.auto._
@@ -24,7 +25,7 @@ import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{ValidationExecutionError, ValidationParameters, getErrorFilePath, getFilePath}
 import uk.gov.nationalarchives.draftmetadatavalidator.ValidationErrors._
-import uk.gov.nationalarchives.draftmetadatavalidator.utils.MetadataUtils
+import uk.gov.nationalarchives.draftmetadatavalidator.utils.{DependencyVersionReader, MetadataUtils}
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
@@ -57,8 +58,15 @@ class Lambda {
   private val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
   private val getConsignmentFilesMetadataClient = new GraphQLClient[gcfm.Data, gcfm.Variables](apiUrl)
-  private val graphQlApi: GraphQlApi =
-    GraphQlApi(keycloakUtils, customMetadataClient, updateConsignmentStatusClient, addOrUpdateBulkFileMetadataClient, getConsignmentFilesMetadataClient)
+  private val updateMetadataSchemaLibraryVersionClient = new GraphQLClient[ucslv.Data, ucslv.Variables](apiUrl)
+  private val graphQlApi: GraphQlApi = GraphQlApi(
+    keycloakUtils,
+    customMetadataClient,
+    updateConsignmentStatusClient,
+    addOrUpdateBulkFileMetadataClient,
+    getConsignmentFilesMetadataClient,
+    updateMetadataSchemaLibraryVersionClient
+  )
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): java.util.Map[String, Object] = {
     val startTime = System.currentTimeMillis()
@@ -87,6 +95,7 @@ class Lambda {
       errorFileData <- doValidation(validationParameters, clientToPersistenceId)
       _ <- writeErrorFileDataToFile(validationParameters, errorFileData)
       _ <- if (errorFileData.validationErrors.isEmpty) persistMetadata(validationParameters, clientToPersistenceId) else IO.unit
+      _ <- updateConsignmentMetadataSchemaLibraryVersion(validationParameters)
       _ <- updateStatus(errorFileData, validationParameters)
     } yield ()
 
@@ -262,6 +271,17 @@ class Lambda {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     val status = if (errorFileData.validationErrors.isEmpty) "Completed" else "CompletedWithIssues"
     graphQlApi.updateConsignmentStatus(draftMetadata.consignmentId, clientSecret, "DraftMetadata", status)
+  }
+
+  private def updateConsignmentMetadataSchemaLibraryVersion(parameters: ValidationParameters): IO[Option[Int]] = {
+    val clientSecret = getClientSecret(clientSecretPath, endpoint)
+    val metadataSchemaLibraryVersion =
+      DependencyVersionReader.findDependencyVersion.getOrElse("Failed to get schema library version")
+    graphQlApi.updateConsignmentMetadataSchemaLibraryVersion(
+      parameters.consignmentId,
+      clientSecret,
+      metadataSchemaLibraryVersion
+    )
   }
 
   private def persistMetadata(draftMetadata: ValidationParameters, clientIdToPersistenceId: Map[String, UUID]): IO[List[AddOrUpdateBulkFileMetadata]] = {
