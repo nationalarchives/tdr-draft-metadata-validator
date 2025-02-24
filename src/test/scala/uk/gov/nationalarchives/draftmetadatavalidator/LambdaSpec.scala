@@ -147,11 +147,11 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/error-file-required.json")
   }
 
-  "handleRequest" should "download the a draft metadata csv file without BOM, validate it as a UTF-8 with BOM and save error file with errors to s3" in {
+  "handleRequest" should "download the a draft metadata csv file with non-UTF8 character, validate it as a UTF-8 and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson()
-    mockS3GetResponse("sample-no-bom.csv")
-    checkFileError("json/no-bom-error.json")
+    mockS3GetResponse("sample-not-utf8.csv")
+    checkFileError("json/not-utf8-error.json")
   }
 
   "handleRequest" should "download the a draft metadata csv file with no key value column try and load and save error file with errors to s3" in {

@@ -33,6 +33,7 @@ import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.{convertToAlternateKe
 import uk.gov.nationalarchives.tdr.validation.FileRow
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, REQUIRED_SCHEMA}
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
+import uk.gov.nationalarchives.utf8.validator.{Utf8Validator, ValidationException, ValidationHandler}
 
 import java.io.FileInputStream
 import java.net.URI
@@ -41,6 +42,7 @@ import java.util
 import java.util.{Properties, UUID}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.Source
+import scala.util.{Failure, Try}
 import scala.jdk.CollectionConverters.MapHasAsJava
 
 class Lambda {
@@ -115,7 +117,6 @@ class Lambda {
       _ <- validateRows(validationParameters, csvData, clientIdToPersistenceId, validationParameters.checkAgainstUploadedRecords)
     } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
 
-    // all validations will raise ValidationExecutionError if they do not pass
     validationProgram.handleError({
       case validationExecutionError: ValidationExecutionError => validationExecutionError.errorFileData
       case err =>
@@ -128,8 +129,9 @@ class Lambda {
 
   private def validUTF8(validationParameters: ValidationParameters): IO[Unit] = {
     val filePath = getFilePath(validationParameters)
+    val utf8Validator = new Utf8Validator(new UTF8ValidationHandler()(logger))
 
-    def utf8FileErrorData = {
+    def utf8FileErrorData: ErrorFileData = {
       val messageKey = "FILE_CHECK.UTF.INVALID"
       val message = messageProperties.getProperty(messageKey, messageKey)
       val singleError = Error("FILE_CHECK", validationParameters.consignmentId.toString, "UTF8", message)
@@ -137,21 +139,16 @@ class Lambda {
       ErrorFileData(validationParameters, FileError.UTF_8, List(validationErrors))
     }
 
-    def checkBOM(inputStream: FileInputStream) = {
-      val utf8BOM = Array(0xef.toByte, 0xbb.toByte, 0xbf.toByte)
-      Resource.fromAutoCloseable(IO(inputStream)).use { stream =>
-        val bytesArray = new Array[Byte](3)
-        stream.read(bytesArray)
-        if (bytesArray sameElements utf8BOM) {
-          IO.unit
-        } else
-          IO.raiseError(ValidationExecutionError(utf8FileErrorData, List.empty[FileRow]))
+    def validateUTF8(inputStream: FileInputStream): IO[Unit] = {
+      Try(utf8Validator.validate(inputStream)) match {
+        case Failure(_) => IO.raiseError(ValidationExecutionError(utf8FileErrorData, List.empty[FileRow]))
+        case _          => IO.unit
       }
     }
 
     for {
       inputStream <- IO(new FileInputStream(filePath))
-      _ <- checkBOM(inputStream)
+      _ <- validateUTF8(inputStream)
     } yield ()
   }
 
