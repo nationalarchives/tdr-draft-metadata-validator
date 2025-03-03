@@ -16,10 +16,14 @@ import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
 import sttp.model.StatusCode
 import uk.gov.nationalarchives.draftmetadatavalidator.TestUtils.testFileIdMetadata
 import uk.gov.nationalarchives.tdr.error.HttpException
+import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig
+import com.typesafe.config.{ConfigFactory, ConfigValue, ConfigValueFactory, Config => TypeSafeConfig}
 
 import java.nio.file.{Files, Paths}
 import java.text.SimpleDateFormat
 import java.util.{Date, UUID}
+import scala.{+:, :+}
+import scala.collection.immutable.Map
 import scala.io.Source
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, MapHasAsJava}
 
