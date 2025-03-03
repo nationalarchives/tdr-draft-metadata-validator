@@ -4,10 +4,10 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.RequestMethod
 import com.github.tomakehurst.wiremock.stubbing.{ServeEvent, StubMapping}
-import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, AddOrUpdateFileMetadata, AddOrUpdateMetadata, ConsignmentStatusInput, UpdateMetadataSchemaLibraryVersionInput}
+import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
+import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
+import graphql.codegen.types._
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import org.mockito.MockitoSugar.mock
@@ -16,14 +16,10 @@ import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
 import sttp.model.StatusCode
 import uk.gov.nationalarchives.draftmetadatavalidator.TestUtils.testFileIdMetadata
 import uk.gov.nationalarchives.tdr.error.HttpException
-import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig
-import com.typesafe.config.{ConfigFactory, ConfigValue, ConfigValueFactory, Config => TypeSafeConfig}
 
 import java.nio.file.{Files, Paths}
 import java.text.SimpleDateFormat
 import java.util.{Date, UUID}
-import scala.{+:, :+}
-import scala.collection.immutable.Map
 import scala.io.Source
 import scala.jdk.CollectionConverters.{CollectionHasAsScala, MapHasAsJava}
 
