@@ -8,8 +8,8 @@ object Dependencies {
 
   lazy val scalaCsv = "com.github.tototoshi" %% "scala-csv" % "2.0.0"
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.19"
-  lazy val metadataValidation = "uk.gov.nationalarchives" %% "tdr-metadata-validation" % "0.0.104" exclude ("uk.gov.nationalarchives", "da-metadata-schema_3")
-  lazy val schemaUtils = "uk.gov.nationalarchives" %% "tdr-schema-utils" % "0.0.104"
+  lazy val metadataValidation = "uk.gov.nationalarchives" %% "tdr-metadata-validation" % "0.0.105" exclude ("uk.gov.nationalarchives", "da-metadata-schema_3")
+  lazy val schemaUtils = "uk.gov.nationalarchives" %% "tdr-schema-utils" % "0.0.105"
   lazy val metadataSchema = "uk.gov.nationalarchives" % "da-metadata-schema_3" % "0.0.45"
   lazy val generatedGraphql = "uk.gov.nationalarchives" %% "tdr-generated-graphql" % "0.0.402"
   lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.214"
