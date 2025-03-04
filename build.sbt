@@ -1,4 +1,4 @@
-import Dependencies._
+import Dependencies.*
 
 ThisBuild / scalaVersion := "2.13.16"
 ThisBuild / version := "0.1.0-SNAPSHOT"
@@ -40,8 +40,10 @@ lazy val root = (project in file("."))
   )
 
 (assembly / assemblyMergeStrategy) := {
-  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-  case _                             => MergeStrategy.first
+  case PathList("META-INF", "MANIFEST.MF")       => MergeStrategy.discard
+  case PathList("META-INF", "services", xs @ _*) => MergeStrategy.concat
+  case PathList("META-INF", xs @ _*)             => MergeStrategy.discard
+  case _                                         => MergeStrategy.first
 }
 
 (Test / fork) := true
