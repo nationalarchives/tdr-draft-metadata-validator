@@ -5,6 +5,7 @@ object Dependencies {
   private val log4CatsVersion = "2.7.0"
   private val mockitoScalaVersion = "1.17.37"
   private val circeVersion = "0.14.10"
+  val metadataSchemaVersion = "0.0.45"
 
   lazy val scalaCsv = "com.github.tototoshi" %% "scala-csv" % "2.0.0"
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.19"
@@ -26,6 +27,6 @@ object Dependencies {
   lazy val circeCore = "io.circe" %% "circe-core" % circeVersion
   lazy val circeGeneric = "io.circe" %% "circe-generic" % circeVersion
   lazy val circeParser = "io.circe" %% "circe-parser" % circeVersion
-  lazy val circeGenericExtras = "io.circe" %% "circe-generic-extras" % "0.14.3"
-
+  lazy val circeGenericExtras = "io.circe" %% "circe-generic-extras" % "0.14.4"
+  lazy val  utf8Validator = "uk.gov.nationalarchives" % "utf8-validator" % "1.2"
 }
