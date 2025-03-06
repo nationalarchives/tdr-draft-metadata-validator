@@ -1,4 +1,4 @@
-import Dependencies._
+import Dependencies.*
 
 ThisBuild / scalaVersion := "2.13.16"
 ThisBuild / version := "0.1.0-SNAPSHOT"
@@ -26,16 +26,24 @@ lazy val root = (project in file("."))
       circeGeneric,
       circeCore,
       circeParser,
+      utf8Validator,
       scalaTest % Test,
       mockitoScala % Test,
       mockitoScalaTest % Test
     ),
-    assembly / assemblyJarName := "draft-metadata-validator.jar"
+    assembly / assemblyJarName := "draft-metadata-validator.jar",
+    Compile / resourceGenerators += Def.task {
+      val file = (Compile / resourceManaged).value / "metadata-schema-version.conf"
+      IO.write(file, s"""metadataSchemaVersion = "$metadataSchemaVersion"""")
+      Seq(file)
+    }.taskValue
   )
 
 (assembly / assemblyMergeStrategy) := {
-  case PathList("META-INF", xs @ _*) => MergeStrategy.discard
-  case _                             => MergeStrategy.first
+  case PathList("META-INF", "MANIFEST.MF")       => MergeStrategy.discard
+  case PathList("META-INF", "services", xs @ _*) => MergeStrategy.concat
+  case PathList("META-INF", xs @ _*)             => MergeStrategy.discard
+  case _                                         => MergeStrategy.first
 }
 
 (Test / fork) := true
