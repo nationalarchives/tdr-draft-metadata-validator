@@ -16,5 +16,4 @@ object ApplicationConfig {
   val fileName: String = configFactory.getString("draftMetadata.fileName")
   val errorFileName: String = configFactory.getString("draftMetadata.errorFileName")
   val timeToLiveSecs: Int = 60
-  val blockUtf8Validator: Boolean = configFactory.getBoolean("blockUtf8Validator")
 }
