@@ -139,18 +139,6 @@ class Lambda {
       ErrorFileData(validationParameters, FileError.UTF_8, List(validationErrors))
     }
 
-    def checkBOM(inputStream: FileInputStream): IO[Unit] = {
-      val utf8BOM = Array(0xef.toByte, 0xbb.toByte, 0xbf.toByte)
-      Resource.fromAutoCloseable(IO(inputStream)).use { stream =>
-        val bytesArray = new Array[Byte](3)
-        stream.read(bytesArray)
-        if (bytesArray sameElements utf8BOM) {
-          IO.unit
-        } else
-          IO.raiseError(ValidationExecutionError(utf8FileErrorData, List.empty[FileRow]))
-      }
-    }
-
     def validateUTF8(inputStream: FileInputStream): IO[Unit] = {
       Try(utf8Validator.validate(inputStream)) match {
         case Failure(_) => IO.raiseError(ValidationExecutionError(utf8FileErrorData, List.empty[FileRow]))
@@ -160,7 +148,7 @@ class Lambda {
 
     for {
       inputStream <- IO(new FileInputStream(filePath))
-      _ <- if (blockUtf8Validator) checkBOM(inputStream) else validateUTF8(inputStream)
+      _ <- validateUTF8(inputStream)
     } yield ()
   }
 
