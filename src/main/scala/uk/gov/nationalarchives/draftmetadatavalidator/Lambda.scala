@@ -1,7 +1,6 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
-import cats.effect.kernel.Resource
 import cats.syntax.semigroup._
 import com.amazonaws.services.lambda.runtime.Context
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
@@ -33,7 +32,7 @@ import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.{convertToAlternateKe
 import uk.gov.nationalarchives.tdr.validation.FileRow
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, REQUIRED_SCHEMA}
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
-import uk.gov.nationalarchives.utf8.validator.{Utf8Validator, ValidationException, ValidationHandler}
+import uk.gov.nationalarchives.utf8.validator.Utf8Validator
 
 import java.io.FileInputStream
 import java.net.URI
@@ -42,8 +41,8 @@ import java.util
 import java.util.{Properties, UUID}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.Source
-import scala.util.{Failure, Try}
 import scala.jdk.CollectionConverters.MapHasAsJava
+import scala.util.{Failure, Try}
 
 class Lambda {
 
