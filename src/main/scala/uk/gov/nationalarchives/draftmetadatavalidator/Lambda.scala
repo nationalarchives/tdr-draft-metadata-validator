@@ -1,7 +1,6 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
-import cats.effect.kernel.Resource
 import cats.syntax.semigroup._
 import com.amazonaws.services.lambda.runtime.Context
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
@@ -33,7 +32,7 @@ import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.{convertToAlternateKe
 import uk.gov.nationalarchives.tdr.validation.FileRow
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, REQUIRED_SCHEMA}
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
-import uk.gov.nationalarchives.utf8.validator.{Utf8Validator, ValidationException, ValidationHandler}
+import uk.gov.nationalarchives.utf8.validator.Utf8Validator
 
 import java.io.FileInputStream
 import java.net.URI
@@ -42,8 +41,8 @@ import java.util
 import java.util.{Properties, UUID}
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.io.Source
-import scala.util.{Failure, Try}
 import scala.jdk.CollectionConverters.MapHasAsJava
+import scala.util.{Failure, Try}
 
 class Lambda {
 
@@ -139,18 +138,6 @@ class Lambda {
       ErrorFileData(validationParameters, FileError.UTF_8, List(validationErrors))
     }
 
-    def checkBOM(inputStream: FileInputStream): IO[Unit] = {
-      val utf8BOM = Array(0xef.toByte, 0xbb.toByte, 0xbf.toByte)
-      Resource.fromAutoCloseable(IO(inputStream)).use { stream =>
-        val bytesArray = new Array[Byte](3)
-        stream.read(bytesArray)
-        if (bytesArray sameElements utf8BOM) {
-          IO.unit
-        } else
-          IO.raiseError(ValidationExecutionError(utf8FileErrorData, List.empty[FileRow]))
-      }
-    }
-
     def validateUTF8(inputStream: FileInputStream): IO[Unit] = {
       Try(utf8Validator.validate(inputStream)) match {
         case Failure(_) => IO.raiseError(ValidationExecutionError(utf8FileErrorData, List.empty[FileRow]))
@@ -160,7 +147,7 @@ class Lambda {
 
     for {
       inputStream <- IO(new FileInputStream(filePath))
-      _ <- if (blockUtf8Validator) checkBOM(inputStream) else validateUTF8(inputStream)
+      _ <- validateUTF8(inputStream)
     } yield ()
   }
 
