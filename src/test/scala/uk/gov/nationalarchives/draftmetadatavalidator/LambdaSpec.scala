@@ -4,10 +4,10 @@ import com.amazonaws.services.lambda.runtime.Context
 import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.http.RequestMethod
 import com.github.tomakehurst.wiremock.stubbing.{ServeEvent, StubMapping}
-import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.types.{AddOrUpdateBulkFileMetadataInput, AddOrUpdateFileMetadata, AddOrUpdateMetadata, ConsignmentStatusInput, UpdateMetadataSchemaLibraryVersionInput}
+import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
+import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
+import graphql.codegen.types._
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import org.mockito.MockitoSugar.mock
