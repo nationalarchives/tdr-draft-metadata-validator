@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - increase-timeout
 jobs:
   build-image:
     uses: nationalarchives/tdr-github-actions/.github/workflows/ecs_build.yml@main
@@ -13,6 +14,8 @@ jobs:
     secrets:
       MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
+      WIZ_CLIENT_ID: ${{ secrets.WIZ_CLIENT_ID }}
+      WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
   deploy:
     needs: build-image
     runs-on: ubuntu-latest
