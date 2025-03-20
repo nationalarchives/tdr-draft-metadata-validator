@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - increase-timeout
 jobs:
   build-image:
     uses: nationalarchives/tdr-github-actions/.github/workflows/ecs_build.yml@main
