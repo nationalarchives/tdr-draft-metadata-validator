@@ -52,7 +52,9 @@ class GraphQlApi(
   def addOrUpdateBulkFileMetadata(consignmentId: UUID, clientSecret: String, fileMetadata: List[AddOrUpdateFileMetadata]): IO[List[AddOrUpdateBulkFileMetadata]] =
     for {
       token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
-      metadata <- addOrUpdateBulkFileMetadata.getResult(token, afm.document, afm.Variables(AddOrUpdateBulkFileMetadataInput(consignmentId, fileMetadata, Some(true))).some, graphqlApiRequestTimeOut).toIO
+      metadata <- addOrUpdateBulkFileMetadata
+        .getResult(token, afm.document, afm.Variables(AddOrUpdateBulkFileMetadataInput(consignmentId, fileMetadata, Some(true))).some, graphqlApiRequestTimeOut)
+        .toIO
       data <- IO.fromOption(metadata.data)(
         new RuntimeException(metadata.errors.map(_.message).headOption.getOrElse("Unable to add or update bulk file metadata"))
       )
