@@ -30,7 +30,7 @@ import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeploymen
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.{convertToAlternateKey, convertToValidationKey}
 import uk.gov.nationalarchives.tdr.validation.FileRow
-import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, REQUIRED_SCHEMA}
+import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, RELATIONSHIP_SCHEMA, REQUIRED_SCHEMA}
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
 import uk.gov.nationalarchives.utf8.validator.Utf8Validator
 
@@ -70,7 +70,7 @@ class Lambda {
   def handleRequest(input: java.util.Map[String, Object], context: Context): java.util.Map[String, Object] = {
     val startTime = System.currentTimeMillis()
     val consignmentId = extractConsignmentId(input)
-    val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN)
+    val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, RELATIONSHIP_SCHEMA)
     val validationParameters: ValidationParameters = ValidationParameters(
       consignmentId = UUID.fromString(consignmentId),
       schemaToValidate = schemaToValidate,

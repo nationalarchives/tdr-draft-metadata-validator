@@ -1,0 +1,38 @@
+{
+  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+  "date" : "2025-03-24",
+  "fileError" : "SCHEMA_VALIDATION",
+  "validationErrors" : [
+    {
+      "assetId" : "test/test1.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
+          "property" : "Is the description sensitive for the public?",
+          "errorKey" : "const",
+          "message" : "Must be Yes if an alternate is provided"
+        },
+        {
+          "validationProcess" : "SCHEMA_RELATIONSHIP",
+          "property" : "Description",
+          "errorKey" : "type",
+          "message" : "Description must be provided when an alternative description is provided"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "Description",
+          "value" : ""
+        },
+        {
+          "name" : "Filepath",
+          "value" : "test/test1.txt"
+        },
+        {
+          "name" : "Is the description sensitive for the public?",
+          "value" : "No"
+        }
+      ]
+    }
+  ]
+}
