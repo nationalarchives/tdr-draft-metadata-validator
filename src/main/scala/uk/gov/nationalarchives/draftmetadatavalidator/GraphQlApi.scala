@@ -11,11 +11,12 @@ import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateCons
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.types._
 import sttp.client3._
-import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig.clientId
+import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig.{clientId, graphqlApiRequestTimeOut}
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 
 import java.util.UUID
+import scala.concurrent.duration.DurationInt
 import scala.concurrent.{ExecutionContext, Future}
 
 class GraphQlApi(
@@ -31,7 +32,7 @@ class GraphQlApi(
     backend: SttpBackend[Identity, Any]
 ) {
 
-  def getCustomMetadata(consignmentId: UUID, clientSecret: String)(implicit executionContext: ExecutionContext): IO[List[cm.CustomMetadata]] = for {
+  def getCustomMetadata(consignmentId: UUID, clientSecret: String): IO[List[cm.CustomMetadata]] = for {
     token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
     metadata <- customMetadataClient.getResult(token, cm.document, cm.Variables(consignmentId).some).toIO
     data <- IO.fromOption(metadata.data)(
@@ -39,7 +40,7 @@ class GraphQlApi(
     )
   } yield data.customMetadata
 
-  def updateConsignmentStatus(consignmentId: UUID, clientSecret: String, statusType: String, statusValue: String)(implicit executionContext: ExecutionContext): IO[Option[Int]] =
+  def updateConsignmentStatus(consignmentId: UUID, clientSecret: String, statusType: String, statusValue: String): IO[Option[Int]] =
     for {
       token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
       metadata <- updateConsignmentStatus.getResult(token, ucs.document, ucs.Variables(ConsignmentStatusInput(consignmentId, statusType, statusValue.some)).some).toIO
@@ -48,12 +49,12 @@ class GraphQlApi(
       )
     } yield data.updateConsignmentStatus
 
-  def addOrUpdateBulkFileMetadata(consignmentId: UUID, clientSecret: String, fileMetadata: List[AddOrUpdateFileMetadata])(implicit
-      executionContext: ExecutionContext
-  ): IO[List[AddOrUpdateBulkFileMetadata]] =
+  def addOrUpdateBulkFileMetadata(consignmentId: UUID, clientSecret: String, fileMetadata: List[AddOrUpdateFileMetadata]): IO[List[AddOrUpdateBulkFileMetadata]] =
     for {
       token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
-      metadata <- addOrUpdateBulkFileMetadata.getResult(token, afm.document, afm.Variables(AddOrUpdateBulkFileMetadataInput(consignmentId, fileMetadata, Some(true))).some).toIO
+      metadata <- addOrUpdateBulkFileMetadata
+        .getResult(token, afm.document, afm.Variables(AddOrUpdateBulkFileMetadataInput(consignmentId, fileMetadata, Some(true))).some, graphqlApiRequestTimeOut)
+        .toIO
       data <- IO.fromOption(metadata.data)(
         new RuntimeException(metadata.errors.map(_.message).headOption.getOrElse("Unable to add or update bulk file metadata"))
       )

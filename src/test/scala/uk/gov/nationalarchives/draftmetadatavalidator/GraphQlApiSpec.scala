@@ -23,6 +23,7 @@ import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeploymen
 import uk.gov.nationalarchives.tdr.{GraphQLClient, GraphQlResponse}
 
 import java.util.UUID
+import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContextExecutor, Future}
 import scala.reflect.ClassTag
 
@@ -127,7 +128,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
 
     doAnswer(() => Future(GraphQlResponse[ucs.Data](None, List(GraphQlError(graphQlError)))))
       .when(addOrUpdateBulkFileMetadataClient)
-      .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[afm.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
+      .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[afm.Variables]], any[Duration])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
 
     val fileMetadata = List(AddOrUpdateFileMetadata(UUID.randomUUID(), List(AddOrUpdateMetadata("ClosureStatus", "Open"))))
     val exception = intercept[RuntimeException] {
@@ -149,7 +150,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
     val expected = List(AddOrUpdateBulkFileMetadata("ClosureStatus", fileId, "Open"))
     doAnswer(() => { Future(GraphQlResponse[afm.Data](Option(afm.Data(expected)), Nil)) })
       .when(addOrUpdateBulkFileMetadataClient)
-      .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[afm.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
+      .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[afm.Variables]], any[Duration])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
 
     val fileMetadata = List(AddOrUpdateFileMetadata(UUID.randomUUID(), List(AddOrUpdateMetadata("ClosureStatus", "Open"))))
 
