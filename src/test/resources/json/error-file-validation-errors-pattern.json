@@ -1,0 +1,70 @@
+{
+  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+  "date" : "2025-03-25",
+  "fileError" : "SCHEMA_VALIDATION",
+  "validationErrors" : [
+    {
+      "assetId" : "test/test2.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "Translated title of record",
+          "errorKey" : "pattern",
+          "message" : "Must not contain line breaks"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "Translated title of record",
+          "value" : "line\r\nbreak"
+        },
+        {
+          "name" : "Filepath",
+          "value" : "test/test2.txt"
+        }
+      ]
+    },
+    {
+      "assetId" : "test/test1.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "Add alternative title without the file extension",
+          "errorKey" : "pattern",
+          "message" : "Must not contain line breaks"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "Add alternative title without the file extension",
+          "value" : "line\r\nbreak"
+        },
+        {
+          "name" : "Filepath",
+          "value" : "test/test1.txt"
+        }
+      ]
+    },
+    {
+      "assetId" : "test/test3.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "Former reference",
+          "errorKey" : "pattern",
+          "message" : "Must not contain line breaks"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "Former reference",
+          "value" : "line\r\nbreak"
+        },
+        {
+          "name" : "Filepath",
+          "value" : "test/test3.txt"
+        }
+      ]
+    }
+  ]
+}
