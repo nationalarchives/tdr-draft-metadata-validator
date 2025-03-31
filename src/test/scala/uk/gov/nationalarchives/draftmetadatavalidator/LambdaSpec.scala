@@ -209,6 +209,22 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/error-file-validation-errors-invalid-rows.json")
   }
 
+  "handleRequest" should "download the draft metadata csv with file validation pattern errors, validate it and save error file with errors to s3" in {
+    val fileIdMetadata = testFileIdMetadata(Seq("test/test1.txt", "test/test2.txt", "test/test3.txt"))
+    authOkJson()
+    graphqlOkJson(testFileIdMetadata = fileIdMetadata)
+    mockS3GetResponse("sample-validation-errors-pattern.csv")
+    checkFileError("json/error-file-validation-errors-pattern.json")
+  }
+
+  "handleRequest" should "download the draft metadata csv file, check for relationship schema errors and save error file with errors to s3" in {
+    val fileIdMetadata = testFileIdMetadata(Seq("test/test1.txt", "test/test2.txt", "test/test3.txt"))
+    authOkJson()
+    graphqlOkJson(testFileIdMetadata = fileIdMetadata)
+    mockS3GetResponse("sample-invalid-description-with-alternate-description.csv")
+    checkFileError("json/error-file-invalid-description-with-alternate-description.json")
+  }
+
   private def checkFileError(errorFile: String) = {
     mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava

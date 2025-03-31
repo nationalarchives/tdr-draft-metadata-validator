@@ -2,6 +2,8 @@ package uk.gov.nationalarchives.draftmetadatavalidator
 
 import com.typesafe.config.{ConfigFactory, Config => TypeSafeConfig}
 
+import scala.concurrent.duration.{DurationInt, FiniteDuration}
+
 object ApplicationConfig {
 
   val configFactory: TypeSafeConfig = ConfigFactory.load
@@ -16,4 +18,5 @@ object ApplicationConfig {
   val fileName: String = configFactory.getString("draftMetadata.fileName")
   val errorFileName: String = configFactory.getString("draftMetadata.errorFileName")
   val timeToLiveSecs: Int = 60
+  val graphqlApiRequestTimeOut: FiniteDuration = 180.seconds
 }

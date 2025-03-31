@@ -18,7 +18,7 @@ import software.amazon.awssdk.http.apache.ApacheHttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.ssm.SsmClient
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest
-import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend}
+import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, SttpBackendOptions}
 import uk.gov.nationalarchives.aws.utils.s3.S3Clients._
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
@@ -30,7 +30,7 @@ import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeploymen
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.{convertToAlternateKey, convertToValidationKey}
 import uk.gov.nationalarchives.tdr.validation.FileRow
-import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, REQUIRED_SCHEMA}
+import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, RELATIONSHIP_SCHEMA, REQUIRED_SCHEMA}
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
 import uk.gov.nationalarchives.utf8.validator.Utf8Validator
 
@@ -46,7 +46,7 @@ import scala.util.{Failure, Try}
 
 class Lambda {
 
-  implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend()
+  implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend(options = SttpBackendOptions.connectionTimeout(graphqlApiRequestTimeOut))
   implicit val keycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment(authUrl, "tdr", timeToLiveSecs)
   implicit def logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
   implicit val fileErrorEncoder: Encoder[FileError.Value] = Encoder.encodeEnumeration(FileError)
@@ -70,7 +70,7 @@ class Lambda {
   def handleRequest(input: java.util.Map[String, Object], context: Context): java.util.Map[String, Object] = {
     val startTime = System.currentTimeMillis()
     val consignmentId = extractConsignmentId(input)
-    val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN)
+    val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, RELATIONSHIP_SCHEMA)
     val validationParameters: ValidationParameters = ValidationParameters(
       consignmentId = UUID.fromString(consignmentId),
       schemaToValidate = schemaToValidate,
