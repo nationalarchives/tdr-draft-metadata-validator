@@ -5,8 +5,8 @@ import cats.syntax.semigroup._
 import com.amazonaws.services.lambda.runtime.Context
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.GetConsignmentFilesMetadata.{getConsignmentFilesMetadata => gcfm}
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
+import graphql.codegen.GetFilesWithUniqueAssetIdKey.{getFilesWithUniqueAssetIdKey => uaik}
 import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import io.circe.Encoder
@@ -22,6 +22,7 @@ import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, SttpBacken
 import uk.gov.nationalarchives.aws.utils.s3.S3Clients._
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
+import uk.gov.nationalarchives.draftmetadatavalidator.FileError.PROTECTED_FIELD
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{ValidationExecutionError, ValidationParameters, getErrorFilePath, getFilePath}
 import uk.gov.nationalarchives.draftmetadatavalidator.ValidationErrors._
 import uk.gov.nationalarchives.draftmetadatavalidator.utils.{DependencyVersionReader, MetadataUtils}
@@ -29,9 +30,9 @@ import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.{convertToAlternateKey, convertToValidationKey}
-import uk.gov.nationalarchives.tdr.validation.FileRow
-import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition.{BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, RELATIONSHIP_SCHEMA, REQUIRED_SCHEMA}
+import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition._
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
+import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 import uk.gov.nationalarchives.utf8.validator.Utf8Validator
 
 import java.io.FileInputStream
@@ -52,18 +53,20 @@ class Lambda {
   implicit val fileErrorEncoder: Encoder[FileError.Value] = Encoder.encodeEnumeration(FileError)
   private lazy val messageProperties = getMessageProperties
 
+  private val protectedMetadataFields = List("file_name", "date_last_modified")
   private val keycloakUtils = new KeycloakUtils()
   private val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
   private val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
-  private val getConsignmentFilesMetadataClient = new GraphQLClient[gcfm.Data, gcfm.Variables](apiUrl)
   private val updateMetadataSchemaLibraryVersionClient = new GraphQLClient[ucslv.Data, ucslv.Variables](apiUrl)
+  private val getFilesWithUniqueAssetIdKey = new GraphQLClient[uaik.Data, uaik.Variables](apiUrl)
+
   private val graphQlApi: GraphQlApi = GraphQlApi(
     keycloakUtils,
     customMetadataClient,
     updateConsignmentStatusClient,
     addOrUpdateBulkFileMetadataClient,
-    getConsignmentFilesMetadataClient,
+    getFilesWithUniqueAssetIdKey,
     updateMetadataSchemaLibraryVersionClient
   )
 
@@ -74,7 +77,7 @@ class Lambda {
     val validationParameters: ValidationParameters = ValidationParameters(
       consignmentId = UUID.fromString(consignmentId),
       schemaToValidate = schemaToValidate,
-      uniqueAssetIDKey = "file_path",
+      uniqueAssetIdKey = "file_path",
       clientAlternateKey = "tdrFileHeader",
       persistenceAlternateKey = "tdrDataLoadHeader",
       requiredSchema = Some(REQUIRED_SCHEMA)
@@ -82,18 +85,10 @@ class Lambda {
 
     val resultIO = for {
       _ <- logger.info(s"Metadata validation was run for $consignmentId")
-      fileIdData <- graphQlApi.getConsignmentFilesMetadata(
-        consignmentId = UUID.fromString(consignmentId),
-        clientSecret = getClientSecret(clientSecretPath, endpoint),
-        databaseMetadataHeaders = List(
-          SchemaUtils.convertToAlternateKey(validationParameters.persistenceAlternateKey, validationParameters.uniqueAssetIDKey),
-          "FileType"
-        )
-      )
-      clientToPersistenceId = IdentityUtils.buildClientToPersistenceIdMap(fileIdData, validationParameters)
-      errorFileData <- doValidation(validationParameters, clientToPersistenceId)
+      filesWithUniqueAssetIdKey <- graphQlApi.getFilesWithUniqueAssetIdKey(UUID.fromString(consignmentId), getClientSecret(clientSecretPath, endpoint))
+      errorFileData <- doValidation(validationParameters, filesWithUniqueAssetIdKey)
       _ <- writeErrorFileDataToFile(validationParameters, errorFileData)
-      _ <- if (errorFileData.validationErrors.isEmpty) persistMetadata(validationParameters, clientToPersistenceId) else IO.unit
+      _ <- if (errorFileData.validationErrors.isEmpty) persistMetadata(validationParameters, filesWithUniqueAssetIdKey) else IO.unit
       _ <- updateConsignmentMetadataSchemaLibraryVersion(validationParameters)
       _ <- updateStatus(errorFileData, validationParameters)
     } yield ()
@@ -105,7 +100,7 @@ class Lambda {
     ).asJava
   }
 
-  private def doValidation(validationParameters: ValidationParameters, clientIdToPersistenceId: Map[String, UUID]): IO[ErrorFileData] = {
+  private def doValidation(validationParameters: ValidationParameters, filesWithUniqueAssetIdKey: Map[String, FileDetail]): IO[ErrorFileData] = {
     val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
     val validationProgram = for {
       _ <- s3Files.downloadFile(bucket, validationParameters)
@@ -113,7 +108,7 @@ class Lambda {
       _ <- validateDuplicateHeaders(validationParameters)
       csvData <- loadCSV(validationParameters)
       _ <- validateRequired(csvData, validationParameters)
-      _ <- validateRows(validationParameters, csvData, clientIdToPersistenceId, validationParameters.checkAgainstUploadedRecords)
+      _ <- validateRows(validationParameters, csvData, filesWithUniqueAssetIdKey, validationParameters.checkAgainstUploadedRecords)
     } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
 
     validationProgram.handleError({
@@ -166,7 +161,7 @@ class Lambda {
       case Some(schema) =>
         val validationErrors = schemaValidate(Set(schema), List(csvData.head), validationParameters.clientAlternateKey)
         if (validationErrors.nonEmpty) {
-          IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_REQUIRED, validationErrors.toList), csvData))
+          IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_REQUIRED, validationErrors), csvData))
         } else {
           IO.unit
         }
@@ -194,21 +189,47 @@ class Lambda {
   private def validateRows(
       validationParameters: ValidationParameters,
       csvData: List[FileRow],
-      clientIdToPersistenceId: Map[String, UUID],
+      filesWithUniqueAssetIdKey: Map[String, FileDetail],
       checkAgainstUploadedRecords: Boolean
   ): IO[ErrorFileData] = {
     def skipUnless(toggle: Boolean): List[ValidationErrors] => IO[List[ValidationErrors]] = validated => if (toggle) IO(validated) else IO(List.empty)
+    val uniqueAssetIdKeys = filesWithUniqueAssetIdKey.keySet
     for {
-      duplicateRowErrors <- IO(RowValidator.validateMissingRows(clientIdToPersistenceId, csvData, messageProperties, validationParameters))
-      missingRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateDuplicateRows(csvData, messageProperties, validationParameters))
-      unknownRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateUnknownRows(clientIdToPersistenceId, csvData, messageProperties, validationParameters))
+      missingRowErrors <- IO(RowValidator.validateMissingRows(uniqueAssetIdKeys, csvData, messageProperties, validationParameters))
+      duplicateRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateDuplicateRows(csvData, messageProperties, validationParameters))
+      unknownRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateUnknownRows(uniqueAssetIdKeys, csvData, messageProperties, validationParameters))
+      protectedFieldErrors <- skipUnless(checkAgainstUploadedRecords)(validateProtectedFields(csvData, filesWithUniqueAssetIdKey, messageProperties, validationParameters))
       rowSchemaErrors <- IO(schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters.clientAlternateKey))
-      combinedErrors = duplicateRowErrors |+| missingRowErrors |+| unknownRowErrors |+| rowSchemaErrors
+      combinedErrors = duplicateRowErrors |+| missingRowErrors |+| unknownRowErrors |+| protectedFieldErrors |+| rowSchemaErrors
       result <-
         if (combinedErrors.nonEmpty)
           IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, combinedErrors), csvData))
         else IO.pure(ErrorFileData(validationParameters))
     } yield result
+  }
+
+  private def validateProtectedFields(
+      csvData: List[FileRow],
+      filesWithUniqueAssetIdKey: Map[String, FileDetail],
+      messageProperties: Properties,
+      validationParameters: ValidationParameters
+  ): List[ValidationErrors] = {
+
+    for {
+      metadataField <- protectedMetadataFields
+      name = SchemaUtils.convertToAlternateKey(validationParameters.clientAlternateKey, metadataField)
+      row <- csvData
+      value = row.metadata.find(_.name == name).map(_.value).getOrElse("")
+      if filesWithUniqueAssetIdKey.contains(row.matchIdentifier) && value != filesWithUniqueAssetIdKey(row.matchIdentifier).getValue(metadataField)
+    } yield {
+      val error = Error(
+        validationProcess = PROTECTED_FIELD.toString,
+        property = name,
+        errorKey = PROTECTED_FIELD.toString,
+        message = messageProperties.getProperty(s"${PROTECTED_FIELD}.$metadataField", s"${PROTECTED_FIELD}.$metadataField")
+      )
+      ValidationErrors(row.matchIdentifier, Set(error), List(Metadata(name, value)))
+    }
   }
 
   private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], alternateKey: String): List[ValidationErrors] = {
@@ -258,7 +279,7 @@ class Lambda {
         filePath,
         validationParameters.clientAlternateKey,
         validationParameters.clientAlternateKey,
-        validationParameters.uniqueAssetIDKey
+        validationParameters.uniqueAssetIdKey
       )
     ).handleErrorWith(err => {
       logger.error(s"Metadata Validation failed to load csv :${err.getMessage}")
@@ -283,12 +304,12 @@ class Lambda {
     )
   }
 
-  private def persistMetadata(draftMetadata: ValidationParameters, clientIdToPersistenceId: Map[String, UUID]): IO[List[AddOrUpdateBulkFileMetadata]] = {
+  private def persistMetadata(draftMetadata: ValidationParameters, filesWithUniqueAssetIdKey: Map[String, FileDetail]): IO[List[AddOrUpdateBulkFileMetadata]] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     for {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
-      fileData <- IO(CSVHandler.loadCSV(getFilePath(draftMetadata), draftMetadata.clientAlternateKey, draftMetadata.persistenceAlternateKey, draftMetadata.uniqueAssetIDKey))
-      addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData, clientIdToPersistenceId)
+      fileData <- IO(CSVHandler.loadCSV(getFilePath(draftMetadata), draftMetadata.clientAlternateKey, draftMetadata.persistenceAlternateKey, draftMetadata.uniqueAssetIdKey))
+      addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData, filesWithUniqueAssetIdKey)
       result <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
     } yield result
   }
@@ -324,7 +345,7 @@ object Lambda {
   case class ValidationParameters(
       consignmentId: UUID,
       schemaToValidate: Set[JsonSchemaDefinition],
-      uniqueAssetIDKey: String,
+      uniqueAssetIdKey: String,
       clientAlternateKey: String,
       persistenceAlternateKey: String,
       requiredSchema: Option[JsonSchemaDefinition] = None,

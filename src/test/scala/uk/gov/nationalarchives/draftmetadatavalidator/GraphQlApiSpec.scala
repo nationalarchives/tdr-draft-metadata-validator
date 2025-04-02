@@ -1,16 +1,18 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.unsafe.implicits.global
+import cats.implicits.catsSyntaxOptionId
 import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import com.typesafe.scalalogging.Logger
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.GetConsignmentFilesMetadata.{getConsignmentFilesMetadata => gcfm}
 import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
+import graphql.codegen.GetFilesWithUniqueAssetIdKey.getFilesWithUniqueAssetIdKey.GetConsignment
+import graphql.codegen.GetFilesWithUniqueAssetIdKey.{getFilesWithUniqueAssetIdKey => uaik}
+import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata, DataType}
-import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
@@ -22,6 +24,7 @@ import uk.gov.nationalarchives.tdr.error.GraphQlError
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.{GraphQLClient, GraphQlResponse}
 
+import java.time.LocalDateTime
 import java.util.UUID
 import scala.concurrent.duration.Duration
 import scala.concurrent.{ExecutionContextExecutor, Future}
@@ -39,9 +42,9 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   private val customMetadataClient: GraphQLClient[cm.Data, cm.Variables] = mock[GraphQLClient[cm.Data, cm.Variables]]
   private val updateConsignmentStatusClient = mock[GraphQLClient[ucs.Data, ucs.Variables]]
   private val addOrUpdateBulkFileMetadataClient = mock[GraphQLClient[afm.Data, afm.Variables]]
-  private val consignmentFilesMetadataClient = mock[GraphQLClient[gcfm.Data, gcfm.Variables]]
   private val keycloak = mock[KeycloakUtils]
   private val updateConsignmentMetadataSchemaLibraryVersion = mock[GraphQLClient[ucslv.Data, ucslv.Variables]]
+  private val getFilesUniquesAssetIdKey = mock[GraphQLClient[uaik.Data, uaik.Variables]]
 
   val customMetadata: List[CustomMetadata] = List(
     TestUtils.createCustomMetadata("ClosureType", "Closure status", 1, DataType.Text),
@@ -80,6 +83,25 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
     val response = api.getCustomMetadata(consignmentId, "secret").unsafeRunSync()
 
     response should equal(customMetadata)
+  }
+
+  "getFilesWithUniqueAssetIdKey" should "return the files with unique asset id" in {
+    val api = getGraphQLAPI
+    val files = GetConsignment.Files(UUID.randomUUID(), "name".some, GetConsignment.Files.Metadata("text/file.txt".some, LocalDateTime.now().some))
+    doAnswer(() => Future(new BearerAccessToken("token")))
+      .when(keycloak)
+      .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
+
+    doAnswer(() => Future(GraphQlResponse[uaik.Data](Option(uaik.Data(GetConsignment(List(files)).some)), Nil)))
+      .when(getFilesUniquesAssetIdKey)
+      .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[uaik.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
+
+    val response = api.getFilesWithUniqueAssetIdKey(consignmentId, "secret").unsafeRunSync()
+
+    val expectedResponse = Map(
+      files.metadata.clientSideOriginalFilePath.get -> FileDetail(files.fileId, files.fileName, files.metadata.clientSideLastModifiedDate)
+    )
+    response should equal(expectedResponse)
   }
 
   "updateConsignmentStatus" should "throw an exception when the api fails to update the consignment status" in {
@@ -183,7 +205,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
       customMetadataClient,
       updateConsignmentStatusClient,
       addOrUpdateBulkFileMetadataClient,
-      consignmentFilesMetadataClient,
+      getFilesUniquesAssetIdKey,
       updateConsignmentMetadataSchemaLibraryVersion
     )
   }

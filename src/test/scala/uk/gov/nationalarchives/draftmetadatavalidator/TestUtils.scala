@@ -26,25 +26,29 @@ object TestUtils {
       allowExport = allowExport
     )
 
-  def testFileIdMetadata(clientIds: Seq[String]): Seq[TestFileIdMetadata] =
-    clientIds.map(id => TestFileIdMetadata(UUID.randomUUID(), "ClientSideOriginalFilepath", id))
+  def filesWithUniquesAssetIdKeyResponse(fileTestData: List[FileTestData]): String = {
+    val getFilesData = fileTestData
+      .map(data => s"""
+             |{
+             |   "fileId": "${data.fileId}",
+             |   "fileName": "${data.fileName}",
+             |   "metadata":
+             |     {
+             |       "clientSideOriginalFilePath": "${data.filePath}",
+             |       "clientSideLastModifiedDate": "${data.lastModifiedDate}"
+             |     }
+             |}
+             |""".stripMargin)
+      .mkString(",\n")
+
+    s"""{
+      "data": {
+        "getConsignment": {
+          "files": [$getFilesData]
+        }
+      }
+    }"""
+  }
 }
 
-case class TestFileIdMetadata(fileId: UUID, persistedIdHeader: String, clientId: String) {
-  val asJson: String =
-    s"""{
-       |  "fileId": "$fileId",
-       |  "fileName": "$clientId",
-       |  "fileMetadata": [
-       |    {
-       |      "name": "$persistedIdHeader",
-       |      "value": "$clientId"
-       |    },
-       |    {
-       |      "name": "FileType",
-       |      "value": "File"
-       |    }
-       |  ],
-       |  "fileStatuses": []
-       |}""".stripMargin
-}
+case class FileTestData(fileId: UUID, fileName: String, filePath: String, lastModifiedDate: String)

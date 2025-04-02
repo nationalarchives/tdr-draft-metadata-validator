@@ -5,8 +5,8 @@ import cats.implicits.catsSyntaxOptionId
 import com.typesafe.scalalogging.Logger
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.GetConsignmentFilesMetadata.{getConsignmentFilesMetadata => gcfm}
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
+import graphql.codegen.GetFilesWithUniqueAssetIdKey.{getFilesWithUniqueAssetIdKey => uaik}
 import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.types._
@@ -15,22 +15,25 @@ import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig.{clientI
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 
+import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import java.util.UUID
-import scala.concurrent.duration.DurationInt
-import scala.concurrent.{ExecutionContext, Future}
+import scala.concurrent.Future
 
 class GraphQlApi(
     keycloak: KeycloakUtils,
     customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
     updateConsignmentStatus: GraphQLClient[ucs.Data, ucs.Variables],
     addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
-    getConsignmentFileMetadata: GraphQLClient[gcfm.Data, gcfm.Variables],
+    getFilesWithUniqueAssetIdKey: GraphQLClient[uaik.Data, uaik.Variables],
     updateConsignmentMetadataSchemaLibraryVersion: GraphQLClient[ucslv.Data, ucslv.Variables]
 )(implicit
     logger: Logger,
     keycloakDeployment: TdrKeycloakDeployment,
     backend: SttpBackend[Identity, Any]
 ) {
+
+  private val fileTypeIdentifier: String = "File"
 
   def getCustomMetadata(consignmentId: UUID, clientSecret: String): IO[List[cm.CustomMetadata]] = for {
     token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
@@ -60,31 +63,17 @@ class GraphQlApi(
       )
     } yield data.addOrUpdateBulkFileMetadata
 
-  def getConsignmentFilesMetadata(consignmentId: UUID, clientSecret: String, databaseMetadataHeaders: List[String]): IO[Option[gcfm.Data]] = {
+  def getFilesWithUniqueAssetIdKey(consignmentId: UUID, clientSecret: String): IO[Map[String, FileDetail]] = {
     for {
       token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
-      metadata <- getConsignmentFileMetadata
-        .getResult(
-          token,
-          gcfm.document,
-          gcfm
-            .Variables(
-              consignmentId = consignmentId,
-              fileFiltersInput = FileFilters(
-                fileTypeIdentifier = None,
-                selectedFileIds = None,
-                parentId = None,
-                metadataFilters = FileMetadataFilters(
-                  None,
-                  None,
-                  properties = Option.when(databaseMetadataHeaders.nonEmpty)(databaseMetadataHeaders)
-                ).some
-              ).some
-            )
-            .some
-        )
-        .toIO
-    } yield metadata.data
+      fileFilters = FileFilters(fileTypeIdentifier.some, None, None, None)
+      fileUniqueAssetIdKey <- getFilesWithUniqueAssetIdKey.getResult(token, uaik.document, uaik.Variables(consignmentId, fileFilters).some).toIO
+      data <- IO.fromOption(fileUniqueAssetIdKey.data)(
+        new RuntimeException(fileUniqueAssetIdKey.errors.map(_.message).headOption.getOrElse("Unable to get file unique asset id key"))
+      )
+    } yield data.getConsignment
+      .map(c => c.files.map(f => f.metadata.clientSideOriginalFilePath.getOrElse("") -> FileDetail(f.fileId, f.fileName, f.metadata.clientSideLastModifiedDate)).toMap)
+      .getOrElse(throw new RuntimeException("Consignment not found"))
   }
 
   def updateConsignmentMetadataSchemaLibraryVersion(consignmentId: UUID, clientSecret: String, schemeVersion: String): IO[Option[Int]] = {
@@ -108,7 +97,7 @@ object GraphQlApi {
       customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
       updateConsignmentStatus: GraphQLClient[ucs.Data, ucs.Variables],
       addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
-      getConsignmentFilesMetadata: GraphQLClient[gcfm.Data, gcfm.Variables],
+      getFilesWithUniqueAssetIdKey: GraphQLClient[uaik.Data, uaik.Variables],
       updateConsignmentMetadataSchemaLibraryVersion: GraphQLClient[ucslv.Data, ucslv.Variables]
   )(implicit
       backend: SttpBackend[Identity, Any],
@@ -120,12 +109,22 @@ object GraphQlApi {
       customMetadataClient,
       updateConsignmentStatus,
       addOrUpdateBulkFileMetadata,
-      getConsignmentFilesMetadata,
+      getFilesWithUniqueAssetIdKey,
       updateConsignmentMetadataSchemaLibraryVersion
     )(
       logger,
       keycloakDeployment,
       backend
     )
+  }
+}
+
+case class FileDetail(fileId: UUID, fileName: Option[String], lastModifiedDate: Option[LocalDateTime]) {
+
+  def getValue(metadataField: String): String = {
+    metadataField match {
+      case "file_name"          => fileName.getOrElse("")
+      case "date_last_modified" => lastModifiedDate.map(_.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))).getOrElse("")
+    }
   }
 }
