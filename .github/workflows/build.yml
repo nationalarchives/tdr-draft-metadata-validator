@@ -15,6 +15,7 @@ jobs:
       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
       WIZ_CLIENT_ID: ${{ secrets.WIZ_CLIENT_ID }}
       WIZ_CLIENT_SECRET: ${{ secrets.WIZ_CLIENT_SECRET }}
+      WIZ_PROJECT_ID: ${{ secrets.WIZ_PROJECT_TDR }}
   deploy:
     needs: build-image
     runs-on: ubuntu-latest
