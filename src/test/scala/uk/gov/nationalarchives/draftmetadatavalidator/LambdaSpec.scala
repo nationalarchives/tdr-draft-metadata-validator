@@ -50,9 +50,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 and save metadata to db if it has no errors" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(true, filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample.csv")
@@ -105,9 +105,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "return 500 response and throw an error message when a call to the api fails" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample.csv")
@@ -136,9 +136,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv file, check for schema errors and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("invalid-sample.csv")
@@ -148,9 +148,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv file, validate protected fields and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample-updated-protected-fields.csv")
@@ -160,9 +160,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv file, check for duplicate columns and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample-duplicate-headers.csv")
@@ -172,9 +172,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv file, validate the required and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample-missing-required-column.csv")
@@ -184,9 +184,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the a draft metadata csv file with non-UTF8 character, validate it as a UTF-8 and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
 
@@ -197,9 +197,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the a draft metadata csv file with no key value column try and load and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
 
@@ -210,9 +210,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv file with duplicate file row errors, validate it and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample-invalid-rows-duplicate.csv")
@@ -222,9 +222,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv file with validation errors and duplicate file rows, validate it and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample-validation-error-invalid-rows-duplicate.csv")
@@ -234,9 +234,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv file with missing file row errors, validate it and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00")
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample-invalid-rows-missing.csv")
@@ -246,9 +246,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv file with unknown file row errors, validate it and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00")
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample-invalid-rows-unknown.csv")
@@ -258,9 +258,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv file with duplicate unknown file row errors, validate it and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample-invalid-rows-duplicate-unknown.csv")
@@ -270,9 +270,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv with file validation and file row errors, validate it and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00")
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample-validation-errors-invalid-rows.csv")
@@ -282,9 +282,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv with file validation pattern errors, validate it and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample-validation-errors-pattern.csv")
@@ -294,9 +294,9 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the draft metadata csv file, check for relationship schema errors and save error file with errors to s3" in {
     authOkJson()
     val fileTestData = List(
-      FileTestData(UUID.randomUUID(),"test3.txt", "test/test3.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test1.txt", "test/test1.txt", "2024-03-26T16:00"),
-      FileTestData(UUID.randomUUID(),"test2.txt", "test/test2.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test3.txt", "test/test3.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test1.txt", "test/test1.txt", "2024-03-26T16:00"),
+      FileTestData(UUID.randomUUID(), "test2.txt", "test/test2.txt", "2024-03-26T16:00")
     )
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample-invalid-description-with-alternate-description.csv")
