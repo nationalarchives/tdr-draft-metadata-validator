@@ -4,26 +4,26 @@ import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.ValidationParameter
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
-import java.util.{Properties, UUID}
+import java.util.Properties
 
 object RowValidator {
   def validateMissingRows(
-      clientIdToPersistenceId: Map[String, UUID],
+      uniqueAssetIdKeys: Set[String],
       csvData: List[FileRow],
       messageProperties: Properties,
       validationParameters: ValidationParameters
   ): List[ValidationErrors] =
-    (clientIdToPersistenceId.keySet -- csvData.map(_.matchIdentifier).toSet)
+    (uniqueAssetIdKeys -- csvData.map(_.matchIdentifier).toSet)
       .map(id => toRowValidationErrors(id, Missing, messageProperties, validationParameters))
       .toList
 
   def validateUnknownRows(
-      clientIdToPersistenceId: Map[String, UUID],
+      uniqueAssetIdKeys: Set[String],
       csvData: List[FileRow],
       messageProperties: Properties,
       validationParameters: ValidationParameters
   ): List[ValidationErrors] =
-    (csvData.map(_.matchIdentifier).toSet -- clientIdToPersistenceId.keySet).map(id => toRowValidationErrors(id, Unknown, messageProperties, validationParameters)).toList
+    (csvData.map(_.matchIdentifier).toSet -- uniqueAssetIdKeys).map(id => toRowValidationErrors(id, Unknown, messageProperties, validationParameters)).toList
 
   def validateDuplicateRows(
       csvData: List[FileRow],
@@ -58,7 +58,7 @@ object RowValidator {
         Metadata(
           name = SchemaUtils.convertToAlternateKey(
             alternateKeyName = validationParameters.clientAlternateKey,
-            propertyKey = validationParameters.uniqueAssetIDKey
+            propertyKey = validationParameters.uniqueAssetIdKey
           ),
           value = clientIdentifier
         )

@@ -6,7 +6,7 @@ import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.must.Matchers.be
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
-import uk.gov.nationalarchives.draftmetadatavalidator.TestUtils
+import uk.gov.nationalarchives.draftmetadatavalidator.{FileDetail, TestUtils}
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.util.UUID
@@ -24,12 +24,12 @@ class MetadataUtilsSpec extends AnyFlatSpec with BeforeAndAfterEach {
     )
     val clientFileId = "test/test.docx"
     val persistenceFileId = "16b2f65c-ec50-494b-824b-f8c08e6b575c"
-    val clientIdPersistenceIdMap = Map(clientFileId -> UUID.fromString(persistenceFileId))
+    val fileWithUniqueAssetIdKey = Map(clientFileId -> FileDetail(UUID.fromString(persistenceFileId), None, None))
     val fileRows = List(
       FileRow(clientFileId, List(Metadata("ClosurePeriod", "10"), Metadata("SHA256ClientSideChecksum", "ChecksumValue"), Metadata("ClosureStatus", "Closed")))
     )
 
-    val filterProtectedFields = MetadataUtils.filterProtectedFields(customMetadata, fileRows, clientIdPersistenceIdMap)
+    val filterProtectedFields = MetadataUtils.filterProtectedFields(customMetadata, fileRows, fileWithUniqueAssetIdKey)
     val expected: List[AddOrUpdateFileMetadata] = List(
       AddOrUpdateFileMetadata(
         UUID.fromString(persistenceFileId),

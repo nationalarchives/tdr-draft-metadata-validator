@@ -13,6 +13,12 @@
           "message" : "Must be No for an open record"
         },
         {
+          "validationProcess" : "PROTECTED_FIELD",
+          "property" : "Date last modified",
+          "errorKey" : "PROTECTED_FIELD",
+          "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
+        },
+        {
           "validationProcess" : "SCHEMA_BASE",
           "property" : "Is the title sensitive for the public?",
           "errorKey" : "type",
@@ -49,12 +55,12 @@
           "value" : "test/test2.txt"
         },
         {
-          "name" : "Is the title sensitive for the public?",
-          "value" : ""
-        },
-        {
           "name" : "Date last modified",
           "value" : "hhhh"
+        },
+        {
+          "name" : "Is the title sensitive for the public?",
+          "value" : ""
         },
         {
           "name" : "Is the description sensitive for the public?",
