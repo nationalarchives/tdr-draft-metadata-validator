@@ -226,7 +226,7 @@ class Lambda {
         validationProcess = PROTECTED_FIELD.toString,
         property = name,
         errorKey = PROTECTED_FIELD.toString,
-        message = messageProperties.getProperty(s"${PROTECTED_FIELD}.$metadataField", s"${PROTECTED_FIELD}.$metadataField")
+        message = messageProperties.getProperty(s"$PROTECTED_FIELD.$metadataField", s"$PROTECTED_FIELD.$metadataField")
       )
       ValidationErrors(row.matchIdentifier, Set(error), List(Metadata(name, value)))
     }

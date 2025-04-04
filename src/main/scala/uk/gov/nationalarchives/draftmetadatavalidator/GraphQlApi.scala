@@ -12,11 +12,11 @@ import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.types._
 import sttp.client3._
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig.{clientId, graphqlApiRequestTimeOut}
+import uk.gov.nationalarchives.draftmetadatavalidator.utils.MetadataUtils.dateTimeFormatter
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 
 import java.time.LocalDateTime
-import java.time.format.DateTimeFormatter
 import java.util.UUID
 import scala.concurrent.Future
 
@@ -73,7 +73,7 @@ class GraphQlApi(
       )
     } yield data.getConsignment
       .map(c => c.files.map(f => f.metadata.clientSideOriginalFilePath.getOrElse("") -> FileDetail(f.fileId, f.fileName, f.metadata.clientSideLastModifiedDate)).toMap)
-      .getOrElse(throw new RuntimeException("Consignment not found"))
+      .getOrElse(throw new RuntimeException("Unable to get FilesWithUniqueAssetIdKey"))
   }
 
   def updateConsignmentMetadataSchemaLibraryVersion(consignmentId: UUID, clientSecret: String, schemeVersion: String): IO[Option[Int]] = {
@@ -124,7 +124,7 @@ case class FileDetail(fileId: UUID, fileName: Option[String], lastModifiedDate: 
   def getValue(metadataField: String): String = {
     metadataField match {
       case "file_name"          => fileName.getOrElse("")
-      case "date_last_modified" => lastModifiedDate.map(_.format(DateTimeFormatter.ofPattern("yyyy-MM-dd"))).getOrElse("")
+      case "date_last_modified" => lastModifiedDate.map(_.format(dateTimeFormatter)).getOrElse("")
     }
   }
 }

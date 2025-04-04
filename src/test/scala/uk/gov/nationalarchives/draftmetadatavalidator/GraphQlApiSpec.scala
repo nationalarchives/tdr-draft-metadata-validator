@@ -104,6 +104,22 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
     response should equal(expectedResponse)
   }
 
+  "getFilesWithUniqueAssetIdKey" should "throw an exception when no consignments are found" in {
+    val api = getGraphQLAPI
+    doAnswer(() => Future(new BearerAccessToken("token")))
+      .when(keycloak)
+      .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
+
+    doAnswer(() => Future(GraphQlResponse[uaik.Data](Option(uaik.Data(None)), Nil)))
+      .when(getFilesUniquesAssetIdKey)
+      .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[uaik.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
+
+    val exception = intercept[RuntimeException] {
+      api.getFilesWithUniqueAssetIdKey(consignmentId, "secret").unsafeRunSync()
+    }
+    exception.getMessage should equal("Unable to get FilesWithUniqueAssetIdKey")
+  }
+
   "updateConsignmentStatus" should "throw an exception when the api fails to update the consignment status" in {
     val api = getGraphQLAPI
     val graphQlError = GraphQLClient.Error("Unable to update consignment status", Nil, Nil, Some(Extensions(Some("NOT_AUTHORISED"))))

@@ -1,12 +1,13 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.Semigroup
-import uk.gov.nationalarchives.draftmetadatavalidator.FileError.{FileError, ROW_VALIDATION}
+import uk.gov.nationalarchives.draftmetadatavalidator.FileError.FileError
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.ValidationParameters
+import uk.gov.nationalarchives.draftmetadatavalidator.utils.MetadataUtils.dateTimeFormatter
 import uk.gov.nationalarchives.tdr.validation.Metadata
 
-import java.text.SimpleDateFormat
-import java.util.{Date, UUID}
+import java.time.LocalDateTime
+import java.util.UUID
 
 object FileError extends Enumeration {
   type FileError = Value
@@ -36,9 +37,6 @@ case class ErrorFileData(consignmentId: UUID, date: String, fileError: FileError
 object ErrorFileData {
 
   def apply(draftMetadata: ValidationParameters, fileError: FileError = FileError.None, validationErrors: List[ValidationErrors] = Nil): ErrorFileData = {
-
-    val pattern = "yyyy-MM-dd"
-    val dateFormat = new SimpleDateFormat(pattern)
-    ErrorFileData(draftMetadata.consignmentId, dateFormat.format(new Date), fileError, validationErrors)
+    ErrorFileData(draftMetadata.consignmentId, LocalDateTime.now().format(dateTimeFormatter), fileError, validationErrors)
   }
 }

@@ -12,6 +12,8 @@ import java.time.format.DateTimeFormatter
 
 object MetadataUtils {
 
+  val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+
   def filterProtectedFields(customMetadata: List[CustomMetadata], fileRows: List[FileRow], filesWithUniqueAssetIdKey: Map[String, FileDetail]): List[AddOrUpdateFileMetadata] = {
     val filterProtectedMetadata = customMetadata.filter(!_.editable).map(_.name)
     val updatedFileRows = fileRows.map { fileMetadata =>
@@ -42,9 +44,8 @@ object MetadataUtils {
   }
 
   private def createAddOrUpdateMetadata(metadata: Metadata, customMetadata: CustomMetadata): List[AddOrUpdateMetadata] = {
-    val format = DateTimeFormatter.ofPattern("yyyy-MM-dd")
     val values = customMetadata.dataType match {
-      case DateTime => Timestamp.valueOf(LocalDate.parse(metadata.value, format).atStartOfDay()).toString :: Nil
+      case DateTime => Timestamp.valueOf(LocalDate.parse(metadata.value, dateTimeFormatter).atStartOfDay()).toString :: Nil
       case Boolean =>
         metadata.value.toLowerCase() match {
           case "yes" => "true" :: Nil
