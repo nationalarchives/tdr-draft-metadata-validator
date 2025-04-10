@@ -144,6 +144,13 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/error-file-duplicate-headers.json")
   }
 
+  "handleRequest" should "download the draft metadata csv file, check for additional columns and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
+    mockS3GetResponse("sample-additional-headers.csv")
+    checkFileError("json/error-file-additional-headers.json")
+  }
+
   "handleRequest" should "download the draft metadata csv file, validate the required and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
@@ -154,7 +161,6 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the a draft metadata csv file with non-UTF8 character, validate it as a UTF-8 and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
-
     mockS3GetResponse("sample-not-utf8.csv")
     checkFileError("json/not-utf8-error.json")
   }
@@ -162,7 +168,6 @@ class LambdaSpec extends ExternalServicesSpec {
   "handleRequest" should "download the a draft metadata csv file with no key value column try and load and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
-
     mockS3GetResponse("sample-no-match-column.csv")
     checkFileError("json/no-match-col-error.json")
   }
