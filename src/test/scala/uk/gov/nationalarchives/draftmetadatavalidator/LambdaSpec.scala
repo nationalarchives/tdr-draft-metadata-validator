@@ -285,7 +285,7 @@ class LambdaSpec extends ExternalServicesSpec {
           AddOrUpdateMetadata("FoiExemptionAsserted", "1990-01-01 00:00:00.0"),
           AddOrUpdateMetadata("ClosureStartDate", "1990-01-01 00:00:00.0"),
           AddOrUpdateMetadata("Language", "English"),
-          AddOrUpdateMetadata("end_date", "")
+          AddOrUpdateMetadata("end_date", "1990-01-01 00:00:00.0")
         )
       ),
       AddOrUpdateFileMetadata(

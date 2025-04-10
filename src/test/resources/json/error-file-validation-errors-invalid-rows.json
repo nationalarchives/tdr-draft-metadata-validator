@@ -46,6 +46,27 @@
           "value" : "bbbb"
         }
       ]
+    },
+    {
+      "assetId" : "test/test1.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "Closure Start Date",
+          "errorKey" : "matchEndDateOrDateLastModified",
+          "message" : "Must match to date of the record (if provided) or date last modified"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "Closure Start Date",
+          "value" : "1990-01-01"
+        },
+        {
+          "name" : "Filepath",
+          "value" : "test/test1.txt"
+        }
+      ]
     }
   ]
 }
