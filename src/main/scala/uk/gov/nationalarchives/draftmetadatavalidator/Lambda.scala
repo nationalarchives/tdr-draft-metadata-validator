@@ -190,16 +190,20 @@ class Lambda {
   private def validateAdditionalHeaders(validationParameters: Lambda.ValidationParameters): IO[Unit] = {
     def additionalError(header: String): Error = {
       val validationKey = convertToValidationKey(validationParameters.clientAlternateKey, header)
-      val errorKey = if(validationKey.isEmpty) header else validationKey
+      val errorKey = if (validationKey.isEmpty) header else validationKey
       val additionalFileError = FileError.ADDITIONAL_HEADER.toString
       Error(additionalFileError, header, "additional", s"$additionalFileError.$errorKey.additional")
     }
     val filePath = getFilePath(validationParameters)
     val headers = CSVHandler.loadHeaders(filePath).getOrElse(Nil)
 
-    val additionalHeaders = headers.collect { case header if !SchemaUtils.getPropertyField(convertToValidationKey(validationParameters.clientAlternateKey, header), validationParameters.expectedPropertyField).asBoolean(false) => header}
+    val additionalHeaders = headers.collect {
+      case header
+          if !SchemaUtils.getPropertyField(convertToValidationKey(validationParameters.clientAlternateKey, header), validationParameters.expectedPropertyField).asBoolean(false) =>
+        header
+    }
 
-    if( additionalHeaders.nonEmpty) {
+    if (additionalHeaders.nonEmpty) {
       val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, additionalHeaders.map(additionalError).toSet)
       IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.ADDITIONAL_HEADER, List(validationErrors)), List.empty[FileRow]))
     } else { IO.unit }
