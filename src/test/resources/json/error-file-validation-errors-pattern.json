@@ -11,12 +11,22 @@
           "property" : "Translated title of record",
           "errorKey" : "pattern",
           "message" : "Must not contain line breaks"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "Closure Start Date",
+          "errorKey" : "matchEndDateOrDateLastModified",
+          "message" : "Must match to date of the record (if provided) or date last modified"
         }
       ],
       "data" : [
         {
           "name" : "Translated title of record",
           "value" : "line\r\nbreak"
+        },
+        {
+          "name" : "Closure Start Date",
+          "value" : "1990-01-01"
         },
         {
           "name" : "Filepath",
@@ -29,6 +39,12 @@
       "errors" : [
         {
           "validationProcess" : "SCHEMA_BASE",
+          "property" : "Closure Start Date",
+          "errorKey" : "matchEndDateOrDateLastModified",
+          "message" : "Must match to date of the record (if provided) or date last modified"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
           "property" : "Add alternative title without the file extension",
           "errorKey" : "pattern",
           "message" : "Must not contain line breaks"
@@ -38,6 +54,10 @@
         {
           "name" : "Add alternative title without the file extension",
           "value" : "line\r\nbreak"
+        },
+        {
+          "name" : "Closure Start Date",
+          "value" : "1990-01-01"
         },
         {
           "name" : "Filepath",

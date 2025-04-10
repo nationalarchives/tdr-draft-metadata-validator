@@ -53,7 +53,6 @@ class Lambda {
   implicit val fileErrorEncoder: Encoder[FileError.Value] = Encoder.encodeEnumeration(FileError)
   private lazy val messageProperties = getMessageProperties
 
-  private val protectedMetadataFields = List("file_name", "date_last_modified")
   private val keycloakUtils = new KeycloakUtils()
   private val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
   private val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
@@ -215,9 +214,11 @@ class Lambda {
       validationParameters: ValidationParameters
   ): List[ValidationErrors] = {
 
+    val protectedMetadataFields = SchemaUtils.getMetadataProperties("System").filterNot(_ == validationParameters.uniqueAssetIdKey)
+    val headers = CSVHandler.loadHeaders(getFilePath(validationParameters)).getOrElse(Nil)
     for {
       metadataField <- protectedMetadataFields
-      name = SchemaUtils.convertToAlternateKey(validationParameters.clientAlternateKey, metadataField)
+      name = convertToAlternateKey(validationParameters.clientAlternateKey, metadataField) if headers.contains(name)
       row <- csvData
       value = row.metadata.find(_.name == name).map(_.value).getOrElse("")
       if filesWithUniqueAssetIdKey.contains(row.matchIdentifier) && value != filesWithUniqueAssetIdKey(row.matchIdentifier).getValue(metadataField)

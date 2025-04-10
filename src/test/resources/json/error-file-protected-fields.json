@@ -8,13 +8,13 @@
       "errors" : [
         {
           "validationProcess" : "PROTECTED_FIELD",
-          "property" : "Filename",
+          "property" : "Date last modified",
           "errorKey" : "PROTECTED_FIELD",
           "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
         },
         {
           "validationProcess" : "PROTECTED_FIELD",
-          "property" : "Date last modified",
+          "property" : "Filename",
           "errorKey" : "PROTECTED_FIELD",
           "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
         },
@@ -33,11 +33,11 @@
       ],
       "data" : [
         {
-          "name" : "Filename",
+          "name" : "Date last modified",
           "value" : ""
         },
         {
-          "name" : "Date last modified",
+          "name" : "Filename",
           "value" : ""
         },
         {
@@ -51,25 +51,39 @@
       "errors" : [
         {
           "validationProcess" : "PROTECTED_FIELD",
-          "property" : "Filename",
+          "property" : "Date last modified",
           "errorKey" : "PROTECTED_FIELD",
           "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
         },
         {
           "validationProcess" : "PROTECTED_FIELD",
-          "property" : "Date last modified",
+          "property" : "Filename",
           "errorKey" : "PROTECTED_FIELD",
           "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "Closure Start Date",
+          "errorKey" : "matchEndDateOrDateLastModified",
+          "message" : "Must match to date of the record (if provided) or date last modified"
         }
       ],
       "data" : [
+        {
+          "name" : "Date last modified",
+          "value" : "2024-05-26"
+        },
         {
           "name" : "Filename",
           "value" : "sample.txt"
         },
         {
-          "name" : "Date last modified",
-          "value" : "2024-05-26"
+          "name" : "Closure Start Date",
+          "value" : "1990-01-01"
+        },
+        {
+          "name" : "Filepath",
+          "value" : "test/test1.txt"
         }
       ]
     }
