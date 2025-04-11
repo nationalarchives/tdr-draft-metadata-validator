@@ -11,12 +11,22 @@
           "property" : "FOI exemption code",
           "errorKey" : "enum",
           "message" : "Must be a pipe delimited list of valid FOI codes, (eg. 31|33). Please see the guidance for more detail on valid codes"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "Closure Start Date",
+          "errorKey" : "matchEndDateOrDateLastModified",
+          "message" : "Must match to date of the record (if provided) or date last modified"
         }
       ],
       "data" : [
         {
           "name" : "FOI exemption code",
           "value" : "78|27(1)|27(2)"
+        },
+        {
+          "name" : "Closure Start Date",
+          "value" : "1990-01-01"
         },
         {
           "name" : "Filepath",
@@ -46,6 +56,12 @@
           "message" : "Must be provided for a closed record"
         },
         {
+          "validationProcess" : "PROTECTED_FIELD",
+          "property" : "Date last modified",
+          "errorKey" : "PROTECTED_FIELD",
+          "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
+        },
+        {
           "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
           "property" : "FOI exemption code",
           "errorKey" : "type",
@@ -59,6 +75,10 @@
         }
       ],
       "data" : [
+        {
+          "name" : "Date last modified",
+          "value" : "12/2/2345"
+        },
         {
           "name" : "FOI decision asserted",
           "value" : ""
@@ -74,10 +94,6 @@
         {
           "name" : "Closure Start Date",
           "value" : ""
-        },
-        {
-          "name" : "Date last modified",
-          "value" : "12/2/2345"
         },
         {
           "name" : "Filepath",
