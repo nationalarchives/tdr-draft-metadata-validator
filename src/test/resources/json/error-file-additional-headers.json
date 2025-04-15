@@ -10,19 +10,19 @@
           "validationProcess" : "ADDITIONAL_HEADER",
           "property" : "UUID",
           "errorKey" : "additional",
-          "message" : "ADDITIONAL_HEADER.UUID.additional"
+          "message" : ""
         },
         {
           "validationProcess" : "ADDITIONAL_HEADER",
           "property" : "AddColumn1",
           "errorKey" : "additional",
-          "message" : "ADDITIONAL_HEADER.AddColumn1.additional"
+          "message" : ""
         },
         {
           "validationProcess" : "ADDITIONAL_HEADER",
           "property" : "AddColumn2",
           "errorKey" : "additional",
-          "message" : "ADDITIONAL_HEADER.AddColumn2.additional"
+          "message" : ""
         }
       ],
       "data" : [
