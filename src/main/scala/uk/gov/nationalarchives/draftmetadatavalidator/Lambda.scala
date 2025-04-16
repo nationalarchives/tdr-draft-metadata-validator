@@ -105,10 +105,10 @@ class Lambda {
     val validationProgram = for {
       _ <- s3Files.downloadFile(bucket, validationParameters)
       _ <- validUTF8(validationParameters)
-      _ <- validateDuplicateHeaders(validationParameters)
-      _ <- validateAdditionalHeaders(validationParameters)
       csvData <- loadCSV(validationParameters)
+      _ <- validateDuplicateHeaders(validationParameters)
       _ <- validateRequired(csvData, validationParameters)
+      _ <- validateAdditionalHeaders(validationParameters)
       _ <- validateRows(validationParameters, csvData, filesWithUniqueAssetIdKey, validationParameters.checkAgainstUploadedRecords)
     } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
 
