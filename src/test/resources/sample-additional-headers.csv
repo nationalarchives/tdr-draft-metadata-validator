@@ -1,0 +1,4 @@
+Filepath,Filename,Date last modified,Date of the record,Description,Former reference,Closure status,Closure Start Date,Closure Period,FOI exemption code,FOI decision asserted,Is the title sensitive for the public?,Add alternative title without the file extension,Is the description sensitive for the public?,Alternative description,Language,Translated title of record,UUID,AddColumn1,AddColumn2
+test/test31.txt,test31.txt,2024-03-26,,eee,,Open,,,,,,,,,English,,Non-UUID-Value,test content,test content
+test/test32.txt,test32.txt,2024-03-26,,hello,,Closed,1990-01-01,33,27(1)|27(2),1990-01-01,Yes,title,No,,English,,Non-UUID-Value,test content,test content
+test/test33.txt,test33.txt,2024-03-26,,www,,Open,,,,,,,,,English,,Non-UUID-Value,test content,test content

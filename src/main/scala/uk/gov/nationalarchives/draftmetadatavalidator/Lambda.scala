@@ -29,7 +29,7 @@ import uk.gov.nationalarchives.draftmetadatavalidator.utils.{DependencyVersionRe
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
-import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.{convertToAlternateKey, convertToValidationKey}
+import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.{convertToAlternateKey, convertToValidationKey, getPropertyField}
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition._
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
@@ -79,6 +79,7 @@ class Lambda {
       uniqueAssetIdKey = "file_path",
       clientAlternateKey = "tdrFileHeader",
       persistenceAlternateKey = "tdrDataLoadHeader",
+      expectedPropertyField = "expectedTDRHeader",
       requiredSchema = Some(REQUIRED_SCHEMA)
     )
 
@@ -105,6 +106,7 @@ class Lambda {
       _ <- s3Files.downloadFile(bucket, validationParameters)
       _ <- validUTF8(validationParameters)
       _ <- validateDuplicateHeaders(validationParameters)
+      _ <- validateAdditionalHeaders(validationParameters)
       csvData <- loadCSV(validationParameters)
       _ <- validateRequired(csvData, validationParameters)
       _ <- validateRows(validationParameters, csvData, filesWithUniqueAssetIdKey, validationParameters.checkAgainstUploadedRecords)
@@ -182,6 +184,23 @@ class Lambda {
       }
       val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, duplicateHeaders.map(duplicateError).toSet)
       IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.DUPLICATE_HEADER, List(validationErrors)), List.empty[FileRow]))
+    } else { IO.unit }
+  }
+
+  private def validateAdditionalHeaders(validationParameters: ValidationParameters): IO[Unit] = {
+    def additionalError(header: String): Error = Error(FileError.ADDITIONAL_HEADER.toString, header, "additional", "")
+
+    def isAdditionalHeader(header: String): Boolean =
+      !SchemaUtils.getPropertyField(convertToValidationKey(validationParameters.clientAlternateKey, header), validationParameters.expectedPropertyField).asBoolean(false)
+
+    val filePath = getFilePath(validationParameters)
+    val headers = CSVHandler.loadHeaders(filePath).getOrElse(Nil)
+
+    val additionalHeaders = headers.filter(header => isAdditionalHeader(header))
+
+    if (additionalHeaders.nonEmpty) {
+      val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, additionalHeaders.map(additionalError).toSet)
+      IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.ADDITIONAL_HEADER, List(validationErrors)), List.empty[FileRow]))
     } else { IO.unit }
   }
 
@@ -349,6 +368,7 @@ object Lambda {
       uniqueAssetIdKey: String,
       clientAlternateKey: String,
       persistenceAlternateKey: String,
+      expectedPropertyField: String,
       requiredSchema: Option[JsonSchemaDefinition] = None,
       checkAgainstUploadedRecords: Boolean = true
   )
