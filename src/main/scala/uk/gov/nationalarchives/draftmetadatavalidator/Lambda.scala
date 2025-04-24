@@ -9,6 +9,7 @@ import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetFilesWithUniqueAssetIdKey.{getFilesWithUniqueAssetIdKey => uaik}
 import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
+import graphql.codegen.types.AddOrUpdateFileMetadata
 import io.circe.Encoder
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -330,8 +331,19 @@ class Lambda {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
       fileData <- IO(CSVHandler.loadCSV(getFilePath(draftMetadata), draftMetadata.clientAlternateKey, draftMetadata.persistenceAlternateKey, draftMetadata.uniqueAssetIdKey))
       addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData, filesWithUniqueAssetIdKey)
-      result <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
+      result <- writeMetadataToDatabase(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
     } yield result
+  }
+
+  private def writeMetadataToDatabase(consignmentId: UUID, clientSecret: String, metadata: List[AddOrUpdateFileMetadata] ): IO[List[AddOrUpdateBulkFileMetadata]] = {
+    import cats.implicits._
+    val x: List[IO[List[AddOrUpdateBulkFileMetadata]]] = metadata.grouped(1000).map { mdGroup =>
+      println("==> " + metadata.size + " " + mdGroup.size)
+      graphQlApi.addOrUpdateBulkFileMetadata(consignmentId, clientSecret, mdGroup)
+    }.toList
+    val y: IO[List[List[AddOrUpdateBulkFileMetadata]]] = x.parSequence
+    val z: IO[List[AddOrUpdateBulkFileMetadata]] = y.map(_.flatten)
+    z
   }
 
   private def writeErrorFileDataToFile(validationParameters: ValidationParameters, errorFileData: ErrorFileData) = {
