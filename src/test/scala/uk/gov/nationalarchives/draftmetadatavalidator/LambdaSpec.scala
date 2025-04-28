@@ -172,7 +172,7 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/no-match-col-error.json")
   }
 
-  "handleRequest" should "download the a draft metadata csv file with invalid key try and load and save error file with errors to s3" in {
+  "handleRequest" should "download the draft metadata csv file with invalid key, validate it and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample-invalid-column-key.csv")
