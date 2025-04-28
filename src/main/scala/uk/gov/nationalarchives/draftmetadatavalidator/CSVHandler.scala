@@ -28,8 +28,9 @@ object CSVHandler {
     val reader = CSVReader.open(filePath)
     val all: Seq[Map[String, String]] = reader.allWithHeaders().map(_.map({ case (k, v) => convertHeaders(k, v) }))
     all.map { row =>
+      val keyValue = SchemaUtils.convertToAlternateKey(outputHeaderKey, uniqueAssetIdKey)
       FileRow(
-        matchIdentifier = row(SchemaUtils.convertToAlternateKey(outputHeaderKey, uniqueAssetIdKey)),
+        matchIdentifier = row.getOrElse(keyValue, keyValue),
         metadata = row.collect {
           case (columnHeader, value) if columnHeader.nonEmpty => Metadata(columnHeader, value)
         }.toList
