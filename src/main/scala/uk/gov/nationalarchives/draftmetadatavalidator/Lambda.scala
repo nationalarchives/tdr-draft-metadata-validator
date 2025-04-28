@@ -22,7 +22,7 @@ import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, SttpBacken
 import uk.gov.nationalarchives.aws.utils.s3.S3Clients._
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadatavalidator.ApplicationConfig._
-import uk.gov.nationalarchives.draftmetadatavalidator.FileError.PROTECTED_FIELD
+import uk.gov.nationalarchives.draftmetadatavalidator.FileError.{FileError, PROTECTED_FIELD}
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{ValidationExecutionError, ValidationParameters, getErrorFilePath, getFilePath}
 import uk.gov.nationalarchives.draftmetadatavalidator.ValidationErrors._
 import uk.gov.nationalarchives.draftmetadatavalidator.utils.{DependencyVersionReader, MetadataUtils}
@@ -285,12 +285,12 @@ class Lambda {
 
   private def loadCSV(validationParameters: ValidationParameters): IO[List[FileRow]] = {
 
-    def invalidCSVFileErrorData = {
+    def invalidCSVFileErrorData(fileError: FileError) = {
       val messageKey = "FILE_CHECK.CSV.INVALID"
       val message = messageProperties.getProperty(messageKey, messageKey)
       val singleError = Error("FILE_CHECK", validationParameters.consignmentId.toString, "LOAD", message)
       val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
-      ErrorFileData(validationParameters, FileError.INVALID_CSV, List(validationErrors))
+      ErrorFileData(validationParameters, fileError, List(validationErrors))
     }
 
     val filePath = getFilePath(validationParameters)
@@ -301,10 +301,15 @@ class Lambda {
         validationParameters.clientAlternateKey,
         validationParameters.uniqueAssetIdKey
       )
-    ).handleErrorWith(err => {
-      logger.error(s"Metadata Validation failed to load csv :${err.getMessage}")
-      IO.raiseError(ValidationExecutionError(invalidCSVFileErrorData, List.empty[FileRow]))
-    })
+    ).handleErrorWith {
+      case e: IllegalArgumentException =>
+        logger.error(s"${e.getMessage}")
+        IO.raiseError(ValidationExecutionError(invalidCSVFileErrorData(FileError.MISSING_UNIQUE_KEY), List.empty[FileRow]))
+
+      case err =>
+        logger.error(s"Metadata Validation failed to load csv: ${err.getMessage}")
+        IO.raiseError(ValidationExecutionError(invalidCSVFileErrorData(FileError.INVALID_CSV), List.empty[FileRow]))
+    }
   }
 
   private def updateStatus(errorFileData: ErrorFileData, draftMetadata: ValidationParameters): IO[Option[Int]] = {

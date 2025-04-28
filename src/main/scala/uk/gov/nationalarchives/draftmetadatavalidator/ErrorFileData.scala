@@ -11,7 +11,7 @@ import java.util.UUID
 
 object FileError extends Enumeration {
   type FileError = Value
-  val UTF_8, INVALID_CSV, ROW_VALIDATION, SCHEMA_REQUIRED, DUPLICATE_HEADER, ADDITIONAL_HEADER, SCHEMA_VALIDATION, PROTECTED_FIELD, UNKNOWN, None = Value
+  val UTF_8, INVALID_CSV, MISSING_UNIQUE_KEY, ROW_VALIDATION, SCHEMA_REQUIRED, DUPLICATE_HEADER, ADDITIONAL_HEADER, SCHEMA_VALIDATION, PROTECTED_FIELD, UNKNOWN, None = Value
 }
 
 case class Error(validationProcess: String, property: String, errorKey: String, message: String)
