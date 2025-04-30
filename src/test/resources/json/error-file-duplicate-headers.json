@@ -8,13 +8,13 @@
       "errors" : [
         {
           "validationProcess" : "DUPLICATE_HEADER",
-          "property" : "Filename",
+          "property" : "filename",
           "errorKey" : "duplicate",
           "message" : "DUPLICATE_HEADER.file_name.duplicate"
         },
         {
           "validationProcess" : "DUPLICATE_HEADER",
-          "property" : "Filepath",
+          "property" : "filepath",
           "errorKey" : "duplicate",
           "message" : "DUPLICATE_HEADER.file_path.duplicate"
         }

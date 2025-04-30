@@ -165,7 +165,7 @@ class Lambda {
     validationParameters.requiredSchema match {
       case None => IO.unit
       case Some(schema) =>
-        val validationErrors = schemaValidate(Set(schema), List(csvData.head), validationParameters.clientAlternateKey)
+        val validationErrors = schemaValidate(Set(schema), List(csvData.head), validationParameters)
         if (validationErrors.nonEmpty) {
           IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_REQUIRED, validationErrors), csvData))
         } else {
@@ -222,7 +222,7 @@ class Lambda {
       duplicateRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateDuplicateRows(csvData, messageProperties, validationParameters))
       unknownRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateUnknownRows(uniqueAssetIdKeys, csvData, messageProperties, validationParameters))
       protectedFieldErrors <- skipUnless(checkAgainstUploadedRecords)(validateProtectedFields(csvData, filesWithUniqueAssetIdKey, messageProperties, validationParameters))
-      rowSchemaErrors <- IO(schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters.clientAlternateKey))
+      rowSchemaErrors <- IO(schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters))
       combinedErrors = duplicateRowErrors |+| missingRowErrors |+| unknownRowErrors |+| protectedFieldErrors |+| rowSchemaErrors
       result <-
         if (combinedErrors.nonEmpty)
@@ -257,7 +257,8 @@ class Lambda {
     }
   }
 
-  private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], alternateKey: String): List[ValidationErrors] = {
+  private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], validationParameters: ValidationParameters): List[ValidationErrors] = {
+    val matchIdentifier = convertToAlternateKey(validationParameters.clientAlternateKey, validationParameters.uniqueAssetIdKey)
     MetadataValidationJsonSchema
       .validate(schema, csvData)
       .collect {
@@ -266,7 +267,7 @@ class Lambda {
             val errorKey = s"${error.validationProcess}.${error.property}.${error.errorKey}"
             Error(
               error.validationProcess.toString,
-              convertToAlternateKey(alternateKey, error.property) match {
+              convertToAlternateKey(validationParameters.clientAlternateKey, error.property) match {
                 case ""           => error.property
                 case alternateKey => alternateKey
               },
@@ -274,7 +275,7 @@ class Lambda {
               messageProperties.getProperty(errorKey, errorKey)
             )
           })
-          val errorProperties = errors.map(_.property) :+ "Filepath"
+          val errorProperties = errors.map(_.property) :+ matchIdentifier
           val data = csvData.find(_.matchIdentifier == result._1).get.metadata.filter(p => errorProperties.contains(p.name))
           ValidationErrors(result._1, errors.toSet, data)
       }

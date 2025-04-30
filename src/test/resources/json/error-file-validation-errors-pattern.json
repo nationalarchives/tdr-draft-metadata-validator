@@ -8,28 +8,28 @@
       "errors" : [
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "Translated title of record",
+          "property" : "translated filename",
           "errorKey" : "pattern",
           "message" : "Must not contain line breaks"
         },
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "Closure Start Date",
+          "property" : "closure start date",
           "errorKey" : "matchEndDateOrDateLastModified",
           "message" : "Must match to date of the record (if provided) or date last modified"
         }
       ],
       "data" : [
         {
-          "name" : "Translated title of record",
+          "name" : "translated filename",
           "value" : "line\r\nbreak"
         },
         {
-          "name" : "Closure Start Date",
+          "name" : "closure start date",
           "value" : "1990-01-01"
         },
         {
-          "name" : "Filepath",
+          "name" : "filepath",
           "value" : "test/test2.txt"
         }
       ]
@@ -39,28 +39,28 @@
       "errors" : [
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "Closure Start Date",
+          "property" : "closure start date",
           "errorKey" : "matchEndDateOrDateLastModified",
           "message" : "Must match to date of the record (if provided) or date last modified"
         },
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "Add alternative title without the file extension",
+          "property" : "alternate filename",
           "errorKey" : "pattern",
           "message" : "Must not contain line breaks"
         }
       ],
       "data" : [
         {
-          "name" : "Add alternative title without the file extension",
+          "name" : "alternate filename",
           "value" : "line\r\nbreak"
         },
         {
-          "name" : "Closure Start Date",
+          "name" : "closure start date",
           "value" : "1990-01-01"
         },
         {
-          "name" : "Filepath",
+          "name" : "filepath",
           "value" : "test/test1.txt"
         }
       ]
@@ -70,19 +70,19 @@
       "errors" : [
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "Former reference",
+          "property" : "former reference",
           "errorKey" : "pattern",
           "message" : "Must not contain line breaks"
         }
       ],
       "data" : [
         {
-          "name" : "Former reference",
-          "value" : "line\r\nbreak"
+          "name" : "filepath",
+          "value" : "test/test3.txt"
         },
         {
-          "name" : "Filepath",
-          "value" : "test/test3.txt"
+          "name" : "former reference",
+          "value" : "line\r\nbreak"
         }
       ]
     }
