@@ -338,10 +338,15 @@ class Lambda {
     } yield result
   }
 
-  private def writeMetadataToDatabase(consignmentId: UUID, clientSecret: String, metadata: List[AddOrUpdateFileMetadata] ): IO[List[AddOrUpdateBulkFileMetadata]] = {
-    metadata.grouped(batchSizeForMetadataDatabaseWrites).map { mdGroup =>
-      graphQlApi.addOrUpdateBulkFileMetadata(consignmentId, clientSecret, mdGroup)
-    }.toList.parSequence.map(_.flatten)
+  private def writeMetadataToDatabase(consignmentId: UUID, clientSecret: String, metadata: List[AddOrUpdateFileMetadata]): IO[List[AddOrUpdateBulkFileMetadata]] = {
+    metadata
+      .grouped(batchSizeForMetadataDatabaseWrites)
+      .map { mdGroup =>
+        graphQlApi.addOrUpdateBulkFileMetadata(consignmentId, clientSecret, mdGroup)
+      }
+      .toList
+      .parSequence
+      .map(_.flatten)
   }
 
   private def writeErrorFileDataToFile(validationParameters: ValidationParameters, errorFileData: ErrorFileData) = {
