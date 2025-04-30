@@ -1,8 +1,9 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
+import cats.effect.std.Semaphore
 import cats.syntax.semigroup._
-import cats.implicits.catsStdInstancesForList
+import cats.implicits.{catsStdInstancesForList, catsSyntaxParallelTraverse1}
 import com.amazonaws.services.lambda.runtime.Context
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
@@ -339,14 +340,19 @@ class Lambda {
   }
 
   private def writeMetadataToDatabase(consignmentId: UUID, clientSecret: String, metadata: List[AddOrUpdateFileMetadata]): IO[List[AddOrUpdateBulkFileMetadata]] = {
-    metadata
-      .grouped(batchSizeForMetadataDatabaseWrites)
-      .map { mdGroup =>
-        graphQlApi.addOrUpdateBulkFileMetadata(consignmentId, clientSecret, mdGroup)
-      }
-      .toList
-      .parSequence
-      .map(_.flatten)
+    val maxConcurrency = 10
+
+    Semaphore[IO](maxConcurrency).flatMap { semaphore =>
+      metadata
+        .grouped(batchSizeForMetadataDatabaseWrites)
+        .toList
+        .parTraverse { mdGroup =>
+          semaphore.permit.use { _ =>
+            graphQlApi.addOrUpdateBulkFileMetadata(consignmentId, clientSecret, mdGroup)
+          }
+        }
+        .map(_.flatten)
+    }
   }
 
   private def writeErrorFileDataToFile(validationParameters: ValidationParameters, errorFileData: ErrorFileData) = {
