@@ -7,40 +7,40 @@
       "assetId" : "test/test2.txt",
       "errors" : [
         {
-          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
-          "property" : "Is the title sensitive for the public?",
-          "errorKey" : "const",
-          "message" : "Must be No for an open record"
-        },
-        {
           "validationProcess" : "PROTECTED_FIELD",
-          "property" : "Date last modified",
+          "property" : "date last modified",
           "errorKey" : "PROTECTED_FIELD",
           "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
         },
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "Is the title sensitive for the public?",
+          "property" : "is filename closed",
           "errorKey" : "type",
           "message" : "Must be Yes or No"
         },
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "Date last modified",
+          "property" : "date last modified",
           "errorKey" : "format.date",
           "message" : "We are unable to recognise this as a valid date format, please provide a date in the format yyyy-mm-dd"
         },
         {
-          "validationProcess" : "SCHEMA_BASE",
-          "property" : "Is the description sensitive for the public?",
-          "errorKey" : "type",
-          "message" : "Must be Yes or No"
+          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
+          "property" : "is filename closed",
+          "errorKey" : "const",
+          "message" : "Must be No for an open record"
         },
         {
           "validationProcess" : "SCHEMA_CLOSURE_OPEN",
-          "property" : "Is the description sensitive for the public?",
+          "property" : "is description closed",
           "errorKey" : "const",
           "message" : "Must be No for an open record"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "is description closed",
+          "errorKey" : "type",
+          "message" : "Must be Yes or No"
         },
         {
           "validationProcess" : "ROW_VALIDATION",
@@ -51,19 +51,19 @@
       ],
       "data" : [
         {
-          "name" : "Filepath",
+          "name" : "filepath",
           "value" : "test/test2.txt"
         },
         {
-          "name" : "Date last modified",
+          "name" : "date last modified",
           "value" : "hhhh"
         },
         {
-          "name" : "Is the title sensitive for the public?",
+          "name" : "is filename closed",
           "value" : ""
         },
         {
-          "name" : "Is the description sensitive for the public?",
+          "name" : "is description closed",
           "value" : ""
         }
       ]
@@ -72,28 +72,28 @@
       "assetId" : "test/test3.txt",
       "errors" : [
         {
-          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
-          "property" : "Is the title sensitive for the public?",
-          "errorKey" : "const",
-          "message" : "Must be No for an open record"
-        },
-        {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "Is the title sensitive for the public?",
-          "errorKey" : "type",
-          "message" : "Must be Yes or No"
-        },
-        {
-          "validationProcess" : "SCHEMA_BASE",
-          "property" : "Is the description sensitive for the public?",
+          "property" : "is filename closed",
           "errorKey" : "type",
           "message" : "Must be Yes or No"
         },
         {
           "validationProcess" : "SCHEMA_CLOSURE_OPEN",
-          "property" : "Is the description sensitive for the public?",
+          "property" : "is filename closed",
           "errorKey" : "const",
           "message" : "Must be No for an open record"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
+          "property" : "is description closed",
+          "errorKey" : "const",
+          "message" : "Must be No for an open record"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "is description closed",
+          "errorKey" : "type",
+          "message" : "Must be Yes or No"
         },
         {
           "validationProcess" : "ROW_VALIDATION",
@@ -104,15 +104,15 @@
       ],
       "data" : [
         {
-          "name" : "Filepath",
+          "name" : "filepath",
           "value" : "test/test3.txt"
         },
         {
-          "name" : "Is the title sensitive for the public?",
+          "name" : "is filename closed",
           "value" : ""
         },
         {
-          "name" : "Is the description sensitive for the public?",
+          "name" : "is description closed",
           "value" : ""
         }
       ]
