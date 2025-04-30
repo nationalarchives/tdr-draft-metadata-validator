@@ -7,20 +7,26 @@
       "assetId" : "test/unknown.txt",
       "errors" : [
         {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "is filename closed",
+          "errorKey" : "type",
+          "message" : "Must be Yes or No"
+        },
+        {
           "validationProcess" : "SCHEMA_CLOSURE_OPEN",
-          "property" : "Is the title sensitive for the public?",
+          "property" : "is filename closed",
+          "errorKey" : "const",
+          "message" : "Must be No for an open record"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
+          "property" : "is description closed",
           "errorKey" : "const",
           "message" : "Must be No for an open record"
         },
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "Is the title sensitive for the public?",
-          "errorKey" : "type",
-          "message" : "Must be Yes or No"
-        },
-        {
-          "validationProcess" : "SCHEMA_BASE",
-          "property" : "Is the description sensitive for the public?",
+          "property" : "is description closed",
           "errorKey" : "type",
           "message" : "Must be Yes or No"
         },
@@ -29,25 +35,19 @@
           "property" : "",
           "errorKey" : "unknown",
           "message" : "This file was listed in your metadata file but does not match to one of your uploaded files"
-        },
-        {
-          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
-          "property" : "Is the description sensitive for the public?",
-          "errorKey" : "const",
-          "message" : "Must be No for an open record"
         }
       ],
       "data" : [
         {
-          "name" : "Filepath",
+          "name" : "filepath",
           "value" : "test/unknown.txt"
         },
         {
-          "name" : "Is the title sensitive for the public?",
+          "name" : "is filename closed",
           "value" : ""
         },
         {
-          "name" : "Is the description sensitive for the public?",
+          "name" : "is description closed",
           "value" : ""
         }
       ]
