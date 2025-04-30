@@ -15,7 +15,7 @@
       ],
       "data" : [
         {
-          "name" : "Filepath",
+          "name" : "filepath",
           "value" : "test/test2.txt"
         }
       ]
@@ -31,18 +31,18 @@
         },
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "Date last modified",
+          "property" : "date last modified",
           "errorKey" : "format.date",
           "message" : "We are unable to recognise this as a valid date format, please provide a date in the format yyyy-mm-dd"
         }
       ],
       "data" : [
         {
-          "name" : "Filepath",
+          "name" : "filepath",
           "value" : "test/unknown.txt"
         },
         {
-          "name" : "Date last modified",
+          "name" : "date last modified",
           "value" : "bbbb"
         }
       ]
@@ -52,18 +52,18 @@
       "errors" : [
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "Closure Start Date",
+          "property" : "closure start date",
           "errorKey" : "matchEndDateOrDateLastModified",
           "message" : "Must match to date of the record (if provided) or date last modified"
         }
       ],
       "data" : [
         {
-          "name" : "Closure Start Date",
+          "name" : "closure start date",
           "value" : "1990-01-01"
         },
         {
-          "name" : "Filepath",
+          "name" : "filepath",
           "value" : "test/test1.txt"
         }
       ]

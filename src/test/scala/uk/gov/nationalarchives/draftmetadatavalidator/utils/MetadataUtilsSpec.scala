@@ -13,7 +13,6 @@ import java.util.UUID
 
 class MetadataUtilsSpec extends AnyFlatSpec with BeforeAndAfterEach {
 
-  val filePath: String = getClass.getResource("/sample-for-csv-handler.csv").getPath
   val metadataNames: List[String] = List("ClosureStatus", "ClosurePeriod")
 
   "filterProtectedFields" should "filter out non editable Fields from the input" in {
