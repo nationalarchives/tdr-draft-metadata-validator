@@ -4,11 +4,11 @@
   "fileError" : "SCHEMA_REQUIRED",
   "validationErrors" : [
     {
-      "assetId" : "Filepath",
+      "assetId" : "filepath",
       "errors" : [
         {
           "validationProcess" : "SCHEMA_REQUIRED",
-          "property" : "Filepath",
+          "property" : "filepath",
           "errorKey" : "required",
           "message" : "SCHEMA_REQUIRED.file_path.required"
         }
