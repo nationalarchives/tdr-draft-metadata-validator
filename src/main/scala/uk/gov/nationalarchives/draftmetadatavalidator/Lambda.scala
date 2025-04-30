@@ -2,6 +2,7 @@ package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
 import cats.syntax.semigroup._
+import cats.implicits.catsStdInstancesForList
 import com.amazonaws.services.lambda.runtime.Context
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
@@ -60,6 +61,8 @@ class Lambda {
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
   private val updateMetadataSchemaLibraryVersionClient = new GraphQLClient[ucslv.Data, ucslv.Variables](apiUrl)
   private val getFilesWithUniqueAssetIdKey = new GraphQLClient[uaik.Data, uaik.Variables](apiUrl)
+
+  private val batchSizeForMetadataDatabaseWrites = 1000
 
   private val graphQlApi: GraphQlApi = GraphQlApi(
     keycloakUtils,
@@ -336,14 +339,9 @@ class Lambda {
   }
 
   private def writeMetadataToDatabase(consignmentId: UUID, clientSecret: String, metadata: List[AddOrUpdateFileMetadata] ): IO[List[AddOrUpdateBulkFileMetadata]] = {
-    import cats.implicits._
-    val x: List[IO[List[AddOrUpdateBulkFileMetadata]]] = metadata.grouped(1000).map { mdGroup =>
-      println("==> " + metadata.size + " " + mdGroup.size)
+    metadata.grouped(batchSizeForMetadataDatabaseWrites).map { mdGroup =>
       graphQlApi.addOrUpdateBulkFileMetadata(consignmentId, clientSecret, mdGroup)
-    }.toList
-    val y: IO[List[List[AddOrUpdateBulkFileMetadata]]] = x.parSequence
-    val z: IO[List[AddOrUpdateBulkFileMetadata]] = y.map(_.flatten)
-    z
+    }.toList.parSequence.map(_.flatten)
   }
 
   private def writeErrorFileDataToFile(validationParameters: ValidationParameters, errorFileData: ErrorFileData) = {
