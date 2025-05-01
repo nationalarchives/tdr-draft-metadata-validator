@@ -63,8 +63,6 @@ class Lambda {
   private val updateMetadataSchemaLibraryVersionClient = new GraphQLClient[ucslv.Data, ucslv.Variables](apiUrl)
   private val getFilesWithUniqueAssetIdKey = new GraphQLClient[uaik.Data, uaik.Variables](apiUrl)
 
-  private val batchSizeForMetadataDatabaseWrites = 1000
-
   private val graphQlApi: GraphQlApi = GraphQlApi(
     keycloakUtils,
     customMetadataClient,
@@ -341,9 +339,7 @@ class Lambda {
   }
 
   private def writeMetadataToDatabase(consignmentId: UUID, clientSecret: String, metadata: List[AddOrUpdateFileMetadata]): IO[List[AddOrUpdateBulkFileMetadata]] = {
-    val maxConcurrency = 10
-
-    Semaphore[IO](maxConcurrency).flatMap { semaphore =>
+    Semaphore[IO](maxConcurrencyForMetadataDatabaseWrites).flatMap { semaphore =>
       metadata
         .grouped(batchSizeForMetadataDatabaseWrites)
         .toList
