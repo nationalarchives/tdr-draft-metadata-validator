@@ -1,7 +1,9 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
+import cats.effect.std.Semaphore
 import cats.syntax.semigroup._
+import cats.implicits.{catsStdInstancesForList, catsSyntaxParallelTraverse1}
 import com.amazonaws.services.lambda.runtime.Context
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
@@ -9,6 +11,7 @@ import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetFilesWithUniqueAssetIdKey.{getFilesWithUniqueAssetIdKey => uaik}
 import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
+import graphql.codegen.types.AddOrUpdateFileMetadata
 import io.circe.Encoder
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -331,8 +334,22 @@ class Lambda {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
       fileData <- IO(CSVHandler.loadCSV(getFilePath(draftMetadata), draftMetadata.clientAlternateKey, draftMetadata.persistenceAlternateKey, draftMetadata.uniqueAssetIdKey))
       addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData, filesWithUniqueAssetIdKey)
-      result <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
+      result <- writeMetadataToDatabase(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
     } yield result
+  }
+
+  private def writeMetadataToDatabase(consignmentId: UUID, clientSecret: String, metadata: List[AddOrUpdateFileMetadata]): IO[List[AddOrUpdateBulkFileMetadata]] = {
+    Semaphore[IO](maxConcurrencyForMetadataDatabaseWrites).flatMap { semaphore =>
+      metadata
+        .grouped(batchSizeForMetadataDatabaseWrites)
+        .toList
+        .parTraverse { mdGroup =>
+          semaphore.permit.use { _ =>
+            graphQlApi.addOrUpdateBulkFileMetadata(consignmentId, clientSecret, mdGroup)
+          }
+        }
+        .map(_.flatten)
+    }
   }
 
   private def writeErrorFileDataToFile(validationParameters: ValidationParameters, errorFileData: ErrorFileData) = {
