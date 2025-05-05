@@ -8,28 +8,28 @@
       "errors" : [
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "FOI exemption code",
+          "property" : "foi exemption code",
           "errorKey" : "enum",
           "message" : "Must be a pipe delimited list of valid FOI codes, (eg. 31|33). Please see the guidance for more detail on valid codes"
         },
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "Closure Start Date",
+          "property" : "closure start date",
           "errorKey" : "matchEndDateOrDateLastModified",
           "message" : "Must match to date of the record (if provided) or date last modified"
         }
       ],
       "data" : [
         {
-          "name" : "FOI exemption code",
+          "name" : "foi exemption code",
           "value" : "78|27(1)|27(2)"
         },
         {
-          "name" : "Closure Start Date",
+          "name" : "closure start date",
           "value" : "1990-01-01"
         },
         {
-          "name" : "Filepath",
+          "name" : "filepath",
           "value" : "test/test1.txt"
         }
       ]
@@ -38,65 +38,65 @@
       "assetId" : "test/test3.txt",
       "errors" : [
         {
-          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
-          "property" : "Closure Start Date",
-          "errorKey" : "type",
-          "message" : "Must be provided for a closed record"
-        },
-        {
-          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
-          "property" : "Closure Period",
-          "errorKey" : "type",
-          "message" : "Must be provided for a closed record"
-        },
-        {
-          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
-          "property" : "FOI decision asserted",
-          "errorKey" : "type",
-          "message" : "Must be provided for a closed record"
-        },
-        {
           "validationProcess" : "PROTECTED_FIELD",
-          "property" : "Date last modified",
+          "property" : "date last modified",
           "errorKey" : "PROTECTED_FIELD",
           "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
         },
         {
           "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
-          "property" : "FOI exemption code",
+          "property" : "closure period",
           "errorKey" : "type",
           "message" : "Must be provided for a closed record"
         },
         {
           "validationProcess" : "SCHEMA_BASE",
-          "property" : "Date last modified",
+          "property" : "date last modified",
           "errorKey" : "format.date",
           "message" : "We are unable to recognise this as a valid date format, please provide a date in the format yyyy-mm-dd"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
+          "property" : "closure start date",
+          "errorKey" : "type",
+          "message" : "Must be provided for a closed record"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
+          "property" : "foi schedule date",
+          "errorKey" : "type",
+          "message" : "Must be provided for a closed record"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
+          "property" : "foi exemption code",
+          "errorKey" : "type",
+          "message" : "Must be provided for a closed record"
         }
       ],
       "data" : [
         {
-          "name" : "Date last modified",
+          "name" : "date last modified",
           "value" : "12/2/2345"
         },
         {
-          "name" : "FOI decision asserted",
+          "name" : "foi exemption code",
           "value" : ""
         },
         {
-          "name" : "FOI exemption code",
+          "name" : "foi schedule date",
           "value" : ""
         },
         {
-          "name" : "Closure Period",
+          "name" : "closure period",
           "value" : ""
         },
         {
-          "name" : "Closure Start Date",
+          "name" : "closure start date",
           "value" : ""
         },
         {
-          "name" : "Filepath",
+          "name" : "filepath",
           "value" : "test/test3.txt"
         }
       ]

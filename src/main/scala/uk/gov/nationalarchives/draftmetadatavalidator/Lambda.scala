@@ -1,7 +1,9 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import cats.effect.IO
+import cats.effect.std.Semaphore
 import cats.syntax.semigroup._
+import cats.implicits.{catsStdInstancesForList, catsSyntaxParallelTraverse1}
 import com.amazonaws.services.lambda.runtime.Context
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
@@ -9,6 +11,7 @@ import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetFilesWithUniqueAssetIdKey.{getFilesWithUniqueAssetIdKey => uaik}
 import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
+import graphql.codegen.types.AddOrUpdateFileMetadata
 import io.circe.Encoder
 import io.circe.generic.auto._
 import io.circe.syntax._
@@ -160,7 +163,7 @@ class Lambda {
     validationParameters.requiredSchema match {
       case None => IO.unit
       case Some(schema) =>
-        val validationErrors = schemaValidate(Set(schema), List(csvData.head), validationParameters.clientAlternateKey)
+        val validationErrors = schemaValidate(Set(schema), List(csvData.head), validationParameters)
         if (validationErrors.nonEmpty) {
           IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_REQUIRED, validationErrors), csvData))
         } else {
@@ -217,7 +220,7 @@ class Lambda {
       duplicateRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateDuplicateRows(csvData, messageProperties, validationParameters))
       unknownRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateUnknownRows(uniqueAssetIdKeys, csvData, messageProperties, validationParameters))
       protectedFieldErrors <- skipUnless(checkAgainstUploadedRecords)(validateProtectedFields(csvData, filesWithUniqueAssetIdKey, messageProperties, validationParameters))
-      rowSchemaErrors <- IO(schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters.clientAlternateKey))
+      rowSchemaErrors <- IO(schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters))
       combinedErrors = duplicateRowErrors |+| missingRowErrors |+| unknownRowErrors |+| protectedFieldErrors |+| rowSchemaErrors
       result <-
         if (combinedErrors.nonEmpty)
@@ -252,7 +255,8 @@ class Lambda {
     }
   }
 
-  private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], alternateKey: String): List[ValidationErrors] = {
+  private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], validationParameters: ValidationParameters): List[ValidationErrors] = {
+    val matchIdentifier = convertToAlternateKey(validationParameters.clientAlternateKey, validationParameters.uniqueAssetIdKey)
     MetadataValidationJsonSchema
       .validate(schema, csvData)
       .collect {
@@ -261,7 +265,7 @@ class Lambda {
             val errorKey = s"${error.validationProcess}.${error.property}.${error.errorKey}"
             Error(
               error.validationProcess.toString,
-              convertToAlternateKey(alternateKey, error.property) match {
+              convertToAlternateKey(validationParameters.clientAlternateKey, error.property) match {
                 case ""           => error.property
                 case alternateKey => alternateKey
               },
@@ -269,7 +273,7 @@ class Lambda {
               messageProperties.getProperty(errorKey, errorKey)
             )
           })
-          val errorProperties = errors.map(_.property) :+ "Filepath"
+          val errorProperties = errors.map(_.property) :+ matchIdentifier
           val data = csvData.find(_.matchIdentifier == result._1).get.metadata.filter(p => errorProperties.contains(p.name))
           ValidationErrors(result._1, errors.toSet, data)
       }
@@ -330,8 +334,22 @@ class Lambda {
       customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
       fileData <- IO(CSVHandler.loadCSV(getFilePath(draftMetadata), draftMetadata.clientAlternateKey, draftMetadata.persistenceAlternateKey, draftMetadata.uniqueAssetIdKey))
       addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData, filesWithUniqueAssetIdKey)
-      result <- graphQlApi.addOrUpdateBulkFileMetadata(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
+      result <- writeMetadataToDatabase(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
     } yield result
+  }
+
+  private def writeMetadataToDatabase(consignmentId: UUID, clientSecret: String, metadata: List[AddOrUpdateFileMetadata]): IO[List[AddOrUpdateBulkFileMetadata]] = {
+    Semaphore[IO](maxConcurrencyForMetadataDatabaseWrites).flatMap { semaphore =>
+      metadata
+        .grouped(batchSizeForMetadataDatabaseWrites)
+        .toList
+        .parTraverse { mdGroup =>
+          semaphore.permit.use { _ =>
+            graphQlApi.addOrUpdateBulkFileMetadata(consignmentId, clientSecret, mdGroup)
+          }
+        }
+        .map(_.flatten)
+    }
   }
 
   private def writeErrorFileDataToFile(validationParameters: ValidationParameters, errorFileData: ErrorFileData) = {

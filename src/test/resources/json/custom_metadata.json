@@ -197,7 +197,7 @@
         "exportOrdinal": 130
       },
       {
-        "name": "Filename",
+        "name": "filename",
         "multiValue": false,
         "description": null,
         "fullName": "file_name",

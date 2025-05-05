@@ -15,7 +15,7 @@
       ],
       "data" : [
         {
-          "name" : "Filepath",
+          "name" : "filepath",
           "value" : "test/test2.txt"
         }
       ]
