@@ -287,7 +287,7 @@ class LambdaSpec extends ExternalServicesSpec {
           AddOrUpdateMetadata("FoiExemptionCode", "27(1);27(2)"),
           AddOrUpdateMetadata("DescriptionAlternate", ""),
           AddOrUpdateMetadata("former_reference_department", ""),
-          AddOrUpdateMetadata("ClosurePeriod", "33"),
+          AddOrUpdateMetadata("ClosurePeriod", "33;44"),
           AddOrUpdateMetadata("TitleAlternate", "title"),
           AddOrUpdateMetadata("TitleClosed", "true"),
           AddOrUpdateMetadata("file_name_translation", ""),
