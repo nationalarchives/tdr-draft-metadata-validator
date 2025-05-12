@@ -1,7 +1,7 @@
 filepath,filename,date last modified,date of the record,description,former reference,closure status,closure start date,closure period,foi exemption code,foi schedule date,is filename closed,alternate filename,is description closed,alternate description,language,translated filename
-test/test1.txt,test1.txt,2024-03-26,,hello,,Closed,1990-01-01,33,27(1)|27(2),1990-01-01,Yes,"line
+test/test1.txt,test1.txt,2024-03-26,,hello,,Closed,1990-01-01,33,27(1);27(2),1990-01-01,Yes,"line
 break",No,,English,
-test/test2.txt,test2.txt,2024-03-26,,hello,,Closed,1990-01-01,33,27(1)|27(2),1990-01-01,Yes,title,No,,English,"line
+test/test2.txt,test2.txt,2024-03-26,,hello,,Closed,1990-01-01,33,27(1);27(2),1990-01-01,Yes,title,No,,English,"line
 break"
 test/test3.txt,test3.txt,2024-03-26,,eee,"line
 break",Open,,,,,No,,No,,English,

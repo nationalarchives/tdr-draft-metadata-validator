@@ -284,8 +284,7 @@ class LambdaSpec extends ExternalServicesSpec {
         fileTestData.find(_.filePath == "test/test1.txt").get.fileId,
         List(
           AddOrUpdateMetadata("DescriptionClosed", "false"),
-          AddOrUpdateMetadata("FoiExemptionCode", "27(1)"),
-          AddOrUpdateMetadata("FoiExemptionCode", "27(2)"),
+          AddOrUpdateMetadata("FoiExemptionCode", "27(1);27(2)"),
           AddOrUpdateMetadata("DescriptionAlternate", ""),
           AddOrUpdateMetadata("former_reference_department", ""),
           AddOrUpdateMetadata("ClosurePeriod", "33"),
