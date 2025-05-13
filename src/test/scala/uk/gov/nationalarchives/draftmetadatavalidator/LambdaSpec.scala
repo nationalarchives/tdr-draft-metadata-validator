@@ -193,6 +193,13 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/error-file-validation-errors-pattern.json")
   }
 
+  "handleRequest" should "download the draft metadata csv with foi code period mismatch, validate it and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
+    mockS3GetResponse("sample-foi-code-period-mismatch.csv")
+    checkFileError("json/error-file-foi-code-period-mismatch.json")
+  }
+
   "handleRequest" should "download the draft metadata csv file, check for relationship schema errors and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
