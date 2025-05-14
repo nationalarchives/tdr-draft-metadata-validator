@@ -10,7 +10,7 @@
           "validationProcess" : "SCHEMA_BASE",
           "property" : "foi exemption code",
           "errorKey" : "enum",
-          "message" : "Must be a pipe delimited list of valid FOI codes, (eg. 31|33). Please see the guidance for more detail on valid codes"
+          "message" : "Must be a semi-colon separated list of valid FOI codes, (eg. 31;33). Please see the guidance for more detail on valid codes"
         },
         {
           "validationProcess" : "SCHEMA_BASE",
@@ -22,7 +22,7 @@
       "data" : [
         {
           "name" : "foi exemption code",
-          "value" : "78|27(1)|27(2)"
+          "value" : "78;27(1);27(2)"
         },
         {
           "name" : "closure start date",

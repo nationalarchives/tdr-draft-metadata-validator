@@ -51,8 +51,7 @@ object MetadataUtils {
           case "yes" => "true" :: Nil
           case _     => "false" :: Nil
         }
-      case Text if customMetadata.multiValue => metadata.value.split("\\|").toList
-      case _                                 => metadata.value :: Nil
+      case _ => metadata.value :: Nil
     }
     values.map(v => AddOrUpdateMetadata(metadata.name, v))
   }

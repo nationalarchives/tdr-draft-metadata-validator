@@ -1,4 +1,4 @@
 ﻿filename,date last modified,date of the record,description,former reference,closure status,closure start date,closure period,foi exemption code,foi schedule date,is filename closed,alternate filename,is description closed,alternate description,language,translated filename
 test3.txt,2024-03-26,,eee,,Open,,,,,,,,,English,
-test1.txt,2024-03-26,,hello,,Closed,1990-01-01,33,27(1)|27(2),1990-01-01,Yes,title,No,,English,
+test1.txt,2024-03-26,,hello,,Closed,1990-01-01,33,27(1);27(2),1990-01-01,Yes,title,No,,English,
 test2.txt,2024-03-26,,www,,Open,,,,,,,,,English,

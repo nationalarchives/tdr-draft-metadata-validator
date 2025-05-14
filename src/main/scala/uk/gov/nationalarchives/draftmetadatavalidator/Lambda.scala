@@ -29,6 +29,8 @@ import uk.gov.nationalarchives.draftmetadatavalidator.FileError.PROTECTED_FIELD
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{ValidationExecutionError, ValidationParameters, getErrorFilePath, getFilePath}
 import uk.gov.nationalarchives.draftmetadatavalidator.ValidationErrors._
 import uk.gov.nationalarchives.draftmetadatavalidator.utils.{DependencyVersionReader, MetadataUtils}
+import uk.gov.nationalarchives.draftmetadatavalidator.validations.FOIClosureCodesAndPeriods
+import uk.gov.nationalarchives.draftmetadatavalidator.validations.FOIClosureCodesAndPeriods.foiCodesPeriodsConsistent
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
@@ -221,7 +223,8 @@ class Lambda {
       unknownRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateUnknownRows(uniqueAssetIdKeys, csvData, messageProperties, validationParameters))
       protectedFieldErrors <- skipUnless(checkAgainstUploadedRecords)(validateProtectedFields(csvData, filesWithUniqueAssetIdKey, messageProperties, validationParameters))
       rowSchemaErrors <- IO(schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters))
-      combinedErrors = duplicateRowErrors |+| missingRowErrors |+| unknownRowErrors |+| protectedFieldErrors |+| rowSchemaErrors
+      foiCodePeriodMismatches <- IO(foiCodesPeriodsConsistent(csvData, messageProperties, validationParameters))
+      combinedErrors = duplicateRowErrors |+| missingRowErrors |+| unknownRowErrors |+| protectedFieldErrors |+| rowSchemaErrors |+| foiCodePeriodMismatches
       result <-
         if (combinedErrors.nonEmpty)
           IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, combinedErrors), csvData))
