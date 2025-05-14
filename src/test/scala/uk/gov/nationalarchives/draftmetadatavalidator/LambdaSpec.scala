@@ -193,6 +193,13 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/error-file-validation-errors-pattern.json")
   }
 
+  "handleRequest" should "download the draft metadata csv with foi code period mismatch, validate it and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
+    mockS3GetResponse("sample-foi-code-period-mismatch.csv")
+    checkFileError("json/error-file-foi-code-period-mismatch.json")
+  }
+
   "handleRequest" should "download the draft metadata csv file, check for relationship schema errors and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
@@ -297,11 +304,10 @@ class LambdaSpec extends ExternalServicesSpec {
         fileTestData.find(_.filePath == "test/test1.txt").get.fileId,
         List(
           AddOrUpdateMetadata("DescriptionClosed", "false"),
-          AddOrUpdateMetadata("FoiExemptionCode", "27(1)"),
-          AddOrUpdateMetadata("FoiExemptionCode", "27(2)"),
+          AddOrUpdateMetadata("FoiExemptionCode", "27(1);27(2)"),
           AddOrUpdateMetadata("DescriptionAlternate", ""),
           AddOrUpdateMetadata("former_reference_department", ""),
-          AddOrUpdateMetadata("ClosurePeriod", "33"),
+          AddOrUpdateMetadata("ClosurePeriod", "33;44"),
           AddOrUpdateMetadata("TitleAlternate", "title"),
           AddOrUpdateMetadata("TitleClosed", "true"),
           AddOrUpdateMetadata("file_name_translation", ""),
