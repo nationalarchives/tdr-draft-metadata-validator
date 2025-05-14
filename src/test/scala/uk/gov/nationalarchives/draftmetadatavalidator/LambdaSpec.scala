@@ -48,53 +48,11 @@ class LambdaSpec extends ExternalServicesSpec {
   val dateFormat = new SimpleDateFormat(pattern)
 
   "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 and save metadata to db if it has no errors" in {
-    authOkJson()
-    graphqlOkJson(saveMetadata = true, filesWithUniquesAssetIdKeyResponse(fileTestData))
-    mockS3GetResponse("sample.csv")
-    mockS3ErrorFilePutResponse()
-    val input = Map("consignmentId" -> consignmentId).asJava
-    new Lambda().handleRequest(input, mockContext)
+    validateAndSaveMetadata("sample.csv", "json/empty-error-file.json", "Completed")
+  }
 
-    val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala.filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT).toList
-    s3Interactions.size shouldBe 1
-
-    val errorWriteRequest = s3Interactions.head
-    val errorFileData = errorWriteRequest.getRequest.getBodyAsString
-
-    val today = dateFormat.format(new Date)
-    val expectedErrorData: String =
-      Source.fromResource("json/empty-error-file.json").getLines.mkString(System.lineSeparator()).replace("$today", today)
-    errorFileData shouldBe expectedErrorData
-
-    val updateConsignmentStatusEvent = getServeEvent("updateConsignmentStatus").get
-    val request: UpdateConsignmentStatusGraphqlRequestData = decode[UpdateConsignmentStatusGraphqlRequestData](updateConsignmentStatusEvent.getRequest.getBodyAsString)
-      .getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None))))
-    val updateConsignmentStatusInput = request.variables.updateConsignmentStatusInput
-
-    val addOrUpdateBulkFileMetadataEvent = getServeEvent("addOrUpdateBulkFileMetadata").get
-    val request2: AddOrUpdateBulkFileMetadataGraphqlRequestData = decode[AddOrUpdateBulkFileMetadataGraphqlRequestData](addOrUpdateBulkFileMetadataEvent.getRequest.getBodyAsString)
-      .getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil, None))))
-    val addOrUpdateBulkFileMetadataInput = request2.variables.addOrUpdateBulkFileMetadataInput
-
-    val updateConsignmentMetadataSchemaLibraryVersionEvent: ServeEvent = getServeEvent("updateMetadataSchemaLibraryVersion").get
-    val request3: UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData =
-      decode[UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData](updateConsignmentMetadataSchemaLibraryVersionEvent.getRequest.getBodyAsString)
-        .getOrElse(
-          UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData(
-            "",
-            ucslv.Variables(UpdateMetadataSchemaLibraryVersionInput(UUID.fromString(consignmentId.toString), "failed"))
-          )
-        )
-    val updateConsignmentMetadataSchemaLibraryVersion = request3.variables.updateMetadataSchemaLibraryVersionInput
-
-    addOrUpdateBulkFileMetadataInput.fileMetadata.size should be(3)
-    addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput(fileTestData))
-    addOrUpdateBulkFileMetadataInput.skipValidation should be(Some(true))
-
-    updateConsignmentStatusInput.statusType must be("DraftMetadata")
-    updateConsignmentStatusInput.statusValue must be(Some("Completed"))
-    updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("failed")
-    updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("Failed to get schema library version")
+  "handleRequest" should "download the draft metadata csv file with an empty row, validate, save empty error file to s3 and save metadata to db if it has no errors" in {
+    validateAndSaveMetadata("sample-empty-row.csv", "json/empty-error-file.json", "Completed")
   }
 
   "handleRequest" should "return 500 response and throw an error message when a call to the api fails" in {
@@ -200,6 +158,13 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/error-file-invalid-rows-missing.json")
   }
 
+  "handleRequest" should "download the draft metadata csv file with empty row and row errors, validate it and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
+    mockS3GetResponse("sample-empty-row-with-errors.csv")
+    checkFileError("json/error-file-validation-errors-invalid-rows.json")
+  }
+
   "handleRequest" should "download the draft metadata csv file with unknown file row errors, validate it and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
@@ -257,6 +222,54 @@ class LambdaSpec extends ExternalServicesSpec {
 
     updateConsignmentStatusInput.statusType must be("DraftMetadata")
     updateConsignmentStatusInput.statusValue must be(Some("CompletedWithIssues"))
+  }
+
+  private def validateAndSaveMetadata(csvFile: String, errorFile: String, statusValue: String): Unit = {
+    authOkJson()
+    graphqlOkJson(saveMetadata = true, filesWithUniquesAssetIdKeyResponse(fileTestData))
+    mockS3GetResponse(csvFile)
+    mockS3ErrorFilePutResponse()
+    val input = Map("consignmentId" -> consignmentId).asJava
+    new Lambda().handleRequest(input, mockContext)
+
+    val s3Interactions = wiremockS3.getAllServeEvents.asScala.filter(_.getRequest.getMethod == RequestMethod.PUT).toList
+    s3Interactions.size shouldBe 1
+
+    val errorFileData = s3Interactions.head.getRequest.getBodyAsString
+    val today = dateFormat.format(new Date)
+    val expectedErrorData = Source.fromResource(errorFile).getLines.mkString(System.lineSeparator()).replace("$today", today)
+    errorFileData shouldBe expectedErrorData
+
+    val updateConsignmentStatusInput = decode[UpdateConsignmentStatusGraphqlRequestData](
+      getServeEvent("updateConsignmentStatus").get.getRequest.getBodyAsString
+    ).getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None))))
+      .variables
+      .updateConsignmentStatusInput
+
+    val addOrUpdateBulkFileMetadataInput = decode[AddOrUpdateBulkFileMetadataGraphqlRequestData](
+      getServeEvent("addOrUpdateBulkFileMetadata").get.getRequest.getBodyAsString
+    ).getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil, None))))
+      .variables
+      .addOrUpdateBulkFileMetadataInput
+
+    val updateConsignmentMetadataSchemaLibraryVersion = decode[UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData](
+      getServeEvent("updateMetadataSchemaLibraryVersion").get.getRequest.getBodyAsString
+    ).getOrElse(
+      UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData(
+        "",
+        ucslv.Variables(UpdateMetadataSchemaLibraryVersionInput(UUID.fromString(consignmentId.toString), "failed"))
+      )
+    ).variables
+      .updateMetadataSchemaLibraryVersionInput
+
+    addOrUpdateBulkFileMetadataInput.fileMetadata.size should be(3)
+    addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput(fileTestData))
+    addOrUpdateBulkFileMetadataInput.skipValidation should be(Some(true))
+
+    updateConsignmentStatusInput.statusType must be("DraftMetadata")
+    updateConsignmentStatusInput.statusValue must be(Some(statusValue))
+    updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("failed")
+    updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("Failed to get schema library version")
   }
 
   private def expectedFileMetadataInput(fileTestData: List[FileTestData]): List[AddOrUpdateFileMetadata] = {
