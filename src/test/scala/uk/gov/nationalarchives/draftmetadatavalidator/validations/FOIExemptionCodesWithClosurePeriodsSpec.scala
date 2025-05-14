@@ -15,7 +15,7 @@ class FOIExemptionCodesWithClosurePeriodsSpec extends AnyWordSpec {
   private val foiExemptionCodeCol = SchemaUtils.convertToAlternateKey("tdrFileHeader", "foi_exemption_code")
   private val closurePeriodCol = SchemaUtils.convertToAlternateKey("tdrFileHeader", "closure_period")
 
-  "Validators.validateClosurePeriodsWithFOICodes" should {
+  "FOIClosureCodesAndPeriods.foiCodesPeriodsConsistent" should {
     "validate a closure period and foi exemption code same length" in {
       val row1 = Map(closurePeriodCol -> s"1${ARRAY_SPLIT_CHAR}150", foiExemptionCodeCol -> s"33${ARRAY_SPLIT_CHAR}34")
       val row2 = Map(closurePeriodCol -> s"11${ARRAY_SPLIT_CHAR}150", foiExemptionCodeCol -> s"23${ARRAY_SPLIT_CHAR}56")
