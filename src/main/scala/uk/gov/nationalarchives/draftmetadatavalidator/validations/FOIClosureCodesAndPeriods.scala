@@ -3,6 +3,7 @@ package uk.gov.nationalarchives.draftmetadatavalidator.validations
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.ValidationParameters
 import uk.gov.nationalarchives.draftmetadatavalidator.{Error, FileError, ValidationErrors}
 import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
+import uk.gov.nationalarchives.tdr.validation.schema.ValidationProcess.SCHEMA_CLOSURE_CLOSED
 import uk.gov.nationalarchives.tdr.validation.utils.ConfigUtils.ARRAY_SPLIT_CHAR
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
@@ -63,12 +64,12 @@ object FOIClosureCodesAndPeriods {
 
   private def misMatchError(propertyName: String, messageProperties: Properties) = {
     Error(
-      validationProcess = s"${FileError.SCHEMA_VALIDATION}",
+      validationProcess = SCHEMA_CLOSURE_CLOSED.toString,
       property = propertyName,
       errorKey = "closureCodeAndPeriodMismatch",
       message = messageProperties.getProperty(
-        s"${FileError.ROW_VALIDATION}.closureCodeAndPeriodMismatch",
-        s"${FileError.ROW_VALIDATION}.closureCodeAndPeriodMismatch"
+        s"${SCHEMA_CLOSURE_CLOSED}.closureCodeAndPeriodMismatch",
+        s"${SCHEMA_CLOSURE_CLOSED}.closureCodeAndPeriodMismatch"
       )
     )
   }
