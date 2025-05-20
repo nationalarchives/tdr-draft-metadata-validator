@@ -15,7 +15,6 @@ lazy val root = (project in file("."))
       awsSsm,
       metadataValidation,
       metadataSchema,
-      schemaUtils,
       generatedGraphql,
       graphqlClient,
       authUtils,

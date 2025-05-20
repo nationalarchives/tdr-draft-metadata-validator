@@ -1,7 +1,7 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
 import com.github.tototoshi.csv.{CSVReader, CSVWriter}
-import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
+import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils.MetadataConfiguration
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.io.ByteArrayOutputStream
@@ -21,15 +21,19 @@ object CSVHandler {
     * @return
     *   List of FileRows
     */
-  def loadCSV(filePath: String, inputHeaderKey: String, outputHeaderKey: String, uniqueAssetIdKey: String): List[FileRow] = {
+  def loadCSV(filePath: String, inputHeaderKey: String, outputHeaderKey: String, uniqueAssetIdKey: String)(implicit metadataConfiguration: MetadataConfiguration): List[FileRow] = {
+
+    val inputToPropertyMapper = metadataConfiguration.inputToPropertyMapper(inputHeaderKey)
+    val propertyToOutputMapper = metadataConfiguration.propertyToOutputMapper(outputHeaderKey)
+
     val convertHeaders: (String, String) => (String, String) = { case (originalHeader, value) =>
-      (SchemaUtils.convertToAlternateKey(outputHeaderKey, SchemaUtils.convertToValidationKey(inputHeaderKey, originalHeader)), value)
+      (propertyToOutputMapper(inputToPropertyMapper(originalHeader)), value)
     }
     val reader = CSVReader.open(filePath)
     val all: Seq[Map[String, String]] = reader.allWithHeaders().map(_.map({ case (k, v) => convertHeaders(k, v) }))
     val allWithoutEmptyRows = all.filter(_.values.exists(_.nonEmpty))
     allWithoutEmptyRows.map { row =>
-      val keyValue = SchemaUtils.convertToAlternateKey(outputHeaderKey, uniqueAssetIdKey)
+      val keyValue = propertyToOutputMapper(uniqueAssetIdKey)
       FileRow(
         matchIdentifier = row.getOrElse(keyValue, keyValue),
         metadata = row.collect {

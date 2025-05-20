@@ -29,12 +29,10 @@ import uk.gov.nationalarchives.draftmetadatavalidator.FileError.PROTECTED_FIELD
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.{ValidationExecutionError, ValidationParameters, getErrorFilePath, getFilePath}
 import uk.gov.nationalarchives.draftmetadatavalidator.ValidationErrors._
 import uk.gov.nationalarchives.draftmetadatavalidator.utils.{DependencyVersionReader, MetadataUtils}
-import uk.gov.nationalarchives.draftmetadatavalidator.validations.FOIClosureCodesAndPeriods
 import uk.gov.nationalarchives.draftmetadatavalidator.validations.FOIClosureCodesAndPeriods.foiCodesPeriodsConsistent
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
-import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
-import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils.{convertToAlternateKey, convertToValidationKey, getPropertyField}
+import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition._
 import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
@@ -57,6 +55,7 @@ class Lambda {
   implicit def logger: SelfAwareStructuredLogger[IO] = Slf4jLogger.getLogger[IO]
   implicit val fileErrorEncoder: Encoder[FileError.Value] = Encoder.encodeEnumeration(FileError)
   private lazy val messageProperties = getMessageProperties
+  implicit val metadataConfiguration: ConfigUtils.MetadataConfiguration = ConfigUtils.loadConfiguration
 
   private val keycloakUtils = new KeycloakUtils()
   private val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
@@ -176,7 +175,7 @@ class Lambda {
 
   private def validateDuplicateHeaders(validationParameters: ValidationParameters): IO[Unit] = {
     def duplicateError(header: String): Error = {
-      val errorKey = convertToValidationKey(validationParameters.clientAlternateKey, header)
+      val errorKey = metadataConfiguration.inputToPropertyMapper(validationParameters.clientAlternateKey)(header)
       val duplicateFileError = FileError.DUPLICATE_HEADER.toString
       Error(duplicateFileError, header, "duplicate", s"$duplicateFileError.$errorKey.duplicate")
     }
@@ -195,13 +194,15 @@ class Lambda {
   private def validateAdditionalHeaders(validationParameters: ValidationParameters): IO[Unit] = {
     def additionalError(header: String): Error = Error(FileError.ADDITIONAL_HEADER.toString, header, "additional", "")
 
-    def isAdditionalHeader(header: String): Boolean =
-      !SchemaUtils.getPropertyField(convertToValidationKey(validationParameters.clientAlternateKey, header), validationParameters.expectedPropertyField).asBoolean(false)
+    def isExpectedHeader(header: String): Boolean = {
+      val propertyKey = metadataConfiguration.inputToPropertyMapper(validationParameters.clientAlternateKey)(header)
+      metadataConfiguration.propertyToOutputMapper(validationParameters.expectedPropertyField)(propertyKey) == "true"
+    }
 
     val filePath = getFilePath(validationParameters)
     val headers = CSVHandler.loadHeaders(filePath).getOrElse(Nil)
 
-    val additionalHeaders = headers.filter(header => isAdditionalHeader(header))
+    val additionalHeaders = headers.filterNot(header => isExpectedHeader(header))
 
     if (additionalHeaders.nonEmpty) {
       val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, additionalHeaders.map(additionalError).toSet)
@@ -217,10 +218,12 @@ class Lambda {
   ): IO[ErrorFileData] = {
     def skipUnless(toggle: Boolean): List[ValidationErrors] => IO[List[ValidationErrors]] = validated => if (toggle) IO(validated) else IO(List.empty)
     val uniqueAssetIdKeys = filesWithUniqueAssetIdKey.keySet
+    val clientAssetIdKey = metadataConfiguration.propertyToOutputMapper(validationParameters.clientAlternateKey)(validationParameters.uniqueAssetIdKey)
+
     for {
-      missingRowErrors <- IO(RowValidator.validateMissingRows(uniqueAssetIdKeys, csvData, messageProperties, validationParameters))
-      duplicateRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateDuplicateRows(csvData, messageProperties, validationParameters))
-      unknownRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateUnknownRows(uniqueAssetIdKeys, csvData, messageProperties, validationParameters))
+      missingRowErrors <- IO(RowValidator.validateMissingRows(uniqueAssetIdKeys, csvData, messageProperties, clientAssetIdKey))
+      duplicateRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateDuplicateRows(csvData, messageProperties, clientAssetIdKey))
+      unknownRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateUnknownRows(uniqueAssetIdKeys, csvData, messageProperties, clientAssetIdKey))
       protectedFieldErrors <- skipUnless(checkAgainstUploadedRecords)(validateProtectedFields(csvData, filesWithUniqueAssetIdKey, messageProperties, validationParameters))
       rowSchemaErrors <- IO(schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters))
       foiCodePeriodMismatches <- IO(foiCodesPeriodsConsistent(csvData, messageProperties, validationParameters))
@@ -239,11 +242,11 @@ class Lambda {
       validationParameters: ValidationParameters
   ): List[ValidationErrors] = {
 
-    val protectedMetadataFields = SchemaUtils.getMetadataProperties("System").filterNot(_ == validationParameters.uniqueAssetIdKey)
+    val protectedMetadataFields = metadataConfiguration.getPropertiesByPropertyType("System").filterNot(_ == validationParameters.uniqueAssetIdKey)
     val headers = CSVHandler.loadHeaders(getFilePath(validationParameters)).getOrElse(Nil)
     for {
       metadataField <- protectedMetadataFields
-      name = convertToAlternateKey(validationParameters.clientAlternateKey, metadataField) if headers.contains(name)
+      name = metadataConfiguration.propertyToOutputMapper(validationParameters.clientAlternateKey)(metadataField) if headers.contains(name)
       row <- csvData
       value = row.metadata.find(_.name == name).map(_.value).getOrElse("")
       if filesWithUniqueAssetIdKey.contains(row.matchIdentifier) && value != filesWithUniqueAssetIdKey(row.matchIdentifier).getValue(metadataField)
@@ -259,7 +262,7 @@ class Lambda {
   }
 
   private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], validationParameters: ValidationParameters): List[ValidationErrors] = {
-    val matchIdentifier = convertToAlternateKey(validationParameters.clientAlternateKey, validationParameters.uniqueAssetIdKey)
+    val matchIdentifier = metadataConfiguration.propertyToOutputMapper(validationParameters.clientAlternateKey)(validationParameters.uniqueAssetIdKey)
     MetadataValidationJsonSchema
       .validate(schema, csvData)
       .collect {
@@ -268,7 +271,7 @@ class Lambda {
             val errorKey = s"${error.validationProcess}.${error.property}.${error.errorKey}"
             Error(
               error.validationProcess.toString,
-              convertToAlternateKey(validationParameters.clientAlternateKey, error.property) match {
+              metadataConfiguration.propertyToOutputMapper(validationParameters.clientAlternateKey)(error.property) match {
                 case ""           => error.property
                 case alternateKey => alternateKey
               },
