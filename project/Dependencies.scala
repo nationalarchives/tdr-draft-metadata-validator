@@ -3,7 +3,7 @@ import sbt.*
 object Dependencies {
 
   private val log4CatsVersion = "2.7.0"
-  private val mockitoScalaVersion = "1.17.37"
+  private val mockitoScalaVersion = "1.17.44"
   private val circeVersion = "0.14.13"
   val metadataSchemaVersion = "0.0.57"
 
