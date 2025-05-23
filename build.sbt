@@ -47,4 +47,5 @@ lazy val root = (project in file("."))
 
 (Test / fork) := true
 (Test / javaOptions) += s"-Dconfig.file=${sourceDirectory.value}/test/resources/application.conf"
-(Test / envVars) := Map("AWS_ACCESS_KEY_ID" -> "test", "AWS_SECRET_ACCESS_KEY" -> "test")
+(Test / envVars) := Map("AWS_ACCESS_KEY_ID" -> "test", "AWS_SECRET_ACCESS_KEY" -> "test",
+  "AWS_REQUEST_CHECKSUM_CALCULATION" -> "when_required", "AWS_RESPONSE_CHECKSUM_CALCULATION" -> "when_required")
