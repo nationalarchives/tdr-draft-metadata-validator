@@ -7,16 +7,16 @@
       "assetId" : "test/test1.txt",
       "errors" : [
         {
-          "validationProcess" : "ROW_VALIDATION",
+          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
           "property" : "foi_exemption_code",
           "errorKey" : "closureCodeAndPeriodMismatch",
-          "message" : "ROW_VALIDATION.closureCodeAndPeriodMismatch"
+          "message" : "Must have the same number of closure periods as foi exemption codes"
         },
         {
-          "validationProcess" : "ROW_VALIDATION",
+          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
           "property" : "closure_period",
           "errorKey" : "closureCodeAndPeriodMismatch",
-          "message" : "ROW_VALIDATION.closureCodeAndPeriodMismatch"
+          "message" : "Must have the same number of closure periods as foi exemption codes"
         }
       ],
       "data" : [
