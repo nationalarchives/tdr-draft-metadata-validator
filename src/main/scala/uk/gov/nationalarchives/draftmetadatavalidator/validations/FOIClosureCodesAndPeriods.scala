@@ -69,7 +69,7 @@ object FOIClosureCodesAndPeriods {
       property = propertyName,
       errorKey = "closureCodeAndPeriodMismatch",
       message = messageProperties.getProperty(
-        s"${ValidationProcess.SCHEMA_CLOSURE_CLOSED.toString}.closureCodeAndPeriodMismatch"
+        s"${ValidationProcess.SCHEMA_CLOSURE_CLOSED}.closureCodeAndPeriodMismatch"
       )
     )
   }
