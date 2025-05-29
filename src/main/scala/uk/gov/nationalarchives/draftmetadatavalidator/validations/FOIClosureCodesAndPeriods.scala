@@ -64,12 +64,11 @@ object FOIClosureCodesAndPeriods {
 
   private def misMatchError(propertyName: String, messageProperties: Properties) = {
     Error(
-      validationProcess = s"${FileError.ROW_VALIDATION}",
+      validationProcess = "SCHEMA_CLOSURE_CLOSED",
       property = propertyName,
       errorKey = "closureCodeAndPeriodMismatch",
       message = messageProperties.getProperty(
-        s"${FileError.ROW_VALIDATION}.closureCodeAndPeriodMismatch",
-        s"${FileError.ROW_VALIDATION}.closureCodeAndPeriodMismatch"
+        "SCHEMA_CLOSURE_CLOSED.closureCodeAndPeriodMismatch"
       )
     )
   }

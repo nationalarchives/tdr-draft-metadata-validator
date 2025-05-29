@@ -31,7 +31,9 @@ class FOIExemptionCodesWithClosurePeriodsSpec extends AnyWordSpec {
 
       val testData = createInputForClosureValidation(List(row))
       val result = FOIClosureCodesAndPeriods.foiCodesPeriodsConsistent(testData._1, testData._2, testData._3)
+
       result.length shouldBe 1
+      result.head.errors.head.message shouldBe "Must have the same number of closure periods as foi exemption codes"
     }
   }
 
@@ -40,7 +42,7 @@ class FOIExemptionCodesWithClosurePeriodsSpec extends AnyWordSpec {
   ): (List[FileRow], Properties, ValidationParameters) = {
 
     val messageProperties = new Properties()
-    messageProperties.setProperty("ROW_VALIDATION.closureCodeAndPeriodMismatch", "Must have the same number of closure periods as foi exemption codes")
+    messageProperties.setProperty("SCHEMA_CLOSURE_CLOSED.closureCodeAndPeriodMismatch", "Must have the same number of closure periods as foi exemption codes")
 
     val validationParameters = ValidationParameters(
       consignmentId = UUID.randomUUID(),
