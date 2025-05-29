@@ -66,7 +66,7 @@ object FOIClosureCodesAndPeriods {
   private def misMatchError(propertyName: String, messageProperties: Properties, tdrClientHeaderMapper: String => String) = {
     Error(
       validationProcess = ValidationProcess.SCHEMA_CLOSURE_CLOSED.toString,
-      property =  tdrClientHeaderMapper(propertyName),
+      property = tdrClientHeaderMapper(propertyName),
       errorKey = "closureCodeAndPeriodMismatch",
       message = messageProperties.getProperty(
         s"${ValidationProcess.SCHEMA_CLOSURE_CLOSED}.closureCodeAndPeriodMismatch"
