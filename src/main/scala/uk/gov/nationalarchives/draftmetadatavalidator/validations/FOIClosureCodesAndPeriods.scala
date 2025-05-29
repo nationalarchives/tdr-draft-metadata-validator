@@ -46,8 +46,8 @@ object FOIClosureCodesAndPeriods {
       ValidationErrors(
         assetId = error.assetId,
         errors = Set(
-          misMatchError("foi_exemption_code", messageProperties),
-          misMatchError("closure_period", messageProperties)
+          misMatchError("foi_exemption_code", messageProperties, tdrClientHeaderMapper),
+          misMatchError("closure_period", messageProperties, tdrClientHeaderMapper)
         ),
         data = List(
           Metadata(
@@ -63,10 +63,10 @@ object FOIClosureCodesAndPeriods {
     }
   }
 
-  private def misMatchError(propertyName: String, messageProperties: Properties) = {
+  private def misMatchError(propertyName: String, messageProperties: Properties, tdrClientHeaderMapper: String => String) = {
     Error(
       validationProcess = ValidationProcess.SCHEMA_CLOSURE_CLOSED.toString,
-      property = propertyName,
+      property =  tdrClientHeaderMapper(propertyName),
       errorKey = "closureCodeAndPeriodMismatch",
       message = messageProperties.getProperty(
         s"${ValidationProcess.SCHEMA_CLOSURE_CLOSED}.closureCodeAndPeriodMismatch"
