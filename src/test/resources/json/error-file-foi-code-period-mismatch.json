@@ -8,7 +8,7 @@
       "errors" : [
         {
           "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
-          "property" : "foi exemption codee",
+          "property" : "foi exemption code",
           "errorKey" : "closureCodeAndPeriodMismatch",
           "message" : "Must have the same number of closure periods as foi exemption codes"
         },
