@@ -3,8 +3,8 @@ package uk.gov.nationalarchives.draftmetadatavalidator.validations
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.ValidationParameters
-import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
-import uk.gov.nationalarchives.tdr.validation.utils.ConfigUtils.ARRAY_SPLIT_CHAR
+import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
+import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils.ARRAY_SPLIT_CHAR
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.util.{Properties, UUID}
@@ -12,8 +12,10 @@ import scala.util.Random
 
 class FOIExemptionCodesWithClosurePeriodsSpec extends AnyWordSpec {
 
-  private val foiExemptionCodeCol = SchemaUtils.convertToAlternateKey("tdrFileHeader", "foi_exemption_code")
-  private val closurePeriodCol = SchemaUtils.convertToAlternateKey("tdrFileHeader", "closure_period")
+  implicit val metadataConfiguration: ConfigUtils.MetadataConfiguration = ConfigUtils.loadConfiguration
+
+  private val foiExemptionCodeCol = metadataConfiguration.propertyToOutputMapper("tdrFileHeader")("foi_exemption_code")
+  private val closurePeriodCol = metadataConfiguration.propertyToOutputMapper("tdrFileHeader")("closure_period")
 
   "FOIClosureCodesAndPeriods.foiCodesPeriodsConsistent" should {
     "validate a closure period and foi exemption code same length" in {
@@ -29,7 +31,9 @@ class FOIExemptionCodesWithClosurePeriodsSpec extends AnyWordSpec {
 
       val testData = createInputForClosureValidation(List(row))
       val result = FOIClosureCodesAndPeriods.foiCodesPeriodsConsistent(testData._1, testData._2, testData._3)
+
       result.length shouldBe 1
+      result.head.errors.head.message shouldBe "Must have the same number of closure periods as foi exemption codes"
     }
   }
 
@@ -38,7 +42,7 @@ class FOIExemptionCodesWithClosurePeriodsSpec extends AnyWordSpec {
   ): (List[FileRow], Properties, ValidationParameters) = {
 
     val messageProperties = new Properties()
-    messageProperties.setProperty("ROW_VALIDATION.closureCodeAndPeriodMismatch", "Must have the same number of closure periods as foi exemption codes")
+    messageProperties.setProperty("SCHEMA_CLOSURE_CLOSED.closureCodeAndPeriodMismatch", "Must have the same number of closure periods as foi exemption codes")
 
     val validationParameters = ValidationParameters(
       consignmentId = UUID.randomUUID(),
@@ -49,7 +53,7 @@ class FOIExemptionCodesWithClosurePeriodsSpec extends AnyWordSpec {
       expectedPropertyField = "expectedField"
     )
 
-    val assetIdColumn = SchemaUtils.convertToAlternateKey(validationParameters.clientAlternateKey, validationParameters.uniqueAssetIdKey)
+    val assetIdColumn = metadataConfiguration.propertyToOutputMapper(validationParameters.clientAlternateKey)(validationParameters.uniqueAssetIdKey)
     val fileRows = csvData.map { row =>
       val uniqueAssetId = Random.nextInt().toString
       FileRow(

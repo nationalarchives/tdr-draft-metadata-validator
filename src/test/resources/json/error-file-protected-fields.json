@@ -8,13 +8,13 @@
       "errors" : [
         {
           "validationProcess" : "PROTECTED_FIELD",
-          "property" : "date last modified",
+          "property" : "filename",
           "errorKey" : "PROTECTED_FIELD",
           "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
         },
         {
           "validationProcess" : "PROTECTED_FIELD",
-          "property" : "filename",
+          "property" : "date last modified",
           "errorKey" : "PROTECTED_FIELD",
           "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
         },
@@ -33,11 +33,11 @@
       ],
       "data" : [
         {
-          "name" : "date last modified",
+          "name" : "filename",
           "value" : ""
         },
         {
-          "name" : "filename",
+          "name" : "date last modified",
           "value" : ""
         },
         {
@@ -51,13 +51,13 @@
       "errors" : [
         {
           "validationProcess" : "PROTECTED_FIELD",
-          "property" : "date last modified",
+          "property" : "filename",
           "errorKey" : "PROTECTED_FIELD",
           "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
         },
         {
           "validationProcess" : "PROTECTED_FIELD",
-          "property" : "filename",
+          "property" : "date last modified",
           "errorKey" : "PROTECTED_FIELD",
           "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
         },
@@ -70,12 +70,12 @@
       ],
       "data" : [
         {
-          "name" : "date last modified",
-          "value" : "2024-05-26"
-        },
-        {
           "name" : "filename",
           "value" : "sample.txt"
+        },
+        {
+          "name" : "date last modified",
+          "value" : "2024-05-26"
         },
         {
           "name" : "closure start date",
