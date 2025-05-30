@@ -10,7 +10,7 @@
           "validationProcess" : "SCHEMA_BASE",
           "property" : "foi exemption code",
           "errorKey" : "enum",
-          "message" : "Must be a semi-colon separated list of valid FOI codes, (eg. 31;33). Please see the guidance for more detail on valid codes"
+          "message" : "Must be a valid FOI exemption code, or a semi-colon separated list of valid FOI exemption codes, eg. 31;33"
         },
         {
           "validationProcess" : "SCHEMA_BASE",
