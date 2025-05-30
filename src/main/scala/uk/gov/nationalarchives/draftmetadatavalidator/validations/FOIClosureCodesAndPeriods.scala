@@ -2,19 +2,23 @@ package uk.gov.nationalarchives.draftmetadatavalidator.validations
 
 import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.ValidationParameters
 import uk.gov.nationalarchives.draftmetadatavalidator.{Error, FileError, ValidationErrors}
-import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
-import uk.gov.nationalarchives.tdr.validation.utils.ConfigUtils.ARRAY_SPLIT_CHAR
+import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils.{ARRAY_SPLIT_CHAR, MetadataConfiguration}
+import uk.gov.nationalarchives.tdr.validation.schema.ValidationProcess
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.util.Properties
 
 object FOIClosureCodesAndPeriods {
 
-  def foiCodesPeriodsConsistent(csvData: List[FileRow], messageProperties: Properties, validationParameters: ValidationParameters): List[ValidationErrors] = {
+  def foiCodesPeriodsConsistent(csvData: List[FileRow], messageProperties: Properties, validationParameters: ValidationParameters)(implicit
+      metadataConfiguration: MetadataConfiguration
+  ): List[ValidationErrors] = {
 
-    val assetIdColumn = SchemaUtils.convertToAlternateKey(validationParameters.clientAlternateKey, validationParameters.uniqueAssetIdKey)
-    val closureCodeColumn = SchemaUtils.convertToAlternateKey(validationParameters.clientAlternateKey, "foi_exemption_code")
-    val closurePeriodColumn = SchemaUtils.convertToAlternateKey(validationParameters.clientAlternateKey, "closure_period")
+    val tdrClientHeaderMapper = metadataConfiguration.propertyToOutputMapper(validationParameters.clientAlternateKey)
+
+    val assetIdColumn = tdrClientHeaderMapper(validationParameters.uniqueAssetIdKey)
+    val closureCodeColumn = tdrClientHeaderMapper("foi_exemption_code")
+    val closurePeriodColumn = tdrClientHeaderMapper("closure_period")
 
     val closureCodeAndPeriods: List[ClosureCheckData] = csvData.map { fileRow =>
       val closureCode = fileRow.metadata.find(_.name == closureCodeColumn).map(_.value).getOrElse("")
@@ -29,31 +33,29 @@ object FOIClosureCodesAndPeriods {
     if (closureCodeAndPeriodsWithErrors.isEmpty) {
       List.empty[ValidationErrors]
     } else {
-      generateValidationErrors(closureCodeAndPeriodsWithErrors, validationParameters, messageProperties)
+      generateValidationErrors(closureCodeAndPeriodsWithErrors, messageProperties, tdrClientHeaderMapper)
     }
   }
 
-  private def generateValidationErrors(closuresWithCodeAndPeriodMismatch: List[ClosureCheckData], validationParameters: ValidationParameters, messageProperties: Properties) = {
+  private def generateValidationErrors(
+      closuresWithCodeAndPeriodMismatch: List[ClosureCheckData],
+      messageProperties: Properties,
+      tdrClientHeaderMapper: String => String
+  ): List[ValidationErrors] = {
     closuresWithCodeAndPeriodMismatch.map { error =>
       ValidationErrors(
         assetId = error.assetId,
         errors = Set(
-          misMatchError("foi_exemption_code", messageProperties),
-          misMatchError("closure_period", messageProperties)
+          misMatchError("foi_exemption_code", messageProperties, tdrClientHeaderMapper),
+          misMatchError("closure_period", messageProperties, tdrClientHeaderMapper)
         ),
         data = List(
           Metadata(
-            name = SchemaUtils.convertToAlternateKey(
-              alternateKeyName = validationParameters.clientAlternateKey,
-              propertyKey = "foi_exemption_code"
-            ),
+            name = tdrClientHeaderMapper("foi_exemption_code"),
             value = error.closureCode
           ),
           Metadata(
-            name = SchemaUtils.convertToAlternateKey(
-              alternateKeyName = validationParameters.clientAlternateKey,
-              propertyKey = "closure_period"
-            ),
+            name = tdrClientHeaderMapper("closure_period"),
             value = error.closurePeriod
           )
         )
@@ -61,14 +63,13 @@ object FOIClosureCodesAndPeriods {
     }
   }
 
-  private def misMatchError(propertyName: String, messageProperties: Properties) = {
+  private def misMatchError(propertyName: String, messageProperties: Properties, tdrClientHeaderMapper: String => String) = {
     Error(
-      validationProcess = s"${FileError.ROW_VALIDATION}",
-      property = propertyName,
+      validationProcess = ValidationProcess.SCHEMA_CLOSURE_CLOSED.toString,
+      property = tdrClientHeaderMapper(propertyName),
       errorKey = "closureCodeAndPeriodMismatch",
       message = messageProperties.getProperty(
-        s"${FileError.ROW_VALIDATION}.closureCodeAndPeriodMismatch",
-        s"${FileError.ROW_VALIDATION}.closureCodeAndPeriodMismatch"
+        s"${ValidationProcess.SCHEMA_CLOSURE_CLOSED}.closureCodeAndPeriodMismatch"
       )
     )
   }
