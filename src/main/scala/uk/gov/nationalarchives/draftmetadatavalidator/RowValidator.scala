@@ -1,7 +1,5 @@
 package uk.gov.nationalarchives.draftmetadatavalidator
 
-import uk.gov.nationalarchives.draftmetadatavalidator.Lambda.ValidationParameters
-import uk.gov.nationalarchives.tdr.schemautils.SchemaUtils
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.util.Properties
@@ -11,63 +9,54 @@ object RowValidator {
       uniqueAssetIdKeys: Set[String],
       csvData: List[FileRow],
       messageProperties: Properties,
-      validationParameters: ValidationParameters
+      clientAssetIdKey: String
   ): List[ValidationErrors] =
     (uniqueAssetIdKeys -- csvData.map(_.matchIdentifier).toSet)
-      .map(id => toRowValidationErrors(id, Missing, messageProperties, validationParameters))
+      .map(matchIdentifier => toRowValidationErrors(clientAssetIdKey, matchIdentifier, Missing, messageProperties))
       .toList
 
   def validateUnknownRows(
       uniqueAssetIdKeys: Set[String],
       csvData: List[FileRow],
       messageProperties: Properties,
-      validationParameters: ValidationParameters
+      clientAssetIdKey: String
   ): List[ValidationErrors] =
-    (csvData.map(_.matchIdentifier).toSet -- uniqueAssetIdKeys).map(id => toRowValidationErrors(id, Unknown, messageProperties, validationParameters)).toList
+    (csvData.map(_.matchIdentifier).toSet -- uniqueAssetIdKeys)
+      .map(matchIdentifier => toRowValidationErrors(clientAssetIdKey, matchIdentifier, Unknown, messageProperties))
+      .toList
 
   def validateDuplicateRows(
       csvData: List[FileRow],
       messageProperties: Properties,
-      validationParameters: ValidationParameters
+      clientAssetIdKey: String
   ): List[ValidationErrors] =
     csvData
       .map(_.matchIdentifier)
       .diff(csvData.map(_.matchIdentifier).distinct)
-      .map(id => toRowValidationErrors(id, Duplicate, messageProperties, validationParameters))
+      .map(matchIdentifier => toRowValidationErrors(clientAssetIdKey, matchIdentifier, Duplicate, messageProperties))
 
-  def toRowValidationErrors(
-      clientIdentifier: String,
+  private def toRowValidationErrors(
+      clientAssetIdKey: String,
+      fileMatchIdentifier: String,
       errorType: RowErrorType,
-      messageProperties: Properties,
-      validationParameters: ValidationParameters
+      messageProperties: Properties
   ): ValidationErrors = {
     ValidationErrors(
-      assetId = clientIdentifier,
+      assetId = fileMatchIdentifier,
       errors = Set(
         Error(
           validationProcess = s"${FileError.ROW_VALIDATION}",
           property = "",
           errorKey = errorType.name,
-          message = messageProperties.getProperty(
-            s"${FileError.ROW_VALIDATION}.${errorType.name}",
-            s"${FileError.ROW_VALIDATION}.${errorType.name}"
-          )
+          message = messageProperties.getProperty(s"${FileError.ROW_VALIDATION}.${errorType.name}", s"${FileError.ROW_VALIDATION}.${errorType.name}")
         )
       ),
-      data = List(
-        Metadata(
-          name = SchemaUtils.convertToAlternateKey(
-            alternateKeyName = validationParameters.clientAlternateKey,
-            propertyKey = validationParameters.uniqueAssetIdKey
-          ),
-          value = clientIdentifier
-        )
-      )
+      data = List(Metadata(clientAssetIdKey, fileMatchIdentifier))
     )
   }
 
-  sealed trait RowErrorType { val name: String }
-  case object Missing extends RowErrorType { val name = "missing" }
-  case object Duplicate extends RowErrorType { val name = "duplicate" }
-  case object Unknown extends RowErrorType { val name = "unknown" }
+  private sealed trait RowErrorType { val name: String }
+  private case object Missing extends RowErrorType { val name = "missing" }
+  private case object Duplicate extends RowErrorType { val name = "duplicate" }
+  private case object Unknown extends RowErrorType { val name = "unknown" }
 }
