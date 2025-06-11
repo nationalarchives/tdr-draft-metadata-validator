@@ -1,0 +1,91 @@
+{
+  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+  "date" : "$today",
+  "fileError" : "SCHEMA_VALIDATION",
+  "validationErrors" : [
+    {
+      "assetId" : "test/test2.txt",
+      "errors" : [
+        {
+          "validationProcess" : "PROTECTED_FIELD",
+          "property" : "filename",
+          "errorKey" : "PROTECTED_FIELD",
+          "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
+        },
+        {
+          "validationProcess" : "PROTECTED_FIELD",
+          "property" : "date last modified",
+          "errorKey" : "PROTECTED_FIELD",
+          "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "date last modified",
+          "errorKey" : "type",
+          "message" : "We are unable to recognise this as a valid date format, please provide a date in the format yyyy-mm-dd"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "filename",
+          "errorKey" : "type",
+          "message" : "Must not be empty"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "filename",
+          "value" : ""
+        },
+        {
+          "name" : "date last modified",
+          "value" : ""
+        },
+        {
+          "name" : "filepath",
+          "value" : "test/test2.txt"
+        }
+      ]
+    },
+    {
+      "assetId" : "test/test1.txt",
+      "errors" : [
+        {
+          "validationProcess" : "PROTECTED_FIELD",
+          "property" : "filename",
+          "errorKey" : "PROTECTED_FIELD",
+          "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
+        },
+        {
+          "validationProcess" : "PROTECTED_FIELD",
+          "property" : "date last modified",
+          "errorKey" : "PROTECTED_FIELD",
+          "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "closure start date",
+          "errorKey" : "matchEndDateOrDateLastModified",
+          "message" : "Must match to date of the record (if provided) or date last modified"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "filename",
+          "value" : "sample.txt"
+        },
+        {
+          "name" : "date last modified",
+          "value" : "2024-05-26"
+        },
+        {
+          "name" : "closure start date",
+          "value" : "1990-01-01"
+        },
+        {
+          "name" : "filepath",
+          "value" : "test/test1.txt"
+        }
+      ]
+    }
+  ]
+}
