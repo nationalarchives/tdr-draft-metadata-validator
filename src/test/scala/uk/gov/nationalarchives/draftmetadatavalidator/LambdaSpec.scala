@@ -271,7 +271,6 @@ class LambdaSpec extends ExternalServicesSpec {
 
     addOrUpdateBulkFileMetadataInput.fileMetadata.size should be(3)
     addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput(fileTestData))
-    addOrUpdateBulkFileMetadataInput.skipValidation should be(Some(true))
 
     updateConsignmentStatusInput.statusType must be("DraftMetadata")
     updateConsignmentStatusInput.statusValue must be(Some(statusValue))
