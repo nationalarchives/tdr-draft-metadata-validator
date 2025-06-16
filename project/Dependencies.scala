@@ -12,7 +12,7 @@ object Dependencies {
   lazy val metadataValidation = "uk.gov.nationalarchives" %% "tdr-metadata-validation" % "0.0.149" exclude ("uk.gov.nationalarchives", "da-metadata-schema")
   lazy val metadataSchema = "uk.gov.nationalarchives" %% "da-metadata-schema" % metadataSchemaVersion
   lazy val generatedGraphql = "uk.gov.nationalarchives" %% "tdr-generated-graphql" % "0.0.415"
-  lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.233"
+  lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.236"
   lazy val authUtils = "uk.gov.nationalarchives" %% "tdr-auth-utils" % "0.0.246"
   lazy val typeSafeConfig = "com.typesafe" % "config" % "1.4.3"
   lazy val awsLambda = "com.amazonaws" % "aws-lambda-java-core" % "1.3.0"
