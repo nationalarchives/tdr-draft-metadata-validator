@@ -18,10 +18,10 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.ssm.SsmClient
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest
 import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, SttpBackendOptions}
-import ApplicationConfig._
 import Lambda.{MetadataPersistorParameters, getFilePath}
 import uk.gov.nationalarchives.aws.utils.s3.S3Clients.s3Async
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
+import uk.gov.nationalarchives.draftmetadata.config.ApplicationConfig._
 import uk.gov.nationalarchives.draftmetadata.csv.CSVHandler
 import uk.gov.nationalarchives.draftmetadata.grapgql.{FileDetail, GraphQlApi}
 import uk.gov.nationalarchives.draftmetadata.s3.S3Files
@@ -29,7 +29,6 @@ import uk.gov.nationalarchives.draftmetadata.utils.MetadataUtils
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
-import uk.gov.nationalarchives.tdr.validation.FileRow
 
 import java.net.URI
 import java.util
