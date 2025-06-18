@@ -21,16 +21,16 @@ import java.util.UUID
 import scala.concurrent.Future
 
 class GraphQlApi(
-                  keycloak: KeycloakUtils,
-                  customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
-                  addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
-                  getFilesWithUniqueAssetIdKey: GraphQLClient[uaik.Data, uaik.Variables],
-                  updateConsignmentMetadataSchemaLibraryVersion: GraphQLClient[ucslv.Data, ucslv.Variables]
-                )(implicit
-                  logger: Logger,
-                  keycloakDeployment: TdrKeycloakDeployment,
-                  backend: SttpBackend[Identity, Any]
-                ) {
+    keycloak: KeycloakUtils,
+    customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
+    addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
+    getFilesWithUniqueAssetIdKey: GraphQLClient[uaik.Data, uaik.Variables],
+    updateConsignmentMetadataSchemaLibraryVersion: GraphQLClient[ucslv.Data, ucslv.Variables]
+)(implicit
+    logger: Logger,
+    keycloakDeployment: TdrKeycloakDeployment,
+    backend: SttpBackend[Identity, Any]
+) {
 
   private val fileTypeIdentifier: String = "File"
 
@@ -83,15 +83,15 @@ class GraphQlApi(
 
 object GraphQlApi {
   def apply(
-             keycloak: KeycloakUtils,
-             customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
-             addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
-             getFilesWithUniqueAssetIdKey: GraphQLClient[uaik.Data, uaik.Variables],
-             updateConsignmentMetadataSchemaLibraryVersion: GraphQLClient[ucslv.Data, ucslv.Variables]
-           )(implicit
-             backend: SttpBackend[Identity, Any],
-             keycloakDeployment: TdrKeycloakDeployment
-           ): GraphQlApi = {
+      keycloak: KeycloakUtils,
+      customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
+      addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
+      getFilesWithUniqueAssetIdKey: GraphQLClient[uaik.Data, uaik.Variables],
+      updateConsignmentMetadataSchemaLibraryVersion: GraphQLClient[ucslv.Data, ucslv.Variables]
+  )(implicit
+      backend: SttpBackend[Identity, Any],
+      keycloakDeployment: TdrKeycloakDeployment
+  ): GraphQlApi = {
     val logger: Logger = Logger[GraphQlApi]
     new GraphQlApi(
       keycloak,
