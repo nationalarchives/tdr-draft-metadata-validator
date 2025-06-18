@@ -41,7 +41,6 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
 
   private val consignmentId = UUID.randomUUID()
   private val customMetadataClient: GraphQLClient[cm.Data, cm.Variables] = mock[GraphQLClient[cm.Data, cm.Variables]]
-  private val updateConsignmentStatusClient = mock[GraphQLClient[ucs.Data, ucs.Variables]]
   private val addOrUpdateBulkFileMetadataClient = mock[GraphQLClient[afm.Data, afm.Variables]]
   private val keycloak = mock[KeycloakUtils]
   private val updateConsignmentMetadataSchemaLibraryVersion = mock[GraphQLClient[ucslv.Data, ucslv.Variables]]
@@ -121,42 +120,6 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
     exception.getMessage should equal("Unable to get FilesWithUniqueAssetIdKey")
   }
 
-  "updateConsignmentStatus" should "throw an exception when the api fails to update the consignment status" in {
-    val api = getGraphQLAPI
-    val graphQlError = GraphQLClient.Error("Unable to update consignment status", Nil, Nil, Some(Extensions(Some("NOT_AUTHORISED"))))
-
-    doAnswer(() => Future(new BearerAccessToken("token")))
-      .when(keycloak)
-      .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
-
-    doAnswer(() => Future(GraphQlResponse[ucs.Data](None, List(GraphQlError(graphQlError)))))
-      .when(updateConsignmentStatusClient)
-      .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[ucs.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
-
-    val exception = intercept[RuntimeException] {
-      api.updateConsignmentStatus(consignmentId, "secret", "status", "value").unsafeRunSync()
-    }
-    exception.getMessage should equal(s"Unable to update consignment status")
-  }
-
-  "updateConsignmentStatus" should "update the consignment status with status type and value" in {
-
-    val consignmentId = UUID.randomUUID()
-    val api = getGraphQLAPI
-
-    doAnswer(() => Future(new BearerAccessToken("token")))
-      .when(keycloak)
-      .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
-
-    doAnswer(() => Future(GraphQlResponse[ucs.Data](Option(ucs.Data(Some(1))), Nil)))
-      .when(updateConsignmentStatusClient)
-      .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[ucs.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
-
-    val response = api.updateConsignmentStatus(consignmentId, "secret", "status", "value").unsafeRunSync()
-
-    response should equal(Some(1))
-  }
-
   "addOrUpdateBulkFileMetadata" should "throw an exception when the api fails to add or update the file metadata" in {
     val api = getGraphQLAPI
     val graphQlError = GraphQLClient.Error("Unable to add or update bulk file metadata", Nil, Nil, Some(Extensions(Some("NOT_AUTHORISED"))))
@@ -220,7 +183,6 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
     new GraphQlApi(
       keycloak,
       customMetadataClient,
-      updateConsignmentStatusClient,
       addOrUpdateBulkFileMetadataClient,
       getFilesUniquesAssetIdKey,
       updateConsignmentMetadataSchemaLibraryVersion

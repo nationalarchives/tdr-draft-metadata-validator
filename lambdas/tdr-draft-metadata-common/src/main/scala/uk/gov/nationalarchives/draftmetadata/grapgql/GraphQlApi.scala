@@ -23,7 +23,6 @@ import scala.concurrent.Future
 class GraphQlApi(
                   keycloak: KeycloakUtils,
                   customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
-                  updateConsignmentStatus: GraphQLClient[ucs.Data, ucs.Variables],
                   addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
                   getFilesWithUniqueAssetIdKey: GraphQLClient[uaik.Data, uaik.Variables],
                   updateConsignmentMetadataSchemaLibraryVersion: GraphQLClient[ucslv.Data, ucslv.Variables]
@@ -42,15 +41,6 @@ class GraphQlApi(
       new RuntimeException(metadata.errors.map(_.message).headOption.getOrElse("No custom metadata definitions found"))
     )
   } yield data.customMetadata
-
-  def updateConsignmentStatus(consignmentId: UUID, clientSecret: String, statusType: String, statusValue: String): IO[Option[Int]] =
-    for {
-      token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
-      metadata <- updateConsignmentStatus.getResult(token, ucs.document, ucs.Variables(ConsignmentStatusInput(consignmentId, statusType, statusValue.some, None)).some).toIO
-      data <- IO.fromOption(metadata.data)(
-        new RuntimeException(metadata.errors.map(_.message).headOption.getOrElse("Unable to update consignment status"))
-      )
-    } yield data.updateConsignmentStatus
 
   def addOrUpdateBulkFileMetadata(consignmentId: UUID, clientSecret: String, fileMetadata: List[AddOrUpdateFileMetadata]): IO[List[AddOrUpdateBulkFileMetadata]] =
     for {
@@ -95,7 +85,6 @@ object GraphQlApi {
   def apply(
              keycloak: KeycloakUtils,
              customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
-             updateConsignmentStatus: GraphQLClient[ucs.Data, ucs.Variables],
              addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
              getFilesWithUniqueAssetIdKey: GraphQLClient[uaik.Data, uaik.Variables],
              updateConsignmentMetadataSchemaLibraryVersion: GraphQLClient[ucslv.Data, ucslv.Variables]
@@ -107,7 +96,6 @@ object GraphQlApi {
     new GraphQlApi(
       keycloak,
       customMetadataClient,
-      updateConsignmentStatus,
       addOrUpdateBulkFileMetadata,
       getFilesWithUniqueAssetIdKey,
       updateConsignmentMetadataSchemaLibraryVersion

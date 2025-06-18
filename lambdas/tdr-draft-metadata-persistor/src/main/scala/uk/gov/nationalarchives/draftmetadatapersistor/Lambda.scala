@@ -9,7 +9,6 @@ import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata 
 import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetFilesWithUniqueAssetIdKey.{getFilesWithUniqueAssetIdKey => uaik}
 import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
-import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.types.AddOrUpdateFileMetadata
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
@@ -45,7 +44,6 @@ class Lambda {
 
   private val keycloakUtils = new KeycloakUtils()
   private val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
-  private val updateConsignmentStatusClient = new GraphQLClient[ucs.Data, ucs.Variables](apiUrl)
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
   private val updateMetadataSchemaLibraryVersionClient = new GraphQLClient[ucslv.Data, ucslv.Variables](apiUrl)
   private val getFilesWithUniqueAssetIdKey = new GraphQLClient[uaik.Data, uaik.Variables](apiUrl)
@@ -53,7 +51,6 @@ class Lambda {
   private val graphQlApi: GraphQlApi = GraphQlApi(
     keycloakUtils,
     customMetadataClient,
-    updateConsignmentStatusClient,
     addOrUpdateBulkFileMetadataClient,
     getFilesWithUniqueAssetIdKey,
     updateMetadataSchemaLibraryVersionClient
