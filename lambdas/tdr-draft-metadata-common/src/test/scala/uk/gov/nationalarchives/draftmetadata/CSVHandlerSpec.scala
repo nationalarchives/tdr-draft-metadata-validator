@@ -8,7 +8,6 @@ import uk.gov.nationalarchives.draftmetadata.csv.CSVHandler
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils.MetadataConfiguration
 
-
 import java.nio.file.{Files, Path}
 
 class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {

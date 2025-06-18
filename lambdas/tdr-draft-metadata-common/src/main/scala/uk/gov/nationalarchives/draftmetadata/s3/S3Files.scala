@@ -37,9 +37,9 @@ class S3Files(s3Utils: S3Utils)(implicit val logger: SelfAwareStructuredLogger[I
     }
   }
 
-  def getFilePath(consignmentId:String) = s"""$rootDirectory/$consignmentId/$fileName"""
+  def getFilePath(consignmentId: String) = s"""$rootDirectory/$consignmentId/$fileName"""
 
-  def getFolderPath(consignmentId:String) = s"""$rootDirectory/$consignmentId"""
+  def getFolderPath(consignmentId: String) = s"""$rootDirectory/$consignmentId"""
 }
 
 object S3Files {

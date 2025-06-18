@@ -86,7 +86,8 @@ class Lambda {
         apiProxyRequestInput.get("pathParameters").asInstanceOf[util.Map[String, Object]]
     }
 
-   MetadataPersistorParameters(consignmentId = UUID.fromString(inputParameters.get("consignmentId").toString),
+    MetadataPersistorParameters(
+      consignmentId = UUID.fromString(inputParameters.get("consignmentId").toString),
       uniqueAssetIdKey = inputParameters.getOrDefault("uniqueAssetIdKey", "file_path").toString,
       clientAlternateKey = inputParameters.getOrDefault("clientAlternateKey", "tdrFileHeader").toString,
       persistenceAlternateKey = inputParameters.getOrDefault("persistenceAlternateKey", "tdrDataLoadHeader").toString,
@@ -94,7 +95,7 @@ class Lambda {
     )
   }
 
-  private def updateConsignmentMetadataSchemaLibraryVersion(consignmentId:UUID, metadataSchemaLibraryVersion:String): IO[Option[Int]] = {
+  private def updateConsignmentMetadataSchemaLibraryVersion(consignmentId: UUID, metadataSchemaLibraryVersion: String): IO[Option[Int]] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     graphQlApi.updateConsignmentMetadataSchemaLibraryVersion(
       consignmentId,
