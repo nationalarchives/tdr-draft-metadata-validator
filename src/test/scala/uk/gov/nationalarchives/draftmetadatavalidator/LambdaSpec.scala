@@ -224,7 +224,7 @@ class LambdaSpec extends ExternalServicesSpec {
 
     val updateConsignmentStatusEvent = getServeEvent("updateConsignmentStatus").get
     val request: UpdateConsignmentStatusGraphqlRequestData = decode[UpdateConsignmentStatusGraphqlRequestData](updateConsignmentStatusEvent.getRequest.getBodyAsString)
-      .getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None))))
+      .getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None, None))))
     val updateConsignmentStatusInput = request.variables.updateConsignmentStatusInput
 
     updateConsignmentStatusInput.statusType must be("DraftMetadata")
@@ -249,7 +249,7 @@ class LambdaSpec extends ExternalServicesSpec {
 
     val updateConsignmentStatusInput = decode[UpdateConsignmentStatusGraphqlRequestData](
       getServeEvent("updateConsignmentStatus").get.getRequest.getBodyAsString
-    ).getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None))))
+    ).getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None, None))))
       .variables
       .updateConsignmentStatusInput
 
