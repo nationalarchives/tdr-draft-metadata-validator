@@ -1,0 +1,26 @@
+name: TDR Persistor build release and deploy
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'lambdas/tdr-draft-metadata-persistor/**'
+jobs:
+  pre-deploy:
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@main
+    with:
+      repo-name: tdr-draft-metadata-validator
+      artifact-name: draft-metadata-persistor
+      build-command: |
+        sbt "tdrDraftMetadataPersistor/assembly"
+    secrets:
+      MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
+      WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
+  deploy:
+    needs: pre-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - run: gh workflow run deploy.yml -f environment=intg -f to-deploy=${{ needs.pre-deploy.outputs.next-version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_PAT }}

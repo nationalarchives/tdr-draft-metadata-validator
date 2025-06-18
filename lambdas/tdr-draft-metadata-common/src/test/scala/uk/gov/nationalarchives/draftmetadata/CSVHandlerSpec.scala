@@ -1,11 +1,13 @@
-package uk.gov.nationalarchives.draftmetadatavalidator
+package uk.gov.nationalarchives.draftmetadata
 
 import org.scalatest.BeforeAndAfterEach
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.must.Matchers.be
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import uk.gov.nationalarchives.draftmetadata.csv.CSVHandler
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
-import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
+import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils.MetadataConfiguration
+
 
 import java.nio.file.{Files, Path}
 
@@ -13,7 +15,7 @@ class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
 
   val filePath: String = getClass.getResource("/sample-for-csv-handler.csv").getPath
   val metadataNames: List[String] = List("Filename", "Filepath", "end_date", "ClosureStatus", "ClosurePeriod")
-  implicit val metadataConfiguration: ConfigUtils.MetadataConfiguration = ConfigUtils.loadConfiguration
+  implicit val metadataConfiguration: MetadataConfiguration = ConfigUtils.loadConfiguration
 
   "loadCSV with output alternate key of tdrDataLoadHeader" should "read the file and return expected FileRows with correct names for DB persistence" in {
     val fileData: Seq[FileRow] = CSVHandler.loadCSV(filePath, "tdrFileHeader", "tdrDataLoadHeader", "file_path")
