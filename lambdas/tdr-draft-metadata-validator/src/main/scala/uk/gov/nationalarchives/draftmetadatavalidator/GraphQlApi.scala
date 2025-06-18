@@ -46,7 +46,7 @@ class GraphQlApi(
   def updateConsignmentStatus(consignmentId: UUID, clientSecret: String, statusType: String, statusValue: String): IO[Option[Int]] =
     for {
       token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
-      metadata <- updateConsignmentStatus.getResult(token, ucs.document, ucs.Variables(ConsignmentStatusInput(consignmentId, statusType, statusValue.some)).some).toIO
+      metadata <- updateConsignmentStatus.getResult(token, ucs.document, ucs.Variables(ConsignmentStatusInput(consignmentId, statusType, statusValue.some, None)).some).toIO
       data <- IO.fromOption(metadata.data)(
         new RuntimeException(metadata.errors.map(_.message).headOption.getOrElse("Unable to update consignment status"))
       )
@@ -56,7 +56,7 @@ class GraphQlApi(
     for {
       token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
       metadata <- addOrUpdateBulkFileMetadata
-        .getResult(token, afm.document, afm.Variables(AddOrUpdateBulkFileMetadataInput(consignmentId, fileMetadata, Some(true))).some, graphqlApiRequestTimeOut)
+        .getResult(token, afm.document, afm.Variables(AddOrUpdateBulkFileMetadataInput(consignmentId, fileMetadata)).some, graphqlApiRequestTimeOut)
         .toIO
       data <- IO.fromOption(metadata.data)(
         new RuntimeException(metadata.errors.map(_.message).headOption.getOrElse("Unable to add or update bulk file metadata"))

@@ -224,7 +224,7 @@ class LambdaSpec extends ExternalServicesSpec {
 
     val updateConsignmentStatusEvent = getServeEvent("updateConsignmentStatus").get
     val request: UpdateConsignmentStatusGraphqlRequestData = decode[UpdateConsignmentStatusGraphqlRequestData](updateConsignmentStatusEvent.getRequest.getBodyAsString)
-      .getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None))))
+      .getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None, None))))
     val updateConsignmentStatusInput = request.variables.updateConsignmentStatusInput
 
     updateConsignmentStatusInput.statusType must be("DraftMetadata")
@@ -249,13 +249,13 @@ class LambdaSpec extends ExternalServicesSpec {
 
     val updateConsignmentStatusInput = decode[UpdateConsignmentStatusGraphqlRequestData](
       getServeEvent("updateConsignmentStatus").get.getRequest.getBodyAsString
-    ).getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None))))
+    ).getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None, None))))
       .variables
       .updateConsignmentStatusInput
 
     val addOrUpdateBulkFileMetadataInput = decode[AddOrUpdateBulkFileMetadataGraphqlRequestData](
       getServeEvent("addOrUpdateBulkFileMetadata").get.getRequest.getBodyAsString
-    ).getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil, None))))
+    ).getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil))))
       .variables
       .addOrUpdateBulkFileMetadataInput
 
@@ -271,7 +271,6 @@ class LambdaSpec extends ExternalServicesSpec {
 
     addOrUpdateBulkFileMetadataInput.fileMetadata.size should be(3)
     addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput(fileTestData))
-    addOrUpdateBulkFileMetadataInput.skipValidation should be(Some(true))
 
     updateConsignmentStatusInput.statusType must be("DraftMetadata")
     updateConsignmentStatusInput.statusValue must be(Some(statusValue))
