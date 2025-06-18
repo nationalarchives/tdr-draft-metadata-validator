@@ -255,7 +255,7 @@ class LambdaSpec extends ExternalServicesSpec {
 
     val addOrUpdateBulkFileMetadataInput = decode[AddOrUpdateBulkFileMetadataGraphqlRequestData](
       getServeEvent("addOrUpdateBulkFileMetadata").get.getRequest.getBodyAsString
-    ).getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil, None))))
+    ).getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil))))
       .variables
       .addOrUpdateBulkFileMetadataInput
 
