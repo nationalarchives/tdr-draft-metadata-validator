@@ -15,7 +15,7 @@ import uk.gov.nationalarchives.draftmetadata.TestUtils
 import uk.gov.nationalarchives.draftmetadata.FileTestData
 import uk.gov.nationalarchives.draftmetadata.grapgql.GraphqlRequestModel._
 import uk.gov.nationalarchives.draftmetadata.grapgql.{AddOrUpdateBulkFileMetadataGraphqlRequestData, UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData}
-import uk.gov.nationalarchives.draftmetadata.{ExternalServicesSpec}
+import uk.gov.nationalarchives.draftmetadata.ExternalServicesSpec
 import uk.gov.nationalarchives.tdr.error.HttpException
 
 import java.nio.file.{Files, Paths}
@@ -40,7 +40,7 @@ class LambdaSpec extends ExternalServicesSpec {
 
     val addOrUpdateBulkFileMetadataInput = decode[AddOrUpdateBulkFileMetadataGraphqlRequestData](
       getServeEvent("addOrUpdateBulkFileMetadata").get.getRequest.getBodyAsString
-    ).getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil, None))))
+    ).getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil))))
       .variables
       .addOrUpdateBulkFileMetadataInput
 
@@ -56,7 +56,6 @@ class LambdaSpec extends ExternalServicesSpec {
 
     addOrUpdateBulkFileMetadataInput.fileMetadata.size should be(3)
     addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput(TestUtils.fileTestData))
-    addOrUpdateBulkFileMetadataInput.skipValidation should be(Some(true))
 
     updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("failed")
     updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("Failed to get schema library version")
