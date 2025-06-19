@@ -53,7 +53,7 @@ class LambdaSpec extends ExternalServicesSpec {
     val metadataSchemaLibraryVersion = "1.0.0"
 
     val input = Map("consignmentId" -> consignmentId, "metadataSchemaLibraryVersion" -> metadataSchemaLibraryVersion).asJava
-    new Lambda().handleRequest(input, mockContext)
+    val result = new Lambda().handleRequest(input, mockContext)
 
     val updateConsignmentMetadataSchemaLibraryVersion = decode[UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData](
       getServeEvent("updateMetadataSchemaLibraryVersion").get.getRequest.getBodyAsString
@@ -67,6 +67,9 @@ class LambdaSpec extends ExternalServicesSpec {
 
     updateConsignmentMetadataSchemaLibraryVersion.consignmentId.toString must be(consignmentId)
     updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion must be(metadataSchemaLibraryVersion)
+    result.get("persistenceStatus") should equal("success")
+    result.get("consignmentId") should equal(consignmentId.toString)
+    result.get("error") should equal("")
   }
 
   "handleRequest" should "download the draft metadata csv file and save metadata library version with Not provided is not provided in request" in {
@@ -75,7 +78,7 @@ class LambdaSpec extends ExternalServicesSpec {
     mockS3GetResponse("sample.csv")
 
     val input = Map("consignmentId" -> consignmentId).asJava
-    new Lambda().handleRequest(input, mockContext)
+    val result = new Lambda().handleRequest(input, mockContext)
 
     val updateConsignmentMetadataSchemaLibraryVersion = decode[UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData](
       getServeEvent("updateMetadataSchemaLibraryVersion").get.getRequest.getBodyAsString
@@ -90,9 +93,11 @@ class LambdaSpec extends ExternalServicesSpec {
     updateConsignmentMetadataSchemaLibraryVersion.consignmentId.toString must be(consignmentId)
     updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion must be("Not provided")
 
+    result.get("persistenceStatus") should equal("success")
+
   }
 
-  "handleRequest" should "return 500 response and throw an error message when a call to the api fails" in {
+  "handleRequest" should "return data showing persistenceStatus failure when a call to the api fails" in {
     authOkJson()
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = TestUtils.filesWithUniquesAssetIdKeyResponse(TestUtils.fileTestData))
     mockS3GetResponse("sample.csv")
@@ -104,12 +109,24 @@ class LambdaSpec extends ExternalServicesSpec {
     )
 
     val input = Map("consignmentId" -> consignmentId).asJava
-    val exception = intercept[HttpException] {
-      new Lambda().handleRequest(input, mockContext)
-    }
+    val result = new Lambda().handleRequest(input, mockContext)
 
-    exception.code should equal(StatusCode(500))
-    exception.getMessage should include("Failed to persist metadata")
+    result.get("persistenceStatus") should equal("failure")
+    result.get("consignmentId") should equal(consignmentId.toString)
+    result.get("error").toString should include("Failed to persist metadata")
+  }
+
+  "handleRequest" should "return data showing persistenceStatus failure when a call the consignmentId is not valid" in {
+    authOkJson()
+    graphqlOkJson(filesWithUniquesAssetIdKeyResponse = TestUtils.filesWithUniquesAssetIdKeyResponse(TestUtils.fileTestData))
+    mockS3GetResponse("sample.csv")
+
+    val input = Map("consignmentId" -> "123".asInstanceOf[Object]).asJava
+    val result = new Lambda().handleRequest(input, mockContext)
+
+    result.get("persistenceStatus") should equal("failure")
+    result.get("consignmentId") should equal("123")
+    result.get("error").toString should include("Invalid UUID string: 123")
   }
 
   def mockS3GetResponse(fileName: String): StubMapping = {

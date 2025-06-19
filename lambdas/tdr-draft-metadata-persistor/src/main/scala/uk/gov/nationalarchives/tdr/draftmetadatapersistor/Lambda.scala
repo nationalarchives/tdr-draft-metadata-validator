@@ -58,22 +58,41 @@ class Lambda {
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): java.util.Map[String, Object] = {
 
-    val metadataPersistorParameters: MetadataPersistorParameters = extractMetadataPersistorParameters(input)
-
-    val s3Files = S3Files(S3Utils(s3Async(s3Endpoint)))
-
     val resultIO = for {
+      s3Files <- IO(S3Files(S3Utils(s3Async(s3Endpoint))))
+      metadataPersistorParameters <- IO(extractMetadataPersistorParameters(input))
       filesWithUniqueAssetIdKey <- graphQlApi.getFilesWithUniqueAssetIdKey(metadataPersistorParameters.consignmentId, getClientSecret(clientSecretPath, endpoint))
       _ <- s3Files.downloadFile(bucket, metadataPersistorParameters.consignmentId.toString)
       _ <- persistMetadata(metadataPersistorParameters, filesWithUniqueAssetIdKey)
       _ <- updateConsignmentMetadataSchemaLibraryVersion(metadataPersistorParameters.consignmentId, metadataPersistorParameters.metadataSchemaLibraryVersion)
-    } yield ()
+    } yield responseData(metadataPersistorParameters.consignmentId.toString, "success")
 
-    resultIO.unsafeRunSync()(cats.effect.unsafe.implicits.global)
+    resultIO
+      .handleErrorWith(error => {
+        logger.error(s"Unexpected validation problem:${error.getMessage}")
+        IO.pure(responseData(extractConsignmentId(input), "failure", error.getMessage))
+      })
+      .unsafeRunSync()(cats.effect.unsafe.implicits.global)
+      .asJava
+  }
 
+  private def responseData(consignmentId: String, persistenceStatus: String, errorMessage: String = "") = {
     Map[String, Object](
-      "consignmentId" -> metadataPersistorParameters.consignmentId.toString
-    ).asJava
+      "consignmentId" -> consignmentId,
+      "persistenceStatus" -> persistenceStatus,
+      "error" -> errorMessage
+    )
+  }
+
+  private def extractConsignmentId(input: util.Map[String, Object]): String = {
+    input match {
+      case stepFunctionInput if stepFunctionInput.containsKey("consignmentId") =>
+        stepFunctionInput.get("consignmentId").toString
+      case apiProxyRequestInput if apiProxyRequestInput.containsKey("pathParameters") =>
+        val pathParameters = apiProxyRequestInput.get("pathParameters").asInstanceOf[util.Map[String, Object]]
+        pathParameters.getOrDefault("consignmentId", "No consignmentId provide").toString
+      case _ => throw new IllegalArgumentException("Consignment ID not found in input")
+    }
   }
 
   private def extractMetadataPersistorParameters(input: util.Map[String, Object]): MetadataPersistorParameters = {
