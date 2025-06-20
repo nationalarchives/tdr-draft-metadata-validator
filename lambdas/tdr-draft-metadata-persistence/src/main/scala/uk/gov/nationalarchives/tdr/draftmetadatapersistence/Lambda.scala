@@ -69,7 +69,7 @@ class Lambda {
 
     resultIO
       .handleErrorWith(error => {
-        logger.error(s"Unexpected validation problem:${error.getMessage}")
+        logger.error(s"Unexpected metadata persistence problem:${error.getMessage}")
         IO.pure(responseData(extractConsignmentId(input), "failure", error.getMessage))
       })
       .unsafeRunSync()(cats.effect.unsafe.implicits.global)
@@ -84,6 +84,7 @@ class Lambda {
     )
   }
 
+  // Required to allow error reporting if consignmentId is not a UUID and want to handle it gracefully outside IO
   private def extractConsignmentId(input: util.Map[String, Object]): String = {
     input match {
       case stepFunctionInput if stepFunctionInput.containsKey("consignmentId") =>
@@ -91,7 +92,7 @@ class Lambda {
       case apiProxyRequestInput if apiProxyRequestInput.containsKey("pathParameters") =>
         val pathParameters = apiProxyRequestInput.get("pathParameters").asInstanceOf[util.Map[String, Object]]
         pathParameters.getOrDefault("consignmentId", "No consignmentId provide").toString
-      case _ => throw new IllegalArgumentException("Consignment ID not found in input")
+      case _ => "Consignment ID not found in input"
     }
   }
 
