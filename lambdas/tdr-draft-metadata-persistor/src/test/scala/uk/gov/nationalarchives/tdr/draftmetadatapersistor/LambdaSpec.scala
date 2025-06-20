@@ -6,14 +6,13 @@ import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import graphql.codegen.types._
+import io.circe._
+import io.circe.generic.semiauto._
 import io.circe.parser.decode
 import org.mockito.MockitoSugar.mock
 import org.scalatest.matchers.must.Matchers.{be, convertToAnyMustWrapper, include}
 import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
-import sttp.model.StatusCode
 import uk.gov.nationalarchives.draftmetadata.{ExternalServicesSpec, FileTestData, TestUtils}
-import uk.gov.nationalarchives.tdr.draftmetadatapersistor.grapgql.{AddOrUpdateBulkFileMetadataGraphqlRequestData, UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData}
-import uk.gov.nationalarchives.tdr.error.HttpException
 import uk.gov.nationalarchives.tdr.draftmetadatapersistor.grapgql.GraphqlRequestModel._
 
 import java.nio.file.{Files, Paths}
@@ -199,4 +198,10 @@ class LambdaSpec extends ExternalServicesSpec {
       )
     )
   }
+
+  case class AddOrUpdateBulkFileMetadataGraphqlRequestData(query: String, variables: afm.Variables)
+  case class UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData(query: String, variables: ucslv.Variables)
+  // Top-level decoders for the request data classes
+  implicit val addOrUpdateBulkFileMetadataGraphqlRequestDataDecoder: Decoder[AddOrUpdateBulkFileMetadataGraphqlRequestData] = deriveDecoder
+  implicit val updateConsignmentMetadataSchemaLibraryVersionGraphqlRequestDataDecoder: Decoder[UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData] = deriveDecoder
 }

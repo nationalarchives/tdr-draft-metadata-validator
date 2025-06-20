@@ -5,6 +5,12 @@ ThisBuild / scalaVersion := "2.13.16"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / organization := "uk.gov.nationalarchives"
 
+// Add resolvers for fetching tdr-generated-graphql
+ThisBuild / resolvers ++= Seq(
+  "National Archives Releases"  at "https://nexus.nationalarchives.gov.uk/repository/maven-public/",
+  "National Archives Snapshots" at "https://nexus.nationalarchives.gov.uk/repository/maven-snapshots/"
+)
+
 // Common assembly merge strategy
 ThisBuild / assembly / assemblyMergeStrategy := {
   case PathList("META-INF", "MANIFEST.MF")       => MergeStrategy.discard
@@ -56,7 +62,7 @@ lazy val tdrDraftMetadataCommon = (project in file("lambdas/tdr-draft-metadata-c
     assembly / skip := true
   )
 
-// Persitor: enable assembly
+// Persistor: enable assembly
 lazy val tdrDraftMetadataPersistor = (project in file("lambdas/tdr-draft-metadata-persistor"))
   .enablePlugins(AssemblyPlugin)
   .dependsOn(tdrDraftMetadataCommon % "test->test;compile->compile")

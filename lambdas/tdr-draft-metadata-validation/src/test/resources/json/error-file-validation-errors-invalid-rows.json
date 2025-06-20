@@ -1,0 +1,72 @@
+{
+  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+  "date" : "$today",
+  "fileError" : "SCHEMA_VALIDATION",
+  "validationErrors" : [
+    {
+      "assetId" : "test/test2.txt",
+      "errors" : [
+        {
+          "validationProcess" : "ROW_VALIDATION",
+          "property" : "",
+          "errorKey" : "missing",
+          "message" : "This file was uploaded but is missing from your metadata file"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "filepath",
+          "value" : "test/test2.txt"
+        }
+      ]
+    },
+    {
+      "assetId" : "test/unknown.txt",
+      "errors" : [
+        {
+          "validationProcess" : "ROW_VALIDATION",
+          "property" : "",
+          "errorKey" : "unknown",
+          "message" : "This file was listed in your metadata file but does not match to one of your uploaded files"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "date last modified",
+          "errorKey" : "format.date",
+          "message" : "We are unable to recognise this as a valid date format, please provide a date in the format yyyy-mm-dd"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "filepath",
+          "value" : "test/unknown.txt"
+        },
+        {
+          "name" : "date last modified",
+          "value" : "bbbb"
+        }
+      ]
+    },
+    {
+      "assetId" : "test/test1.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "closure start date",
+          "errorKey" : "matchEndDateOrDateLastModified",
+          "message" : "Must match to date of the record (if provided) or date last modified"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "closure start date",
+          "value" : "1990-01-01"
+        },
+        {
+          "name" : "filepath",
+          "value" : "test/test1.txt"
+        }
+      ]
+    }
+  ]
+}

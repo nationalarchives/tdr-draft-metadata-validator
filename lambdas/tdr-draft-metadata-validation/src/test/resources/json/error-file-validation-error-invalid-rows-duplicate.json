@@ -1,0 +1,121 @@
+{
+  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+  "date" : "$today",
+  "fileError" : "SCHEMA_VALIDATION",
+  "validationErrors" : [
+    {
+      "assetId" : "test/test2.txt",
+      "errors" : [
+        {
+          "validationProcess" : "PROTECTED_FIELD",
+          "property" : "date last modified",
+          "errorKey" : "PROTECTED_FIELD",
+          "message" : "Does not match expected value, this is intrinsic metadata and must not be changed"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "is filename closed",
+          "errorKey" : "type",
+          "message" : "Must be Yes or No"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "date last modified",
+          "errorKey" : "format.date",
+          "message" : "We are unable to recognise this as a valid date format, please provide a date in the format yyyy-mm-dd"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
+          "property" : "is filename closed",
+          "errorKey" : "const",
+          "message" : "Must be No for an open record"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
+          "property" : "is description closed",
+          "errorKey" : "const",
+          "message" : "Must be No for an open record"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "is description closed",
+          "errorKey" : "type",
+          "message" : "Must be Yes or No"
+        },
+        {
+          "validationProcess" : "ROW_VALIDATION",
+          "property" : "",
+          "errorKey" : "duplicate",
+          "message" : "This file appears more than once in your metadata file. There must be only one row in your metadata file for each file you uploaded"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "filepath",
+          "value" : "test/test2.txt"
+        },
+        {
+          "name" : "date last modified",
+          "value" : "hhhh"
+        },
+        {
+          "name" : "is filename closed",
+          "value" : ""
+        },
+        {
+          "name" : "is description closed",
+          "value" : ""
+        }
+      ]
+    },
+    {
+      "assetId" : "test/test3.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "is filename closed",
+          "errorKey" : "type",
+          "message" : "Must be Yes or No"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
+          "property" : "is filename closed",
+          "errorKey" : "const",
+          "message" : "Must be No for an open record"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_OPEN",
+          "property" : "is description closed",
+          "errorKey" : "const",
+          "message" : "Must be No for an open record"
+        },
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "is description closed",
+          "errorKey" : "type",
+          "message" : "Must be Yes or No"
+        },
+        {
+          "validationProcess" : "ROW_VALIDATION",
+          "property" : "",
+          "errorKey" : "duplicate",
+          "message" : "This file appears more than once in your metadata file. There must be only one row in your metadata file for each file you uploaded"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "filepath",
+          "value" : "test/test3.txt"
+        },
+        {
+          "name" : "is filename closed",
+          "value" : ""
+        },
+        {
+          "name" : "is description closed",
+          "value" : ""
+        }
+      ]
+    }
+  ]
+}
