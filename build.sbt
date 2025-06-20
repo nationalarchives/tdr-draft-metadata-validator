@@ -5,11 +5,23 @@ ThisBuild / scalaVersion := "2.13.16"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / organization := "uk.gov.nationalarchives"
 
-// Add resolvers for fetching tdr-generated-graphql
-ThisBuild / resolvers ++= Seq(
-  "National Archives Releases"  at "https://nexus.nationalarchives.gov.uk/repository/maven-public/",
-  "National Archives Snapshots" at "https://nexus.nationalarchives.gov.uk/repository/maven-snapshots/"
-)
+val commonMergeStrategy: String => sbtassembly.MergeStrategy = {
+  case PathList("META-INF", "MANIFEST.MF")           => MergeStrategy.discard
+  case PathList("META-INF", "services", xs @ _*)     => MergeStrategy.concat
+  case PathList("META-INF", xs @ _*)                 => MergeStrategy.discard
+  case PathList(xs @ _*) if xs.last.endsWith(".nir") => MergeStrategy.discard
+  case "utf8.json"                                   => MergeStrategy.discard
+  case PathList("java", _ @_*)                       => MergeStrategy.discard
+  case PathList("javax", _ @_*)                      => MergeStrategy.discard
+  case PathList("scala", "scalanative", _ @_*)       => MergeStrategy.discard
+  case PathList("scala-native", _ @_*)               => MergeStrategy.discard
+  case PathList("assets", "swagger", "ui", _ @_*)    => MergeStrategy.discard
+  case PathList("wiremock", _ @_*)                   => MergeStrategy.discard
+  case "module-info.class"                           => MergeStrategy.discard
+  case "reference.conf"                              => MergeStrategy.concat
+  case x                                             => MergeStrategy.first
+}
+
 
 // Common assembly merge strategy
 ThisBuild / assembly / assemblyMergeStrategy := {
@@ -75,23 +87,9 @@ lazy val tdrDraftMetadataPersistence = (project in file("lambdas/tdr-draft-metad
     assembly / skip := false,
     assembly / assemblyJarName := "tdr-draft-metadata-persistence.jar",
     assembly / assemblyMergeStrategy := {
-      // Discard Scala 3 IR files (.nir) which are compile-time only
-      case PathList(xs @ _*) if xs.last.endsWith(".nir") => MergeStrategy.discard
       case PathList("validation-messages", _ @_*)        => MergeStrategy.discard
-      case "utf8.json"                                   => MergeStrategy.discard
-      case PathList("java", _ @_*)                       => MergeStrategy.discard
-      case PathList("javax", _ @_*)                      => MergeStrategy.discard
-      case PathList("scala", "scalanative", _ @_*)       => MergeStrategy.discard
-      case PathList("scala-native", _ @_*)               => MergeStrategy.discard
-      case PathList("assets", "swagger", "ui", _ @_*)    => MergeStrategy.discard
-      case PathList("wiremock", _ @_*)                   => MergeStrategy.discard
-      case PathList("META-INF", "MANIFEST.MF")           => MergeStrategy.discard
-      case PathList("META-INF", "services", xs @ _*)     => MergeStrategy.concat
-      case PathList("META-INF", xs @ _*)                 => MergeStrategy.discard
-      case "module-info.class"                           => MergeStrategy.discard
-      case "reference.conf"                              => MergeStrategy.concat
-      case x                                             => MergeStrategy.first
-    }
+      case x                                            => commonMergeStrategy(x)
+   }
   )
 
 lazy val tdrDraftMetadataValidation = (project in file("lambdas/tdr-draft-metadata-validation"))
@@ -101,24 +99,7 @@ lazy val tdrDraftMetadataValidation = (project in file("lambdas/tdr-draft-metada
     name := "tdr-draft-metadata-validation",
     assembly / skip := false,
     assembly / assemblyJarName := "tdr-draft-metadata-validation.jar",
-    assembly / assemblyMergeStrategy := {
-      // Discard Scala 3 IR files (.nir) which are compile-time only
-      case PathList(xs @ _*) if xs.last.endsWith(".nir") => MergeStrategy.discard
-      case PathList("validation-messages", _ @_*)        => MergeStrategy.discard
-      case "utf8.json"                                   => MergeStrategy.discard
-      case PathList("java", _ @_*)                       => MergeStrategy.discard
-      case PathList("javax", _ @_*)                      => MergeStrategy.discard
-      case PathList("scala", "scalanative", _ @_*)       => MergeStrategy.discard
-      case PathList("scala-native", _ @_*)               => MergeStrategy.discard
-      case PathList("assets", "swagger", "ui", _ @_*)    => MergeStrategy.discard
-      case PathList("wiremock", _ @_*)                   => MergeStrategy.discard
-      case PathList("META-INF", "MANIFEST.MF")           => MergeStrategy.discard
-      case PathList("META-INF", "services", xs @ _*)     => MergeStrategy.concat
-      case PathList("META-INF", xs @ _*)                 => MergeStrategy.discard
-      case "module-info.class"                           => MergeStrategy.discard
-      case "reference.conf"                              => MergeStrategy.concat
-      case x                                             => MergeStrategy.first
-    }
+    assembly / assemblyMergeStrategy := commonMergeStrategy
   )
 
 
