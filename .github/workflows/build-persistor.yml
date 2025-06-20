@@ -4,15 +4,16 @@ on:
     branches:
       - main
     paths:
-      - 'lambdas/tdr-draft-metadata-persistor/**'
+      - '../../lambdas/tdr-draft-metadata-persistence/**'
 jobs:
   pre-deploy:
     uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@main
     with:
       repo-name: tdr-draft-metadata-validator
-      artifact-name: draft-metadata-persistor
+      lambda-name: tdr-draft-metadata-persistence
+      artifact-name: draft-metadata-persistence
       build-command: |
-        sbt "tdrDraftMetadataPersistor/assembly"
+        sbt "tdrDraftMetadataPersistence/assembly"
     secrets:
       MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}

@@ -62,18 +62,18 @@ lazy val tdrDraftMetadataCommon = (project in file("lambdas/tdr-draft-metadata-c
     assembly / skip := true
   )
 
-// Persistor: enable assembly
-lazy val tdrDraftMetadataPersistor = (project in file("lambdas/tdr-draft-metadata-persistor"))
+
+lazy val tdrDraftMetadataPersistence = (project in file("lambdas/tdr-draft-metadata-persistence"))
   .enablePlugins(AssemblyPlugin)
   .dependsOn(tdrDraftMetadataCommon % "test->test;compile->compile")
   .settings(
-    name := "tdr-draft-metadata-persistor",
+    name := "tdr-draft-metadata-persistence",
     excludeDependencies ++= Seq(
       ExclusionRule("com.networknt", "json-schema-validator"),
       ExclusionRule("com.networknt", "openapi-parser")
     ),
     assembly / skip := false,
-    assembly / assemblyJarName := "tdr-draft-metadata-persistor.jar",
+    assembly / assemblyJarName := "tdr-draft-metadata-persistence.jar",
     assembly / assemblyMergeStrategy := {
       // Discard Scala 3 IR files (.nir) which are compile-time only
       case PathList(xs @ _*) if xs.last.endsWith(".nir") => MergeStrategy.discard
@@ -88,13 +88,40 @@ lazy val tdrDraftMetadataPersistor = (project in file("lambdas/tdr-draft-metadat
       case PathList("META-INF", "MANIFEST.MF")           => MergeStrategy.discard
       case PathList("META-INF", "services", xs @ _*)     => MergeStrategy.concat
       case PathList("META-INF", xs @ _*)                 => MergeStrategy.discard
-      case "module-info.class"                           => MergeStrategy.discard // Added for Java 9+ module system
+      case "module-info.class"                           => MergeStrategy.discard
       case "reference.conf"                              => MergeStrategy.concat
       case x                                             => MergeStrategy.first
     }
   )
 
-// Validator: enable assembly
+lazy val tdrDraftMetadataValidation = (project in file("lambdas/tdr-draft-metadata-validation"))
+  .enablePlugins(AssemblyPlugin)
+  .dependsOn(tdrDraftMetadataCommon % "test->test;compile->compile")
+  .settings(
+    name := "tdr-draft-metadata-validation",
+    assembly / skip := false,
+    assembly / assemblyJarName := "tdr-draft-metadata-validation.jar",
+    assembly / assemblyMergeStrategy := {
+      // Discard Scala 3 IR files (.nir) which are compile-time only
+      case PathList(xs @ _*) if xs.last.endsWith(".nir") => MergeStrategy.discard
+      case PathList("validation-messages", _ @_*)        => MergeStrategy.discard
+      case "utf8.json"                                   => MergeStrategy.discard
+      case PathList("java", _ @_*)                       => MergeStrategy.discard
+      case PathList("javax", _ @_*)                      => MergeStrategy.discard
+      case PathList("scala", "scalanative", _ @_*)       => MergeStrategy.discard
+      case PathList("scala-native", _ @_*)               => MergeStrategy.discard
+      case PathList("assets", "swagger", "ui", _ @_*)    => MergeStrategy.discard
+      case PathList("wiremock", _ @_*)                   => MergeStrategy.discard
+      case PathList("META-INF", "MANIFEST.MF")           => MergeStrategy.discard
+      case PathList("META-INF", "services", xs @ _*)     => MergeStrategy.concat
+      case PathList("META-INF", xs @ _*)                 => MergeStrategy.discard
+      case "module-info.class"                           => MergeStrategy.discard
+      case "reference.conf"                              => MergeStrategy.concat
+      case x                                             => MergeStrategy.first
+    }
+  )
+
+
 lazy val tdrDraftMetadataValidator = (project in file("lambdas/tdr-draft-metadata-validator"))
   .enablePlugins(AssemblyPlugin)
   .dependsOn(tdrDraftMetadataCommon % "test->test;compile->compile")
@@ -112,7 +139,7 @@ lazy val tdrDraftMetadataValidator = (project in file("lambdas/tdr-draft-metadat
 // Root: disable assembly
 lazy val root = (project in file("."))
   .disablePlugins(AssemblyPlugin)
-  .aggregate(tdrDraftMetadataCommon, tdrDraftMetadataPersistor, tdrDraftMetadataValidator)
+  .aggregate(tdrDraftMetadataCommon, tdrDraftMetadataPersistence, tdrDraftMetadataValidator, tdrDraftMetadataValidation)
   .settings(
     name := "tdr-draft-metadata-validator-root",
     publish / skip := true,
