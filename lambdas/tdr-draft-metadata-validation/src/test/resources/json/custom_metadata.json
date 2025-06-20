@@ -1,0 +1,938 @@
+{
+  "data": {
+    "customMetadata": [
+      {
+        "name": "FileReference",
+        "multiValue": false,
+        "description": null,
+        "fullName": "file_reference",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "System",
+        "propertyGroup": "System",
+        "editable": false,
+        "exportOrdinal": 1
+      },
+      {
+        "name": "UUID",
+        "multiValue": false,
+        "description": "FiledID value for the record",
+        "fullName": "UUID",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "System",
+        "propertyGroup": "System",
+        "editable": false,
+        "exportOrdinal": 150
+      },
+      {
+        "name": "ClientSideFileLastModifiedDate",
+        "multiValue": false,
+        "description": null,
+        "fullName": "date_last_modified",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "DateTime",
+        "defaultValue": null,
+        "propertyType": "System",
+        "propertyGroup": "MandatoryMetadata",
+        "editable": false,
+        "exportOrdinal": 40
+      },
+      {
+        "name": "ClientSideFileSize",
+        "multiValue": false,
+        "description": null,
+        "fullName": "file_size",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Decimal",
+        "defaultValue": null,
+        "propertyType": "System",
+        "propertyGroup": "System",
+        "editable": false,
+        "exportOrdinal": 15
+      },
+      {
+        "name": "date_created",
+        "multiValue": false,
+        "description": null,
+        "fullName": "date_created",
+        "uiOrdinal": 2147483647,
+        "allowExport": false,
+        "values": [],
+        "dataType": "DateTime",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "OptionalMetadata",
+        "editable": true,
+        "exportOrdinal": 100
+      },
+      {
+        "name": "date_range",
+        "multiValue": false,
+        "description": null,
+        "fullName": "date_range",
+        "uiOrdinal": 2147483647,
+        "allowExport": false,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "OptionalMetadata",
+        "editable": true,
+        "exportOrdinal": 105
+      },
+      {
+        "name": "description",
+        "multiValue": false,
+        "description": null,
+        "fullName": "description",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "OptionalMetadata",
+        "editable": true,
+        "exportOrdinal": 80
+      },
+      {
+        "name": "SHA256ClientSideChecksum",
+        "multiValue": false,
+        "description": null,
+        "fullName": "Checksum",
+        "uiOrdinal": 2147483647,
+        "allowExport": false,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "System",
+        "propertyGroup": "MandatoryMetadata",
+        "editable": false,
+        "exportOrdinal": null
+      },
+      {
+        "name": "SHA256ServerSideChecksum",
+        "multiValue": false,
+        "description": null,
+        "fullName": "Server Checksum",
+        "uiOrdinal": 2147483647,
+        "allowExport": false,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "System",
+        "propertyGroup": "System",
+        "editable": false,
+        "exportOrdinal": null
+      },
+      {
+        "name": "end_date",
+        "multiValue": false,
+        "description": null,
+        "fullName": "end_date",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "DateTime",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "OptionalMetadata",
+        "editable": true,
+        "exportOrdinal": 110
+      },
+      {
+        "name": "file_name_language",
+        "multiValue": false,
+        "description": null,
+        "fullName": "file_name_language",
+        "uiOrdinal": 2147483647,
+        "allowExport": false,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "OptionalMetadata",
+        "editable": true,
+        "exportOrdinal": 120
+      },
+      {
+        "name": "file_name_translation",
+        "multiValue": false,
+        "description": null,
+        "fullName": "file_name_translation",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "OptionalMetadata",
+        "editable": true,
+        "exportOrdinal": 125
+      },
+      {
+        "name": "file_name_translation_language",
+        "multiValue": false,
+        "description": null,
+        "fullName": "file_name_translation_language",
+        "uiOrdinal": 2147483647,
+        "allowExport": false,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "OptionalMetadata",
+        "editable": true,
+        "exportOrdinal": 130
+      },
+      {
+        "name": "filename",
+        "multiValue": false,
+        "description": null,
+        "fullName": "file_name",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "System",
+        "propertyGroup": "MandatoryMetadata",
+        "editable": false,
+        "exportOrdinal": 5
+      },
+      {
+        "name": "HeldBy",
+        "multiValue": false,
+        "description": null,
+        "fullName": "held_by",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [
+          {
+            "dependencies": [],
+            "value": "The National Archives, Kew",
+            "uiOrdinal": 2147483647
+          }
+        ],
+        "dataType": "Text",
+        "defaultValue": "The National Archives, Kew",
+        "propertyType": "Defined",
+        "propertyGroup": "MandatoryMetadata",
+        "editable": false,
+        "exportOrdinal": 35
+      },
+      {
+        "name": "Language",
+        "multiValue": true,
+        "description": null,
+        "fullName": "language",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [
+          {
+            "dependencies": [],
+            "value": "English",
+            "uiOrdinal": 2147483647
+          },
+          {
+            "dependencies": [],
+            "value": "Welsh",
+            "uiOrdinal": 2147483647
+          }
+        ],
+        "dataType": "Text",
+        "defaultValue": "English",
+        "propertyType": "Defined",
+        "propertyGroup": "OptionalMetadata",
+        "editable": true,
+        "exportOrdinal": 95
+      },
+      {
+        "name": "LegalStatus",
+        "multiValue": false,
+        "description": null,
+        "fullName": "legal_status",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [
+          {
+            "dependencies": [],
+            "value": "Public Record(s)",
+            "uiOrdinal": 2147483647
+          },
+          {
+            "dependencies": [],
+            "value": "Not Public Record(s)",
+            "uiOrdinal": 2147483647
+          },
+          {
+            "dependencies": [],
+            "value": "Welsh Public Record(s)",
+            "uiOrdinal": 2147483647
+          }
+        ],
+        "dataType": "Text",
+        "defaultValue": "Public Record(s)",
+        "propertyType": "Defined",
+        "propertyGroup": "MandatoryMetadata",
+        "editable": true,
+        "exportOrdinal": 30
+      },
+      {
+        "name": "RightsCopyright",
+        "multiValue": false,
+        "description": null,
+        "fullName": "rights_copyright",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [
+          {
+            "dependencies": [],
+            "value": "Crown Copyright",
+            "uiOrdinal": 2147483647
+          },
+          {
+            "dependencies": [],
+            "value": "Non Crown Copyright",
+            "uiOrdinal": 2147483647
+          }
+        ],
+        "dataType": "Text",
+        "defaultValue": "Crown Copyright",
+        "propertyType": "Defined",
+        "propertyGroup": "MandatoryMetadata",
+        "editable": true,
+        "exportOrdinal": 25
+      },
+      {
+        "name": "start_date",
+        "multiValue": false,
+        "description": null,
+        "fullName": "start_date",
+        "uiOrdinal": 2147483647,
+        "allowExport": false,
+        "values": [],
+        "dataType": "DateTime",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "OptionalMetadata",
+        "editable": true,
+        "exportOrdinal": 115
+      },
+      {
+        "name": "ParentReference",
+        "multiValue": false,
+        "description": null,
+        "fullName": "parent_reference",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "System",
+        "propertyGroup": "System",
+        "editable": false,
+        "exportOrdinal": 137
+      },
+      {
+        "name": "ClosurePeriod",
+        "multiValue": false,
+        "description": "Number of years the record is closed from the closure start date",
+        "fullName": "closure_period",
+        "uiOrdinal": 3,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Integer",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "MandatoryClosure",
+        "editable": true,
+        "exportOrdinal": 55
+      },
+      {
+        "name": "ClosureStartDate",
+        "multiValue": false,
+        "description": "This has been defaulted to the last date modified. If this is not correct, amend the field below.",
+        "fullName": "closure_start_date",
+        "uiOrdinal": 2,
+        "allowExport": true,
+        "values": [],
+        "dataType": "DateTime",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "OptionalClosure",
+        "editable": true,
+        "exportOrdinal": 50
+      },
+      {
+        "name": "ClosureType",
+        "multiValue": false,
+        "description": null,
+        "fullName": "closure_type",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [
+          {
+            "dependencies": [
+              {
+                "name": "FoiExemptionAsserted",
+                "multiValue": false,
+                "description": "Date of the Advisory Council approval (or SIRO approval if appropriate)",
+                "fullName": "foi_exemption_asserted",
+                "uiOrdinal": 1,
+                "allowExport": true,
+                "dataType": "DateTime",
+                "defaultValue": null,
+                "propertyType": "Supplied",
+                "propertyGroup": "MandatoryClosure",
+                "editable": true,
+                "exportOrdinal": 65
+              },
+              {
+                "name": "ClosurePeriod",
+                "multiValue": false,
+                "description": "Number of years the record is closed from the closure start date",
+                "fullName": "closure_period",
+                "uiOrdinal": 3,
+                "allowExport": true,
+                "dataType": "Integer",
+                "defaultValue": null,
+                "propertyType": "Supplied",
+                "propertyGroup": "MandatoryClosure",
+                "editable": true,
+                "exportOrdinal": 55
+              },
+              {
+                "name": "ClosureStartDate",
+                "multiValue": false,
+                "description": "This has been defaulted to the last date modified. If this is not correct, amend the field below.",
+                "fullName": "closure_start_date",
+                "uiOrdinal": 2,
+                "allowExport": true,
+                "dataType": "DateTime",
+                "defaultValue": null,
+                "propertyType": "Supplied",
+                "propertyGroup": "OptionalClosure",
+                "editable": true,
+                "exportOrdinal": 50
+              },
+              {
+                "name": "FoiExemptionCode",
+                "multiValue": true,
+                "description": "Select the exemption code that applies",
+                "fullName": "foi_exemption_code",
+                "uiOrdinal": 4,
+                "allowExport": true,
+                "dataType": "Text",
+                "defaultValue": null,
+                "propertyType": "Defined",
+                "propertyGroup": "MandatoryClosure",
+                "editable": true,
+                "exportOrdinal": 60
+              },
+              {
+                "name": "TitleClosed",
+                "multiValue": false,
+                "description": null,
+                "fullName": "title_closed",
+                "uiOrdinal": 5,
+                "allowExport": true,
+                "dataType": "Boolean",
+                "defaultValue": null,
+                "propertyType": "Supplied",
+                "propertyGroup": "MandatoryClosure",
+                "editable": true,
+                "exportOrdinal": 70
+              },
+              {
+                "name": "DescriptionClosed",
+                "multiValue": false,
+                "description": null,
+                "fullName": "description_closed",
+                "uiOrdinal": 2147483647,
+                "allowExport": true,
+                "dataType": "Boolean",
+                "defaultValue": null,
+                "propertyType": "Supplied",
+                "propertyGroup": "MandatoryClosure",
+                "editable": true,
+                "exportOrdinal": 85
+              }
+            ],
+            "value": "Closed",
+            "uiOrdinal": 2147483647
+          },
+          {
+            "dependencies": [
+              {
+                "name": "TitleClosed",
+                "multiValue": false,
+                "description": null,
+                "fullName": "title_closed",
+                "uiOrdinal": 5,
+                "allowExport": true,
+                "dataType": "Boolean",
+                "defaultValue": null,
+                "propertyType": "Supplied",
+                "propertyGroup": "MandatoryClosure",
+                "editable": true,
+                "exportOrdinal": 70
+              },
+              {
+                "name": "DescriptionClosed",
+                "multiValue": false,
+                "description": null,
+                "fullName": "description_closed",
+                "uiOrdinal": 2147483647,
+                "allowExport": true,
+                "dataType": "Boolean",
+                "defaultValue": null,
+                "propertyType": "Supplied",
+                "propertyGroup": "MandatoryClosure",
+                "editable": true,
+                "exportOrdinal": 85
+              }
+            ],
+            "value": "Open",
+            "uiOrdinal": 2147483647
+          }
+        ],
+        "dataType": "Text",
+        "defaultValue": "Open",
+        "propertyType": "Defined",
+        "propertyGroup": "MandatoryClosure",
+        "editable": true,
+        "exportOrdinal": 45
+      },
+      {
+        "name": "DescriptionAlternate",
+        "multiValue": false,
+        "description": null,
+        "fullName": "description_alternate",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "OptionalClosure",
+        "editable": true,
+        "exportOrdinal": 90
+      },
+      {
+        "name": "DescriptionClosed",
+        "multiValue": false,
+        "description": null,
+        "fullName": "description_closed",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [
+          {
+            "dependencies": [],
+            "value": "false",
+            "uiOrdinal": 2147483647
+          },
+          {
+            "dependencies": [
+              {
+                "name": "DescriptionAlternate",
+                "multiValue": false,
+                "description": null,
+                "fullName": "description_alternate",
+                "uiOrdinal": 2147483647,
+                "allowExport": true,
+                "dataType": "Text",
+                "defaultValue": "The description of this record is closed",
+                "propertyType": "Supplied",
+                "propertyGroup": "OptionalClosure",
+                "editable": true,
+                "exportOrdinal": 90
+              }
+            ],
+            "value": "true",
+            "uiOrdinal": 2147483647
+          }
+        ],
+        "dataType": "Boolean",
+        "defaultValue": "false",
+        "propertyType": "Supplied",
+        "propertyGroup": "MandatoryClosure",
+        "editable": true,
+        "exportOrdinal": 85
+      },
+      {
+        "name": "FileType",
+        "multiValue": false,
+        "description": "States if the type is a file or folder",
+        "fullName": "file_type",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "System",
+        "propertyGroup": "MandatoryMetadata",
+        "editable": false,
+        "exportOrdinal": 10
+      },
+      {
+        "name": "FoiExemptionAsserted",
+        "multiValue": false,
+        "description": "Date of the Advisory Council approval (or SIRO approval if appropriate)",
+        "fullName": "foi_exemption_asserted",
+        "uiOrdinal": 1,
+        "allowExport": true,
+        "values": [],
+        "dataType": "DateTime",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "MandatoryClosure",
+        "editable": true,
+        "exportOrdinal": 65
+      },
+      {
+        "name": "FoiExemptionCode",
+        "multiValue": true,
+        "description": "Select the exemption code that applies",
+        "fullName": "foi_exemption_code",
+        "uiOrdinal": 4,
+        "allowExport": true,
+        "values": [
+          {
+            "dependencies": [],
+            "value": "27(1)",
+            "uiOrdinal": 5
+          },
+          {
+            "dependencies": [],
+            "value": "27(2)",
+            "uiOrdinal": 10
+          },
+          {
+            "dependencies": [],
+            "value": "31",
+            "uiOrdinal": 15
+          },
+          {
+            "dependencies": [],
+            "value": "33",
+            "uiOrdinal": 20
+          },
+          {
+            "dependencies": [],
+            "value": "38(1a)",
+            "uiOrdinal": 25
+          },
+          {
+            "dependencies": [],
+            "value": "38(1b)",
+            "uiOrdinal": 30
+          },
+          {
+            "dependencies": [],
+            "value": "38(2)",
+            "uiOrdinal": 35
+          },
+          {
+            "dependencies": [],
+            "value": "40(2)",
+            "uiOrdinal": 40
+          },
+          {
+            "dependencies": [],
+            "value": "43(1)",
+            "uiOrdinal": 45
+          },
+          {
+            "dependencies": [],
+            "value": "43(2)",
+            "uiOrdinal": 50
+          },
+          {
+            "dependencies": [],
+            "value": "22",
+            "uiOrdinal": 55
+          },
+          {
+            "dependencies": [],
+            "value": "22A",
+            "uiOrdinal": 60
+          },
+          {
+            "dependencies": [],
+            "value": "26",
+            "uiOrdinal": 65
+          },
+          {
+            "dependencies": [],
+            "value": "28",
+            "uiOrdinal": 70
+          },
+          {
+            "dependencies": [],
+            "value": "29",
+            "uiOrdinal": 75
+          },
+          {
+            "dependencies": [],
+            "value": "32",
+            "uiOrdinal": 80
+          },
+          {
+            "dependencies": [],
+            "value": "34",
+            "uiOrdinal": 85
+          },
+          {
+            "dependencies": [],
+            "value": "35",
+            "uiOrdinal": 90
+          },
+          {
+            "dependencies": [],
+            "value": "37(1)(a)",
+            "uiOrdinal": 95
+          },
+          {
+            "dependencies": [],
+            "value": "37(1)(aa)",
+            "uiOrdinal": 100
+          },
+          {
+            "dependencies": [],
+            "value": "37(1)(ab)",
+            "uiOrdinal": 105
+          },
+          {
+            "dependencies": [],
+            "value": "37(1)(ac)",
+            "uiOrdinal": 110
+          },
+          {
+            "dependencies": [],
+            "value": "37(1)(ad)",
+            "uiOrdinal": 115
+          },
+          {
+            "dependencies": [],
+            "value": "37(1)(b)",
+            "uiOrdinal": 120
+          },
+          {
+            "dependencies": [],
+            "value": "37(2)",
+            "uiOrdinal": 125
+          },
+          {
+            "dependencies": [],
+            "value": "39",
+            "uiOrdinal": 130
+          },
+          {
+            "dependencies": [],
+            "value": "40",
+            "uiOrdinal": 135
+          },
+          {
+            "dependencies": [],
+            "value": "41",
+            "uiOrdinal": 140
+          },
+          {
+            "dependencies": [],
+            "value": "42",
+            "uiOrdinal": 145
+          },
+          {
+            "dependencies": [],
+            "value": "43(1)",
+            "uiOrdinal": 150
+          },
+          {
+            "dependencies": [],
+            "value": "43(2)",
+            "uiOrdinal": 155
+          },
+          {
+            "dependencies": [],
+            "value": "44",
+            "uiOrdinal": 160
+          },
+          {
+            "dependencies": [],
+            "value": "EIRs 12(3) & 13",
+            "uiOrdinal": 165
+          },
+          {
+            "dependencies": [],
+            "value": "EIR 12(5)(a)",
+            "uiOrdinal": 170
+          },
+          {
+            "dependencies": [],
+            "value": "EIR 12(5)(b)",
+            "uiOrdinal": 175
+          },
+          {
+            "dependencies": [],
+            "value": "EIR 12(5)(c)",
+            "uiOrdinal": 180
+          },
+          {
+            "dependencies": [],
+            "value": "EIR 12(5)(d)",
+            "uiOrdinal": 185
+          },
+          {
+            "dependencies": [],
+            "value": "EIR 12(5)(e)",
+            "uiOrdinal": 190
+          },
+          {
+            "dependencies": [],
+            "value": "EIR 12(5)(f)",
+            "uiOrdinal": 195
+          },
+          {
+            "dependencies": [],
+            "value": "EIR 12(5)(g)",
+            "uiOrdinal": 200
+          }
+        ],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "Defined",
+        "propertyGroup": "MandatoryClosure",
+        "editable": true,
+        "exportOrdinal": 60
+      },
+      {
+        "name": "OriginalFilepath",
+        "multiValue": false,
+        "description": "The original filepath of a redacted file",
+        "fullName": "original_filepath",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "System",
+        "propertyGroup": "MandatoryMetadata",
+        "editable": false,
+        "exportOrdinal": 135
+      },
+      {
+        "name": "TitleAlternate",
+        "multiValue": false,
+        "description": null,
+        "fullName": "title_alternate",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "OptionalClosure",
+        "editable": true,
+        "exportOrdinal": 75
+      },
+      {
+        "name": "TitleClosed",
+        "multiValue": false,
+        "description": null,
+        "fullName": "title_closed",
+        "uiOrdinal": 5,
+        "allowExport": true,
+        "values": [
+          {
+            "dependencies": [],
+            "value": "false",
+            "uiOrdinal": 2147483647
+          },
+          {
+            "dependencies": [
+              {
+                "name": "TitleAlternate",
+                "multiValue": false,
+                "description": null,
+                "fullName": "title_alternate",
+                "uiOrdinal": 2147483647,
+                "allowExport": true,
+                "dataType": "Text",
+                "defaultValue": "The title of this record is closed",
+                "propertyType": "Supplied",
+                "propertyGroup": "OptionalClosure",
+                "editable": true,
+                "exportOrdinal": 75
+              }
+            ],
+            "value": "true",
+            "uiOrdinal": 2147483647
+          }
+        ],
+        "dataType": "Boolean",
+        "defaultValue": "false",
+        "propertyType": "Supplied",
+        "propertyGroup": "MandatoryClosure",
+        "editable": true,
+        "exportOrdinal": 70
+      },
+      {
+        "name": "former_reference_department",
+        "multiValue": false,
+        "description": null,
+        "fullName": "former_reference_department",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "Supplied",
+        "propertyGroup": "OptionalMetadata",
+        "editable": true,
+        "exportOrdinal": 140
+      },
+      {
+        "name": "ClientSideOriginalFilepath",
+        "multiValue": false,
+        "description": null,
+        "fullName": "clientside_original_filepath",
+        "uiOrdinal": 2147483647,
+        "allowExport": true,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "System",
+        "propertyGroup": "MandatoryMetadata",
+        "editable": false,
+        "exportOrdinal": 20
+      },
+      {
+        "name": "creating_body",
+        "multiValue": false,
+        "description": null,
+        "fullName": "creating_body",
+        "uiOrdinal": 2147483647,
+        "allowExport": false,
+        "values": [],
+        "dataType": "Text",
+        "defaultValue": null,
+        "propertyType": "Defined",
+        "propertyGroup": "OptionalMetadata",
+        "editable": true,
+        "exportOrdinal": 145
+      }
+    ]
+  }
+}
