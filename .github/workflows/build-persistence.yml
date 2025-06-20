@@ -3,8 +3,7 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '../../lambdas/tdr-draft-metadata-persistence/**'
+  workflow_dispatch:
 jobs:
   pre-deploy:
     uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@main
@@ -12,6 +11,8 @@ jobs:
       repo-name: tdr-draft-metadata-validator
       lambda-name: tdr-draft-metadata-persistence
       artifact-name: draft-metadata-persistence
+      artifact-path: lambdas/tdr-draft-metadata-validation/target/scala-2.13
+      java-version: 21
       build-command: |
         sbt "tdrDraftMetadataPersistence/assembly"
     secrets:
