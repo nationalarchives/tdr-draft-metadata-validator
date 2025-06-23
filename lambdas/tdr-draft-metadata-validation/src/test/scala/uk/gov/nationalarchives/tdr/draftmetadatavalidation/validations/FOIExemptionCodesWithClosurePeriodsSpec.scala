@@ -2,7 +2,7 @@ package uk.gov.nationalarchives.tdr.draftmetadatavalidation.validations
 
 import org.scalatest.matchers.should.Matchers._
 import org.scalatest.wordspec.AnyWordSpec
-import uk.gov.nationalarchives.tdr.draftmetadatavalidator.Lambda.ValidationParameters
+import uk.gov.nationalarchives.tdr.draftmetadatavalidation.Lambda.ValidationParameters
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils.ARRAY_SPLIT_CHAR
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}

@@ -99,7 +99,12 @@ lazy val tdrDraftMetadataValidation = (project in file("lambdas/tdr-draft-metada
     name := "tdr-draft-metadata-validation",
     assembly / skip := false,
     assembly / assemblyJarName := "tdr-draft-metadata-validation.jar",
-    assembly / assemblyMergeStrategy := commonMergeStrategy
+    assembly / assemblyMergeStrategy := commonMergeStrategy,
+    Compile / resourceGenerators += Def.task {
+      val file = (Compile / resourceManaged).value / "metadata-schema-version.conf"
+      IO.write(file, "metadataSchemaVersion = \"" + metadataSchemaVersion + "\"")
+      Seq(file)
+    }.taskValue
   )
 
 
@@ -114,7 +119,7 @@ lazy val tdrDraftMetadataValidator = (project in file("lambdas/tdr-draft-metadat
       val file = (Compile / resourceManaged).value / "metadata-schema-version.conf"
       IO.write(file, "metadataSchemaVersion = \"" + metadataSchemaVersion + "\"")
       Seq(file)
-    }.taskValue,
+    }.taskValue
   )
 
 // Root: disable assembly
