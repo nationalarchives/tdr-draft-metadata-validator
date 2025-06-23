@@ -201,7 +201,6 @@ class LambdaSpec extends ExternalServicesSpec {
 
   case class AddOrUpdateBulkFileMetadataGraphqlRequestData(query: String, variables: afm.Variables)
   case class UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData(query: String, variables: ucslv.Variables)
-  // Top-level decoders for the request data classes
   implicit val addOrUpdateBulkFileMetadataGraphqlRequestDataDecoder: Decoder[AddOrUpdateBulkFileMetadataGraphqlRequestData] = deriveDecoder
   implicit val updateConsignmentMetadataSchemaLibraryVersionGraphqlRequestDataDecoder: Decoder[UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData] = deriveDecoder
 }
