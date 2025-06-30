@@ -1,0 +1,4 @@
+closure period,closure status,date last modified,filepath,filename
+10,Closed,2020-05-29,aa/file.jpg,file1.jpg
+,Open,2020-05-29,aa/file.jpg,file2.jpg
+,Open,2020-05-29,aa/file.jpg,file3.jpg
