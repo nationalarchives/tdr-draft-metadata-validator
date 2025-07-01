@@ -1,0 +1,28 @@
+name: TDR Persistor build release and deploy
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+jobs:
+  pre-deploy:
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@main
+    with:
+      repo-name: tdr-draft-metadata-validator
+      lambda-name: tdr-draft-metadata-persistence
+      artifact-name: draft-metadata-persistence
+      artifact-path: lambdas/tdr-draft-metadata-validation/target/scala-2.13
+      java-version: 21
+      build-command: |
+        sbt "tdrDraftMetadataPersistence/assembly"
+    secrets:
+      MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
+      WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
+  deploy:
+    needs: pre-deploy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - run: gh workflow run deploy.yml -f environment=intg -f to-deploy=${{ needs.pre-deploy.outputs.next-version }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_PAT }}
