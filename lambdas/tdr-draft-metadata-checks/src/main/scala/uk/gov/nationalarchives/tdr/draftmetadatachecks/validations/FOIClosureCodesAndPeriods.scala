@@ -1,7 +1,7 @@
 package uk.gov.nationalarchives.tdr.draftmetadatachecks.validations
 
 import uk.gov.nationalarchives.tdr.draftmetadatachecks.Lambda.ValidationParameters
-import uk.gov.nationalarchives.tdr.draftmetadatachecks.{Error, FileError, ValidationErrors}
+import uk.gov.nationalarchives.tdr.draftmetadatachecks.{Error, ValidationErrors}
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils.{ARRAY_SPLIT_CHAR, MetadataConfiguration}
 import uk.gov.nationalarchives.tdr.validation.schema.ValidationProcess
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}

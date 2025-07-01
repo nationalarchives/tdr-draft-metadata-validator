@@ -1,7 +1,7 @@
 package uk.gov.nationalarchives.draftmetadata.csv
 
 import com.github.tototoshi.csv.{CSVReader, CSVWriter}
-import uk.gov.nationalarchives.draftmetadata.{FileRow, Metadata}
+import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils.MetadataConfiguration
 
 import java.io.ByteArrayOutputStream
@@ -41,6 +41,10 @@ object CSVHandler {
         }.toList
       )
     }.toList
+  }
+
+  def loadHeaders(filePath: String): Option[List[String]] = {
+    CSVReader.open(filePath).readNext()
   }
 
   def writeCsv(rows: List[List[String]], filePath: String): Unit = {

@@ -19,6 +19,4 @@ object ApplicationConfig {
   val errorFileName: String = configFactory.getString("draftMetadata.errorFileName")
   val timeToLiveSecs: Int = 60
   val graphqlApiRequestTimeOut: FiniteDuration = 180.seconds
-  val batchSizeForMetadataDatabaseWrites: Int = configFactory.getInt("database.write.batchSizeForMetadata")
-  val maxConcurrencyForMetadataDatabaseWrites: Int = configFactory.getInt("database.write.maxConcurrencyForMetadata")
 }
