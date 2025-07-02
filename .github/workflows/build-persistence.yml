@@ -10,7 +10,7 @@ jobs:
     with:
       repo-name: tdr-draft-metadata-validator
       lambda-name: tdr-draft-metadata-persistence
-      artifact-name: draft-metadata-persistence
+      artifact-name: tdr-draft-metadata-persistence
       artifact-path: lambdas/tdr-draft-metadata-persistence/target/scala-2.13
       java-version: 21
       build-command: |
@@ -32,7 +32,7 @@ jobs:
     with:
       repo-name: tdr-draft-metadata-validator
       lambda-name: tdr-draft-metadata-checks
-      artifact-name: draft-metadata-checks
+      artifact-name: tdr-draft-metadata-checks
       artifact-path: lambdas/tdr-draft-metadata-checks/target/scala-2.13
       java-version: 21
       build-command: |
