@@ -1,4 +1,4 @@
-name: TDR Deploy Draft Metadata Validator Lambda
+name: TDR Deploy Lambda
 on:
   workflow_dispatch:
     inputs:
@@ -14,31 +14,25 @@ on:
       to-deploy:
         description: 'Version to deploy'
         required: true
+      lambda-name:
+        description: 'Lambda name'
+        required: true
+      deployment-package:
+        description: 'Deployment package name'
+        required: true
 
-run-name: Deploying Draft Metadata Validator Lambda ${{inputs.to-deploy}} to ${{inputs.environment}}
+run-name: Deploying ${{inputs.lambda-name}} ${{inputs.to-deploy}} to ${{inputs.environment}}
 permissions:
   id-token: write
   contents: write
 jobs:
-  tag-ecr-image:
-    uses: nationalarchives/tdr-github-actions/.github/workflows/ecr_image_tag.yml@main
-    with:
-      tag: ${{inputs.environment}}
-      image-name: draft-metadata-validator
-      to-deploy: ${{ inputs.to-deploy }}
-    secrets:
-      MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
-      SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
   deploy:
-    needs:
-      - tag-ecr-image
     uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml@main
     with:
-      lambda-name: draft-metadata-validator
-      deployment-package: draft-metadata-validator.jar
-      environment: ${{inputs.environment}}
-      to-deploy: ${{ inputs.to-deploy }}
-      image-name: draft-metadata-validator
+      lambda-name: ${{ github.event.inputs.lambda-name }}
+      deployment-package: ${{ github.event.inputs.deployment-package }}
+      environment: ${{ github.event.inputs.environment }}
+      to-deploy: ${{ github.event.inputs.to-deploy }}
     secrets:
       ACCOUNT_NUMBER: ${{ secrets.ACCOUNT_NUMBER }}
       MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}

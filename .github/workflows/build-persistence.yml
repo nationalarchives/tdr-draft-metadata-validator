@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - run: >
-          gh workflow run deploy-lambda.yml -f environment=intg
+          gh workflow run deploy-lambda.yml --ref ${{ github.ref_name }} -f environment=intg
           -f to-deploy=${{ needs.pre-deploy-persistence.outputs.next-version }}
           -f lambda-name=tdr-draft-metadata-persistence
           -f deployment-package=draft-metadata-persistence.jar
@@ -50,7 +50,7 @@ jobs:
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
       - run: >
-          gh workflow run deploy-lambda.yml -f environment=intg
+          gh workflow run deploy-lambda.yml --ref ${{ github.ref_name }} -f environment=intg
           -f to-deploy=${{ needs.pre-deploy-checks.outputs.next-version }}
           -f lambda-name=tdr-draft-metadata-checks
           -f deployment-package=draft-metadata-checks.jar
