@@ -44,6 +44,7 @@ import scala.jdk.CollectionConverters.MapHasAsJava
 import scala.util.{Failure, Try}
 
 class Lambda {
+  private val SCHEMA_LIBRARY_VERSION_READ_FAILURE_MESSAGE = "Failed to get schema library version"
 
   implicit val backend: SttpBackend[Identity, Any] = HttpURLConnectionBackend(options = SttpBackendOptions.connectionTimeout(graphqlApiRequestTimeOut))
   implicit val keycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment(authUrl, "tdr", timeToLiveSecs)
@@ -81,13 +82,13 @@ class Lambda {
       errorFileData <- doValidation(validationParameters, filesWithUniqueAssetIdKey)
       _ <- writeErrorFileDataToFile(validationParameters, errorFileData)
       status = if (errorFileData.validationErrors.isEmpty) "success" else "failure"
-      metadataSchemaLibraryVersion = DependencyVersionReader.findDependencyVersion.getOrElse("Failed to get schema library version")
+      metadataSchemaLibraryVersion = DependencyVersionReader.findDependencyVersion.getOrElse(SCHEMA_LIBRARY_VERSION_READ_FAILURE_MESSAGE)
     } yield responseData(consignmentId, status, metadataSchemaLibraryVersion)
 
     resultIO
       .handleErrorWith(error => {
         logger.error(s"Unexpected metadata validation problem:${error.getMessage}")
-        IO.pure(responseData(extractConsignmentId(input), "failure", "Failed to get schema library version", error.getMessage))
+        IO.pure(responseData(extractConsignmentId(input), "failure", SCHEMA_LIBRARY_VERSION_READ_FAILURE_MESSAGE, error.getMessage))
       })
       .unsafeRunSync()(cats.effect.unsafe.implicits.global)
       .asJava
