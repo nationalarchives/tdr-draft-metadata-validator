@@ -7,9 +7,9 @@ import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetFilesWithUniqueAssetIdKey.{getFilesWithUniqueAssetIdKey => uaik}
 import graphql.codegen.types._
 import sttp.client3._
+import uk.gov.nationalarchives.draftmetadata.config.ApplicationConfig.clientId
 import uk.gov.nationalarchives.draftmetadata.utils.MetadataUtils.dateTimeFormatter
 import uk.gov.nationalarchives.tdr.GraphQLClient
-import uk.gov.nationalarchives.tdr.draftmetadatachecks.ApplicationConfig.clientId
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 
 import java.time.LocalDateTime

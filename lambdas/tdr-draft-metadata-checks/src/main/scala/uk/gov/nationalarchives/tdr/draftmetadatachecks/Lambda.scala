@@ -17,10 +17,10 @@ import software.amazon.awssdk.services.ssm.model.GetParameterRequest
 import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, SttpBackendOptions}
 import uk.gov.nationalarchives.aws.utils.s3.S3Clients._
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
+import uk.gov.nationalarchives.draftmetadata.config.ApplicationConfig._
 import uk.gov.nationalarchives.draftmetadata.csv.CSVHandler
 import uk.gov.nationalarchives.draftmetadata.s3.S3Files
 import uk.gov.nationalarchives.tdr.GraphQLClient
-import uk.gov.nationalarchives.tdr.draftmetadatachecks.ApplicationConfig._
 import uk.gov.nationalarchives.tdr.draftmetadatachecks.FileError.PROTECTED_FIELD
 import uk.gov.nationalarchives.tdr.draftmetadatachecks.Lambda.{ValidationExecutionError, ValidationParameters, getErrorFilePath, getFilePath}
 import uk.gov.nationalarchives.tdr.draftmetadatachecks.ValidationErrors._
@@ -63,7 +63,6 @@ class Lambda {
   )
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): java.util.Map[String, Object] = {
-    val startTime = System.currentTimeMillis()
     val consignmentId = extractConsignmentId(input)
     val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, RELATIONSHIP_SCHEMA)
     val validationParameters: ValidationParameters = ValidationParameters(
@@ -163,31 +162,6 @@ class Lambda {
     }
   }
 
-  private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], validationParameters: ValidationParameters): List[ValidationErrors] = {
-    val matchIdentifier = metadataConfiguration.propertyToOutputMapper(validationParameters.clientAlternateKey)(validationParameters.uniqueAssetIdKey)
-    MetadataValidationJsonSchema
-      .validate(schema, csvData)
-      .collect {
-        case result if result._2.nonEmpty =>
-          val errors = result._2.map(error => {
-            val errorKey = s"${error.validationProcess}.${error.property}.${error.errorKey}"
-            Error(
-              error.validationProcess.toString,
-              metadataConfiguration.propertyToOutputMapper(validationParameters.clientAlternateKey)(error.property) match {
-                case ""           => error.property
-                case alternateKey => alternateKey
-              },
-              error.errorKey,
-              messageProperties.getProperty(errorKey, errorKey)
-            )
-          })
-          val errorProperties = errors.map(_.property) :+ matchIdentifier
-          val data = csvData.find(_.matchIdentifier == result._1).get.metadata.filter(p => errorProperties.contains(p.name))
-          ValidationErrors(result._1, errors.toSet, data)
-      }
-      .toList
-  }
-
   private def validateDuplicateHeaders(validationParameters: ValidationParameters): IO[Unit] = {
     def duplicateError(header: String): Error = {
       val errorKey = metadataConfiguration.inputToPropertyMapper(validationParameters.clientAlternateKey)(header)
@@ -248,6 +222,31 @@ class Lambda {
           IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, combinedErrors), csvData))
         else IO.pure(ErrorFileData(validationParameters))
     } yield result
+  }
+
+  private def schemaValidate(schema: Set[JsonSchemaDefinition], csvData: List[FileRow], validationParameters: ValidationParameters): List[ValidationErrors] = {
+    val matchIdentifier = metadataConfiguration.propertyToOutputMapper(validationParameters.clientAlternateKey)(validationParameters.uniqueAssetIdKey)
+    MetadataValidationJsonSchema
+      .validate(schema, csvData)
+      .collect {
+        case result if result._2.nonEmpty =>
+          val errors = result._2.map(error => {
+            val errorKey = s"${error.validationProcess}.${error.property}.${error.errorKey}"
+            Error(
+              error.validationProcess.toString,
+              metadataConfiguration.propertyToOutputMapper(validationParameters.clientAlternateKey)(error.property) match {
+                case ""           => error.property
+                case alternateKey => alternateKey
+              },
+              error.errorKey,
+              messageProperties.getProperty(errorKey, errorKey)
+            )
+          })
+          val errorProperties = errors.map(_.property) :+ matchIdentifier
+          val data = csvData.find(_.matchIdentifier == result._1).get.metadata.filter(p => errorProperties.contains(p.name))
+          ValidationErrors(result._1, errors.toSet, data)
+      }
+      .toList
   }
 
   private def validateProtectedFields(
