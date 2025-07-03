@@ -98,7 +98,7 @@ class Lambda {
     Map[String, Object](
       "consignmentId" -> consignmentId,
       "validationStatus" -> validationStatus,
-      "validationLibraryVersion" -> validationLibraryVersion,
+      "metadataSchemaLibraryVersion" -> validationLibraryVersion,
       "error" -> errorMessage
     )
   }
