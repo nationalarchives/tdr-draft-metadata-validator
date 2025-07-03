@@ -26,7 +26,7 @@ jobs:
       - run: >
           gh workflow run deploy.yml --ref ${{ github.ref_name }} -f environment=intg
           -f to-deploy=${{ needs.pre-deploy-persistence.outputs.next-version }}
-          -f lambda-name=tdr-draft-metadata-persistence
+          -f lambda-name=draft-metadata-persistence
           -f deployment-package=draft-metadata-persistence.jar
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_PAT }}
@@ -52,7 +52,7 @@ jobs:
       - run: >
           gh workflow run deploy.yml --ref ${{ github.ref_name }} -f environment=intg
           -f to-deploy=${{ needs.pre-deploy-checks.outputs.next-version }}
-          -f lambda-name=tdr-draft-metadata-checks
+          -f lambda-name=draft-metadata-checks
           -f deployment-package=draft-metadata-checks.jar
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_PAT }}
