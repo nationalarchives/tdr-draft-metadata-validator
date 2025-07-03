@@ -10,7 +10,10 @@ import java.util.Properties
 
 object FOIClosureCodesAndPeriods {
 
-  def foiCodesPeriodsConsistent(csvData: List[FileRow], messageProperties: Properties, validationParameters: ValidationParameters)(implicit
+  def foiCodesPeriodsConsistent(
+      csvData: List[FileRow],
+      messageProperties: Properties,
+      validationParameters: ValidationParameters,
       metadataConfiguration: MetadataConfiguration
   ): List[ValidationErrors] = {
 

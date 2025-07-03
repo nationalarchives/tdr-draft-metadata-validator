@@ -215,7 +215,7 @@ class Lambda {
       unknownRowErrors <- skipUnless(checkAgainstUploadedRecords)(RowValidator.validateUnknownRows(uniqueAssetIdKeys, csvData, messageProperties, clientAssetIdKey))
       protectedFieldErrors <- skipUnless(checkAgainstUploadedRecords)(validateProtectedFields(csvData, filesWithUniqueAssetIdKey, messageProperties, validationParameters))
       rowSchemaErrors <- IO(schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters))
-      foiCodePeriodMismatches <- IO(foiCodesPeriodsConsistent(csvData, messageProperties, validationParameters))
+      foiCodePeriodMismatches <- IO(foiCodesPeriodsConsistent(csvData, messageProperties, validationParameters, metadataConfiguration))
       combinedErrors = duplicateRowErrors |+| missingRowErrors |+| unknownRowErrors |+| protectedFieldErrors |+| rowSchemaErrors |+| foiCodePeriodMismatches
       result <-
         if (combinedErrors.nonEmpty)
