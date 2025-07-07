@@ -4,5 +4,5 @@ WORKDIR /lambda/src/
 RUN sbt assembly
 
 FROM public.ecr.aws/lambda/java:17
-COPY --from=builder /lambda/src/target/scala-2.13/draft-metadata-validator.jar ${LAMBDA_TASK_ROOT}/lib/
-CMD ["uk.gov.nationalarchives.draftmetadatavalidator.Lambda::handleRequest"]
+COPY --from=builder /lambda/src/lambdas/tdr-draft-metadata-validator/target/scala-2.13/tdr-draft-metadata-validator.jar ${LAMBDA_TASK_ROOT}/lib/
+CMD ["uk.gov.nationalarchives.tdr.draftmetadatavalidator.Lambda::handleRequest"]
