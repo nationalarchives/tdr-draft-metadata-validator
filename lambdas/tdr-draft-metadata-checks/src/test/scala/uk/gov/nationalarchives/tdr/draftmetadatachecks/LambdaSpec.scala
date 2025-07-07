@@ -51,53 +51,6 @@ class LambdaSpec extends ExternalServicesSpec {
     errorFileData should be(expectedErrorData)
   }
 
-  private def validateAndSaveMetadata(csvFile: String, errorFile: String, statusValue: String): Unit = {
-    authOkJson()
-    graphqlOkJson(saveMetadata = true, filesWithUniquesAssetIdKeyResponse(fileTestData))
-    mockS3GetResponse(csvFile)
-    mockS3ErrorFilePutResponse()
-    val input = Map("consignmentId" -> consignmentId).asJava
-    new Lambda().handleRequest(input, mockContext)
-
-    val s3Interactions = wiremockS3.getAllServeEvents.asScala.filter(_.getRequest.getMethod == RequestMethod.PUT).toList
-    s3Interactions.size shouldBe 1
-
-    val errorFileData = s3Interactions.head.getRequest.getBodyAsString
-    val today = dateFormat.format(new Date)
-    val expectedErrorData = Source.fromResource(errorFile).getLines.mkString(System.lineSeparator()).replace("$today", today)
-    errorFileData shouldBe expectedErrorData
-
-    val updateConsignmentStatusInput = decode[UpdateConsignmentStatusGraphqlRequestData](
-      getServeEvent("updateConsignmentStatus").get.getRequest.getBodyAsString
-    ).getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None, None))))
-      .variables
-      .updateConsignmentStatusInput
-
-    val addOrUpdateBulkFileMetadataInput = decode[AddOrUpdateBulkFileMetadataGraphqlRequestData](
-      getServeEvent("addOrUpdateBulkFileMetadata").get.getRequest.getBodyAsString
-    ).getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil))))
-      .variables
-      .addOrUpdateBulkFileMetadataInput
-
-    val updateConsignmentMetadataSchemaLibraryVersion = decode[UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData](
-      getServeEvent("updateMetadataSchemaLibraryVersion").get.getRequest.getBodyAsString
-    ).getOrElse(
-      UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData(
-        "",
-        ucslv.Variables(UpdateMetadataSchemaLibraryVersionInput(UUID.fromString(consignmentId.toString), "failed"))
-      )
-    ).variables
-      .updateMetadataSchemaLibraryVersionInput
-
-    addOrUpdateBulkFileMetadataInput.fileMetadata.size should be(3)
-    addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput(fileTestData))
-
-    updateConsignmentStatusInput.statusType must be("DraftMetadata")
-    updateConsignmentStatusInput.statusValue must be(Some(statusValue))
-    updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("failed")
-    updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("Failed to get schema library version")
-  }
-
   "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 if it has no errors" in {
     authOkJson()
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
