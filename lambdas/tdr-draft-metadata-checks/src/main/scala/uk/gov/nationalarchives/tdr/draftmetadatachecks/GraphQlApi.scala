@@ -3,7 +3,6 @@ package uk.gov.nationalarchives.tdr.draftmetadatachecks
 import cats.effect.IO
 import cats.implicits.catsSyntaxOptionId
 import com.typesafe.scalalogging.Logger
-import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetFilesWithUniqueAssetIdKey.{getFilesWithUniqueAssetIdKey => uaik}
 import graphql.codegen.types._
 import sttp.client3._
@@ -18,7 +17,6 @@ import scala.concurrent.Future
 
 class GraphQlApi(
     keycloak: KeycloakUtils,
-    customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
     getFilesWithUniqueAssetIdKey: GraphQLClient[uaik.Data, uaik.Variables]
 )(implicit
     logger: Logger,
@@ -27,14 +25,6 @@ class GraphQlApi(
 ) {
 
   private val fileTypeIdentifier: String = "File"
-
-  def getCustomMetadata(consignmentId: UUID, clientSecret: String): IO[List[cm.CustomMetadata]] = for {
-    token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
-    metadata <- customMetadataClient.getResult(token, cm.document, cm.Variables(consignmentId).some).toIO
-    data <- IO.fromOption(metadata.data)(
-      new RuntimeException(metadata.errors.map(_.message).headOption.getOrElse("No custom metadata definitions found"))
-    )
-  } yield data.customMetadata
 
   def getFilesWithUniqueAssetIdKey(consignmentId: UUID, clientSecret: String): IO[Map[String, FileDetail]] = {
     for {
@@ -57,7 +47,6 @@ class GraphQlApi(
 object GraphQlApi {
   def apply(
       keycloak: KeycloakUtils,
-      customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
       getFilesWithUniqueAssetIdKey: GraphQLClient[uaik.Data, uaik.Variables]
   )(implicit
       backend: SttpBackend[Identity, Any],
@@ -66,7 +55,6 @@ object GraphQlApi {
     val logger: Logger = Logger[GraphQlApi]
     new GraphQlApi(
       keycloak,
-      customMetadataClient,
       getFilesWithUniqueAssetIdKey
     )(
       logger,

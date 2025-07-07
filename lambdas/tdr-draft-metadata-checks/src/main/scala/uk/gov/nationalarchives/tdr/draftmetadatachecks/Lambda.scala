@@ -3,7 +3,6 @@ package uk.gov.nationalarchives.tdr.draftmetadatachecks
 import cats.effect.IO
 import cats.syntax.semigroup._
 import com.amazonaws.services.lambda.runtime.Context
-import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetFilesWithUniqueAssetIdKey.{getFilesWithUniqueAssetIdKey => uaik}
 import io.circe.Encoder
 import io.circe.generic.auto._
@@ -54,12 +53,10 @@ class Lambda {
   implicit val metadataConfiguration: ConfigUtils.MetadataConfiguration = ConfigUtils.loadConfiguration
 
   private val keycloakUtils = new KeycloakUtils()
-  private val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
   private val getFilesWithUniqueAssetIdKey = new GraphQLClient[uaik.Data, uaik.Variables](apiUrl)
 
   private val graphQlApi: GraphQlApi = GraphQlApi(
     keycloakUtils,
-    customMetadataClient,
     getFilesWithUniqueAssetIdKey
   )
 
