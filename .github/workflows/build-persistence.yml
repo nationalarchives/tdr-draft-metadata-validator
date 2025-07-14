@@ -1,28 +1,58 @@
-name: TDR Persistor build release and deploy
+name: TDR persistence and lambda build release and deploy
 on:
   push:
     branches:
       - main
   workflow_dispatch:
 jobs:
-  pre-deploy:
+  pre-deploy-persistence:
     uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@main
     with:
       repo-name: tdr-draft-metadata-validator
-      lambda-name: tdr-draft-metadata-persistence
+      lambda-name: draft-metadata-persistence
       artifact-name: draft-metadata-persistence
-      artifact-path: lambdas/tdr-draft-metadata-validation/target/scala-2.13
+      artifact-path: lambdas/tdr-draft-metadata-persistence/target/scala-2.13
       java-version: 21
       build-command: |
         sbt "tdrDraftMetadataPersistence/assembly"
     secrets:
       MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
       WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
-  deploy:
-    needs: pre-deploy
+  deploy-persistence:
+    needs: pre-deploy-persistence
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - run: gh workflow run deploy.yml -f environment=intg -f to-deploy=${{ needs.pre-deploy.outputs.next-version }}
+      - run: >
+          gh workflow run deploy-lambda.yml --ref ${{ github.ref_name }} -f environment=intg
+          -f to-deploy=${{ needs.pre-deploy-persistence.outputs.next-version }}
+          -f lambda-name=draft-metadata-persistence
+          -f deployment-package=draft-metadata-persistence.jar
+        env:
+          GITHUB_TOKEN: ${{ secrets.WORKFLOW_PAT }}
+  pre-deploy-checks:
+    needs: deploy-persistence
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@main
+    with:
+      repo-name: tdr-draft-metadata-validator
+      lambda-name: draft-metadata-checks
+      artifact-name: draft-metadata-checks
+      artifact-path: lambdas/tdr-draft-metadata-checks/target/scala-2.13
+      java-version: 21
+      build-command: |
+        sbt "tdrDraftMetadataChecks/assembly"
+    secrets:
+      MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
+      WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
+  deploy-checks:
+    needs: pre-deploy-checks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+      - run: >
+          gh workflow run deploy-lambda.yml --ref ${{ github.ref_name }} -f environment=intg
+          -f to-deploy=${{ needs.pre-deploy-checks.outputs.next-version }}
+          -f lambda-name=draft-metadata-checks
+          -f deployment-package=draft-metadata-checks.jar
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_PAT }}
