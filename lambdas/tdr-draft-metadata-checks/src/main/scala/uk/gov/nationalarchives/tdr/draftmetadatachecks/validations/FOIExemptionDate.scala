@@ -50,7 +50,7 @@ object FOIExemptionDate {
 
       val invalidExemptionDateError =
         if (foiChecksData.foiExemptionDate.nonEmpty) {
-          val formatter = DateTimeFormatter.ISO_LOCAL_DATE // Assumes date format like 2000-01-01
+          val formatter = DateTimeFormatter.ISO_LOCAL_DATE
           val janFirst2000 = LocalDate.of(2000, 1, 1)
 
           Try(LocalDate.parse(foiChecksData.foiExemptionDate, formatter))
@@ -60,7 +60,7 @@ object FOIExemptionDate {
                 ValidationErrors(
                   assetId = foiChecksData.assetId,
                   errors = Set(
-                    exemptionDateBefore2000(FOI_EXEMPTION_DATE, messageProperties, tdrClientHeaderMapper)
+                    exemptionDateBefore2000(messageProperties, tdrClientHeaderMapper)
                   ),
                   data = List(
                     Metadata(
@@ -89,7 +89,7 @@ object FOIExemptionDate {
       ValidationErrors(
         assetId = error.assetId,
         errors = Set(
-          exemptionDateAndClosureStartDateSameError(FOI_EXEMPTION_DATE, messageProperties, tdrClientHeaderMapper)
+          exemptionDateAndClosureStartDateSameError(messageProperties, tdrClientHeaderMapper)
         ),
         data = List(
           Metadata(
@@ -101,10 +101,10 @@ object FOIExemptionDate {
     }
   }
 
-  private def exemptionDateAndClosureStartDateSameError(propertyName: String, messageProperties: Properties, tdrClientHeaderMapper: String => String) = {
+  private def exemptionDateAndClosureStartDateSameError(messageProperties: Properties, tdrClientHeaderMapper: String => String) = {
     Error(
       validationProcess = ValidationProcess.SCHEMA_CLOSURE_CLOSED.toString,
-      property = tdrClientHeaderMapper(propertyName),
+      property = tdrClientHeaderMapper(FOI_EXEMPTION_DATE),
       errorKey = "exemptionDateAndClosureStartDateSame",
       message = messageProperties.getProperty(
         s"${ValidationProcess.SCHEMA_CLOSURE_CLOSED}.exemptionDateAndClosureStartDateSame",
@@ -113,10 +113,10 @@ object FOIExemptionDate {
     )
   }
 
-  private def exemptionDateBefore2000(propertyName: String, messageProperties: Properties, tdrClientHeaderMapper: String => String) = {
+  private def exemptionDateBefore2000(messageProperties: Properties, tdrClientHeaderMapper: String => String) = {
     Error(
       validationProcess = ValidationProcess.SCHEMA_CLOSURE_CLOSED.toString,
-      property = tdrClientHeaderMapper(propertyName),
+      property = tdrClientHeaderMapper(FOI_EXEMPTION_DATE),
       errorKey = "exemptionDateBefore2000",
       message = messageProperties.getProperty(
         s"${ValidationProcess.SCHEMA_CLOSURE_CLOSED}.exemptionDateBefore2000",

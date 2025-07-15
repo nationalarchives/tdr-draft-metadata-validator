@@ -34,7 +34,7 @@ class FOIExemptionDateSpec extends AnyWordSpec {
     }
 
     "validate with no errors if exemption date is empty" in {
-      val row = Map(CLOSURE_START_DATE -> "", foiExemptionCodeCol -> "")
+      val row = Map(foiExemptionCodeCol -> "")
 
       val testData = createInputForFOIExemptionDateValidation(List(row))
       val result = FOIClosureCodesAndPeriods.foiCodesPeriodsConsistent(testData._1, testData._2, testData._3, metadataConfiguration)
