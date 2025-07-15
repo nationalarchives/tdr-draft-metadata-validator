@@ -5,7 +5,6 @@ import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.nationalarchives.tdr.draftmetadatachecks.Lambda.ValidationParameters
 import uk.gov.nationalarchives.tdr.draftmetadatachecks.validations.FOIExemptionDate.{CLOSURE_START_DATE, FOI_EXEMPTION_DATE}
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
-import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils.ARRAY_SPLIT_CHAR
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.util.{Properties, UUID}
@@ -30,7 +29,7 @@ class FOIExemptionDateSpec extends AnyWordSpec {
       result.head.errors.toList.count(error =>
         error.message == "Must be the date of the advisory schedule confirming closure, should not be the same as closure start date"
       ) shouldBe 1
-      result.head.data.filter(data => data.name == foiExemptionCodeCol).map(_.value).toList shouldBe List("2023-12-13")
+      result.head.data.filter(data => data.name == foiExemptionCodeCol).map(_.value) shouldBe List("2023-12-13")
     }
 
     "validate with no errors if exemption date is empty" in {

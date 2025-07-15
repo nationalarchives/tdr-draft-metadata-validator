@@ -5,11 +5,11 @@ import uk.gov.nationalarchives.tdr.draftmetadatachecks.{Error, ValidationErrors}
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils.MetadataConfiguration
 import uk.gov.nationalarchives.tdr.validation.schema.ValidationProcess
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
+
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
-import scala.util.Try
-
 import java.util.Properties
+import scala.util.Try
 
 object FOIExemptionDate {
 
@@ -81,11 +81,11 @@ object FOIExemptionDate {
   }.flatten
 
   private def generateValidationDatesSameErrors(
-      closuresWithCodeAndPeriodMismatch: List[FOIExemptionDateCheckData],
+      foiExemptionDateErrorData: List[FOIExemptionDateCheckData],
       messageProperties: Properties,
       tdrClientHeaderMapper: String => String
   ): List[ValidationErrors] = {
-    closuresWithCodeAndPeriodMismatch.map { error =>
+    foiExemptionDateErrorData.map { error =>
       ValidationErrors(
         assetId = error.assetId,
         errors = Set(
@@ -108,7 +108,7 @@ object FOIExemptionDate {
       errorKey = "exemptionDateAndClosureStartDateSame",
       message = messageProperties.getProperty(
         s"${ValidationProcess.SCHEMA_CLOSURE_CLOSED}.exemptionDateAndClosureStartDateSame",
-        "FOI exemption date and closure start date cannot be the same TBD"
+        "SCHEMA_CLOSURE_CLOSED.exemptionDateAndClosureStartDateSame"
       )
     )
   }
@@ -120,7 +120,7 @@ object FOIExemptionDate {
       errorKey = "exemptionDateBefore2000",
       message = messageProperties.getProperty(
         s"${ValidationProcess.SCHEMA_CLOSURE_CLOSED}.exemptionDateBefore2000",
-        "Invalid FOI exemption date TBD"
+        "SCHEMA_CLOSURE_CLOSED.exemptionDateBefore2000"
       )
     )
   }
