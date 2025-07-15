@@ -43,29 +43,9 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
 
     wiremockGraphqlServer.stubFor(
       post(urlEqualTo(graphQlPath))
-        .withRequestBody(containing("updateConsignmentStatus"))
-        .willReturn(ok("""{"data": {"updateConsignmentStatus": 1}}""".stripMargin))
-    )
-
-    wiremockGraphqlServer.stubFor(
-      post(urlEqualTo(graphQlPath))
-        .withRequestBody(containing("updateMetadataSchemaLibraryVersion"))
-        .willReturn(ok("""{"data": {"updateMetadataSchemaLibraryVersion": 1}}""".stripMargin))
-    )
-
-    wiremockGraphqlServer.stubFor(
-      post(urlEqualTo(graphQlPath))
         .withRequestBody(containing("getFilesWithUniqueAssetIdKey"))
         .willReturn(ok(filesWithUniquesAssetIdKeyResponse))
     )
-
-    if (saveMetadata) {
-      wiremockGraphqlServer.stubFor(
-        post(urlEqualTo(graphQlPath))
-          .withRequestBody(containing("addOrUpdateBulkFileMetadata"))
-          .willReturn(ok("""{"data": {"addOrUpdateBulkFileMetadata": []}}""".stripMargin))
-      )
-    }
   }
 
   def authOkJson(): StubMapping = wiremockAuthServer.stubFor(

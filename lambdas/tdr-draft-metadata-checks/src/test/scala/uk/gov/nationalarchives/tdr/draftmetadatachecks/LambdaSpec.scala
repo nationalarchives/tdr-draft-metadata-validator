@@ -11,11 +11,10 @@ import graphql.codegen.types._
 import io.circe.generic.auto._
 import io.circe.parser.decode
 import org.mockito.MockitoSugar.mock
-import org.scalatest.matchers.must.Matchers.{be, convertToAnyMustWrapper, include}
-import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
-import sttp.model.StatusCode
-import TestUtils.{fileTestData, filesWithUniquesAssetIdKeyResponse}
-import uk.gov.nationalarchives.tdr.error.HttpException
+import org.scalatest.matchers.must.Matchers.{be, convertToAnyMustWrapper}
+import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
+import uk.gov.nationalarchives.draftmetadata.FileTestData
+import uk.gov.nationalarchives.draftmetadata.TestUtils.{fileTestData, filesWithUniquesAssetIdKeyResponse}
 
 import java.nio.file.{Files, Paths}
 import java.text.SimpleDateFormat
@@ -27,58 +26,36 @@ class LambdaSpec extends ExternalServicesSpec {
 
   val consignmentId: Object = "f82af3bf-b742-454c-9771-bfd6c5eae749"
   val mockContext: Context = mock[Context]
-
-  def mockS3GetResponse(fileName: String): StubMapping = {
-    val filePath = getClass.getResource(s"/$fileName").getFile
-    val bytes = Files.readAllBytes(Paths.get(filePath))
-    wiremockS3.stubFor(
-      get(urlEqualTo(s"/$consignmentId/sample.csv"))
-        .willReturn(aResponse().withStatus(200).withBody(bytes))
-    )
-  }
-
-  def mockS3ErrorFilePutResponse(): StubMapping = {
-    wiremockS3.stubFor(
-      put(urlEqualTo(s"/$consignmentId/draft-metadata-errors.json"))
-        .willReturn(aResponse().withStatus(200))
-    )
-  }
-
   val pattern = "yyyy-MM-dd"
   val dateFormat = new SimpleDateFormat(pattern)
 
-  "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 and save metadata to db if it has no errors" in {
-    validateAndSaveMetadata("sample.csv", "json/empty-error-file.json", "Completed")
+  private def checkFileError(errorFile: String) = {
+    mockS3ErrorFilePutResponse()
+    val input = Map("consignmentId" -> consignmentId).asJava
+    new Lambda().handleRequest(input, mockContext)
+
+    val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala.filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT).toList
+    s3Interactions.size shouldBe 1
+
+    val errorWriteRequest = s3Interactions.head
+    val rawErrorFileData = errorWriteRequest.getRequest.getBodyAsString
+
+    // Extract just the JSON part from between the first { and last }
+    val errorFileData = rawErrorFileData.substring(
+      rawErrorFileData.indexOf("{"),
+      rawErrorFileData.lastIndexOf("}") + 1
+    )
+
+    val today = dateFormat.format(new Date)
+    val expectedErrorData: String = Source.fromResource(errorFile).getLines.mkString(System.lineSeparator()).replace("$today", today)
+    errorFileData should be(expectedErrorData)
   }
 
-  "handleRequest" should "download the draft metadata csv file with an empty row, validate, save empty error file to s3 and save metadata to db if it has no errors" in {
-    validateAndSaveMetadata("sample-empty-row.csv", "json/empty-error-file.json", "Completed")
-  }
-
-  "handleRequest" should "return 500 response and throw an error message when a call to the api fails" in {
+  "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 if it has no errors" in {
     authOkJson()
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
     mockS3GetResponse("sample.csv")
-    mockS3ErrorFilePutResponse()
-
-    wiremockGraphqlServer.stubFor(
-      post(urlEqualTo(graphQlPath))
-        .withRequestBody(containing("addOrUpdateBulkFileMetadata"))
-        .willReturn(serverError().withBody("Failed to persist metadata"))
-    )
-
-    val input = Map("consignmentId" -> consignmentId).asJava
-    val exception = intercept[HttpException] {
-      new Lambda().handleRequest(input, mockContext)
-    }
-
-    val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala
-      .filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT)
-      .toList
-    s3Interactions.size shouldBe 1
-
-    exception.code should equal(StatusCode(500))
-    exception.getMessage should include("Failed to persist metadata")
+    checkFileError("json/empty-error-file.json")
   }
 
   "handleRequest" should "download the draft metadata csv file, check for schema errors and save error file with errors to s3" in {
@@ -207,75 +184,46 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/error-file-invalid-description-with-alternate-description.json")
   }
 
-  private def checkFileError(errorFile: String) = {
+  "handleRequest" should "return correct response for a successful validation" in {
+    authOkJson()
+    graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
+    mockS3GetResponse("sample.csv")
     mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava
-    new Lambda().handleRequest(input, mockContext)
-
-    val s3Interactions: Iterable[ServeEvent] = wiremockS3.getAllServeEvents.asScala.filter(serveEvent => serveEvent.getRequest.getMethod == RequestMethod.PUT).toList
-    s3Interactions.size shouldBe 1
-
-    val errorWriteRequest = s3Interactions.head
-    val errorFileData = errorWriteRequest.getRequest.getBodyAsString
-
-    val today = dateFormat.format(new Date)
-    val expectedErrorData: String = Source.fromResource(errorFile).getLines.mkString(System.lineSeparator()).replace("$today", today)
-    errorFileData should be(expectedErrorData)
-
-    val updateConsignmentStatusEvent = getServeEvent("updateConsignmentStatus").get
-    val request: UpdateConsignmentStatusGraphqlRequestData = decode[UpdateConsignmentStatusGraphqlRequestData](updateConsignmentStatusEvent.getRequest.getBodyAsString)
-      .getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None, None))))
-    val updateConsignmentStatusInput = request.variables.updateConsignmentStatusInput
-
-    updateConsignmentStatusInput.statusType must be("DraftMetadata")
-    updateConsignmentStatusInput.statusValue must be(Some("CompletedWithIssues"))
+    val response = new Lambda().handleRequest(input, mockContext)
+    response.get("consignmentId") must be(consignmentId)
+    response.get("validationStatus") must be("success")
+    response.get("validationLibraryVersion") mustNot be("Failed to get schema library version")
+    response.get("error") must be("")
   }
 
-  private def validateAndSaveMetadata(csvFile: String, errorFile: String, statusValue: String): Unit = {
+  "handleRequest" should "return correct response for a failed validation" in {
     authOkJson()
-    graphqlOkJson(saveMetadata = true, filesWithUniquesAssetIdKeyResponse(fileTestData))
-    mockS3GetResponse(csvFile)
+    graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
+    mockS3GetResponse("invalid-sample.csv")
     mockS3ErrorFilePutResponse()
     val input = Map("consignmentId" -> consignmentId).asJava
-    new Lambda().handleRequest(input, mockContext)
+    val response = new Lambda().handleRequest(input, mockContext)
+    response.get("consignmentId") must be(consignmentId)
+    response.get("validationStatus") must be("failure")
+    response.get("validationLibraryVersion") mustNot be("Failed to get schema library version")
+    response.get("error") must be("")
+  }
 
-    val s3Interactions = wiremockS3.getAllServeEvents.asScala.filter(_.getRequest.getMethod == RequestMethod.PUT).toList
-    s3Interactions.size shouldBe 1
+  def mockS3GetResponse(fileName: String): StubMapping = {
+    val filePath = getClass.getResource(s"/$fileName").getFile
+    val bytes = Files.readAllBytes(Paths.get(filePath))
+    wiremockS3.stubFor(
+      get(urlEqualTo(s"/$consignmentId/sample.csv"))
+        .willReturn(aResponse().withStatus(200).withBody(bytes))
+    )
+  }
 
-    val errorFileData = s3Interactions.head.getRequest.getBodyAsString
-    val today = dateFormat.format(new Date)
-    val expectedErrorData = Source.fromResource(errorFile).getLines.mkString(System.lineSeparator()).replace("$today", today)
-    errorFileData shouldBe expectedErrorData
-
-    val updateConsignmentStatusInput = decode[UpdateConsignmentStatusGraphqlRequestData](
-      getServeEvent("updateConsignmentStatus").get.getRequest.getBodyAsString
-    ).getOrElse(UpdateConsignmentStatusGraphqlRequestData("", ucs.Variables(ConsignmentStatusInput(UUID.fromString(consignmentId.toString), "", None, None))))
-      .variables
-      .updateConsignmentStatusInput
-
-    val addOrUpdateBulkFileMetadataInput = decode[AddOrUpdateBulkFileMetadataGraphqlRequestData](
-      getServeEvent("addOrUpdateBulkFileMetadata").get.getRequest.getBodyAsString
-    ).getOrElse(AddOrUpdateBulkFileMetadataGraphqlRequestData("", afm.Variables(AddOrUpdateBulkFileMetadataInput(UUID.fromString(consignmentId.toString), Nil))))
-      .variables
-      .addOrUpdateBulkFileMetadataInput
-
-    val updateConsignmentMetadataSchemaLibraryVersion = decode[UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData](
-      getServeEvent("updateMetadataSchemaLibraryVersion").get.getRequest.getBodyAsString
-    ).getOrElse(
-      UpdateConsignmentMetadataSchemaLibraryVersionGraphqlRequestData(
-        "",
-        ucslv.Variables(UpdateMetadataSchemaLibraryVersionInput(UUID.fromString(consignmentId.toString), "failed"))
-      )
-    ).variables
-      .updateMetadataSchemaLibraryVersionInput
-
-    addOrUpdateBulkFileMetadataInput.fileMetadata.size should be(3)
-    addOrUpdateBulkFileMetadataInput.fileMetadata should be(expectedFileMetadataInput(fileTestData))
-
-    updateConsignmentStatusInput.statusType must be("DraftMetadata")
-    updateConsignmentStatusInput.statusValue must be(Some(statusValue))
-    updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("failed")
-    updateConsignmentMetadataSchemaLibraryVersion.metadataSchemaLibraryVersion mustNot be("Failed to get schema library version")
+  def mockS3ErrorFilePutResponse(): StubMapping = {
+    wiremockS3.stubFor(
+      put(urlEqualTo(s"/$consignmentId/draft-metadata-errors.json"))
+        .willReturn(aResponse().withStatus(200))
+    )
   }
 
   private def expectedFileMetadataInput(fileTestData: List[FileTestData]): List[AddOrUpdateFileMetadata] = {

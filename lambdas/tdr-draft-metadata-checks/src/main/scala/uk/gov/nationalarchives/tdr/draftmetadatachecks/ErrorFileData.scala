@@ -3,7 +3,7 @@ package uk.gov.nationalarchives.tdr.draftmetadatachecks
 import cats.Semigroup
 import FileError.FileError
 import Lambda.ValidationParameters
-import uk.gov.nationalarchives.tdr.draftmetadatachecks.utils.MetadataUtils.dateTimeFormatter
+import uk.gov.nationalarchives.draftmetadata.utils.MetadataUtils.dateTimeFormatter
 import uk.gov.nationalarchives.tdr.validation.Metadata
 
 import java.time.LocalDateTime
