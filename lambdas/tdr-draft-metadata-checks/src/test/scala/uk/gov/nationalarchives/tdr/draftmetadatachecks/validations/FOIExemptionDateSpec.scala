@@ -61,6 +61,14 @@ class FOIExemptionDateSpec extends AnyWordSpec {
       val result = FOIExemptionDate.validateFOIExemptionDate(testData._1, testData._2, testData._3, metadataConfiguration)
       result.length shouldBe 0
     }
+
+    "validate exemption date after 2000-01-01 is valid" in {
+      val csvRowData = Map(foiExemptionCodeCol -> "2023-01-01")
+
+      val testData = createInputForFOIExemptionDateValidation(List(csvRowData))
+      val result = FOIExemptionDate.validateFOIExemptionDate(testData._1, testData._2, testData._3, metadataConfiguration)
+      result.length shouldBe 0
+    }
   }
 
   private def createInputForFOIExemptionDateValidation(
