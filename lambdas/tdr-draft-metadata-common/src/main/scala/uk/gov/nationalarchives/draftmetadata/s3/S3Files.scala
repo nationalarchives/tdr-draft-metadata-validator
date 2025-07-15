@@ -12,7 +12,7 @@ import scala.reflect.io.Directory
 
 class S3Files(s3Utils: S3Utils)(implicit val logger: SelfAwareStructuredLogger[IO]) {
 
-  def key(consignmentId: String) = s"${consignmentId}/$fileName"
+  def key(consignmentId: String) = s"$consignmentId/$fileName"
 
   def downloadFile(bucket: String, consignmentId: String): IO[Any] = {
     cleanup(getFolderPath(consignmentId))

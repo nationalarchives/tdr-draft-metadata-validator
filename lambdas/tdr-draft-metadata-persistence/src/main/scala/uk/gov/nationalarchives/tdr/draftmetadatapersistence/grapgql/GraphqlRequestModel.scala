@@ -10,7 +10,6 @@ object GraphqlRequestModel {
   implicit val addOrUpdateFileMetadataDecoder: Decoder[AddOrUpdateFileMetadata] = deriveDecoder
   implicit val addOrUpdateMetadataDecoder: Decoder[AddOrUpdateMetadata] = deriveDecoder
   implicit val addOrUpdateBulkFileMetadataInputDecoder: Decoder[AddOrUpdateBulkFileMetadataInput] = deriveDecoder
-  implicit val updateMetadataSchemaLibraryVersionInputDecoder: Decoder[UpdateMetadataSchemaLibraryVersionInput] = deriveDecoder
   implicit val afmVariablesDecoder: Decoder[afm.Variables] = deriveDecoder
   implicit val ucslvVariablesDecoder: Decoder[ucslv.Variables] = deriveDecoder
 }
