@@ -25,15 +25,6 @@ class LambdaSpec extends ExternalServicesSpec {
   val pattern = "yyyy-MM-dd"
   val dateFormat = new SimpleDateFormat(pattern)
 
-  def mockS3GetResponse(fileName: String): StubMapping = {
-    val filePath = getClass.getResource(s"/$fileName").getFile
-    val bytes = Files.readAllBytes(Paths.get(filePath))
-    wiremockS3.stubFor(
-      get(urlEqualTo(s"/$consignmentId/sample.csv"))
-        .willReturn(aResponse().withStatus(200).withBody(bytes))
-    )
-  }
-
   "handleRequest" should "download the draft metadata csv file, validate, save empty error file to s3 if it has no errors" in {
     authOkJson()
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
@@ -198,6 +189,15 @@ class LambdaSpec extends ExternalServicesSpec {
     response.get("validationStatus") must be("failure")
     response.get("validationLibraryVersion") mustNot be("Failed to get schema library version")
     response.get("error") must be("")
+  }
+
+  def mockS3GetResponse(fileName: String): StubMapping = {
+    val filePath = getClass.getResource(s"/$fileName").getFile
+    val bytes = Files.readAllBytes(Paths.get(filePath))
+    wiremockS3.stubFor(
+      get(urlEqualTo(s"/$consignmentId/sample.csv"))
+        .willReturn(aResponse().withStatus(200).withBody(bytes))
+    )
   }
 
   private def checkFileError(errorFile: String) = {
