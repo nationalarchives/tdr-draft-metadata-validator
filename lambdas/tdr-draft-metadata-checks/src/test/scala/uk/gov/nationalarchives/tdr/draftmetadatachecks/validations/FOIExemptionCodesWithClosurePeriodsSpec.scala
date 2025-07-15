@@ -22,7 +22,7 @@ class FOIExemptionCodesWithClosurePeriodsSpec extends AnyWordSpec {
       val row1 = Map(closurePeriodCol -> s"1${ARRAY_SPLIT_CHAR}150", foiExemptionCodeCol -> s"33${ARRAY_SPLIT_CHAR}34")
       val row2 = Map(closurePeriodCol -> s"11${ARRAY_SPLIT_CHAR}150", foiExemptionCodeCol -> s"23${ARRAY_SPLIT_CHAR}56")
       val testData = createInputForClosureValidation(List(row1, row2))
-      val result = FOIClosureCodesAndPeriods.foiCodesPeriodsConsistent(testData._1, testData._2, testData._3)
+      val result = FOIClosureCodesAndPeriods.foiCodesPeriodsConsistent(testData._1, testData._2, testData._3, metadataConfiguration)
       result.length shouldBe 0
     }
 
@@ -30,7 +30,7 @@ class FOIExemptionCodesWithClosurePeriodsSpec extends AnyWordSpec {
       val row = Map(closurePeriodCol -> s"1${ARRAY_SPLIT_CHAR}150", foiExemptionCodeCol -> s"33${ARRAY_SPLIT_CHAR}34${ARRAY_SPLIT_CHAR}35")
 
       val testData = createInputForClosureValidation(List(row))
-      val result = FOIClosureCodesAndPeriods.foiCodesPeriodsConsistent(testData._1, testData._2, testData._3)
+      val result = FOIClosureCodesAndPeriods.foiCodesPeriodsConsistent(testData._1, testData._2, testData._3, metadataConfiguration)
 
       result.length shouldBe 1
       result.head.errors.head.message shouldBe "Must have the same number of closure periods as foi exemption codes"
