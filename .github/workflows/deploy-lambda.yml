@@ -17,9 +17,11 @@ on:
       lambda-name:
         description: 'Lambda name'
         required: true
+        default: 'draft-metadata-persistence'
       deployment-package:
         description: 'Deployment package name'
         required: true
+        default: 'draft-metadata-persistence.jar'
 
 run-name: Deploying ${{inputs.lambda-name}} ${{inputs.to-deploy}} to ${{inputs.environment}}
 permissions:
