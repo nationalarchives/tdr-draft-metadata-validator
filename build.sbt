@@ -85,7 +85,7 @@ lazy val tdrDraftMetadataPersistence = (project in file("lambdas/tdr-draft-metad
       ExclusionRule("com.networknt", "openapi-parser")
     ),
     assembly / skip := false,
-    assembly / assemblyJarName := "tdr-draft-metadata-persistence.jar",
+    assembly / assemblyJarName := "draft-metadata-persistence.jar",
     assembly / assemblyMergeStrategy := {
       case PathList("validation-messages", _ @_*)        => MergeStrategy.discard
       case x                                            => commonMergeStrategy(x)
@@ -98,7 +98,7 @@ lazy val tdrDraftMetadataChecks = (project in file("lambdas/tdr-draft-metadata-c
   .settings(
     name := "tdr-draft-metadata-checks",
     assembly / skip := false,
-    assembly / assemblyJarName := "tdr-draft-metadata-checks.jar",
+    assembly / assemblyJarName := "draft-metadata-checks.jar",
     assembly / assemblyMergeStrategy := commonMergeStrategy,
     Compile / resourceGenerators += Def.task {
       val file = (Compile / resourceManaged).value / "metadata-schema-version.conf"
