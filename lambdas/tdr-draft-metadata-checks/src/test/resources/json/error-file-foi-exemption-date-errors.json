@@ -1,0 +1,30 @@
+{
+  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+  "date" : "$today",
+  "fileError" : "SCHEMA_VALIDATION",
+  "validationErrors" : [
+    {
+      "assetId" : "test/test1.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
+          "property" : "foi schedule date",
+          "errorKey" : "exemptionDateAndClosureStartDateSame",
+          "message" : "Must be the date of the advisory schedule confirming closure, should not be the same as closure start date"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
+          "property" : "foi schedule date",
+          "errorKey" : "exemptionDateBefore2000",
+          "message" : "Invalid FOI exemption date"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "foi schedule date",
+          "value" : "1990-01-01"
+        }
+      ]
+    }
+  ]
+}
