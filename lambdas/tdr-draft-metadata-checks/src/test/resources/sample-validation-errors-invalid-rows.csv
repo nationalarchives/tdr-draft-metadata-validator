@@ -1,4 +1,4 @@
-﻿filepath,filename,date last modified,date of the record,description,former reference,closure status,closure start date,closure period,foi exemption code,foi schedule date,is filename closed,alternate filename,is description closed,alternate description,language,translated filename
-test/unknown.txt,unknown.txt,bbbb,,eee,,Open,,,,,No,,No,,English,
-test/test1.txt,test1.txt,2024-03-26,,hello,,Closed,2023-01-01,33;54,27(1);27(2),2021-01-01,Yes,title,No,,English,
-test/test3.txt,test3.txt,2024-03-26,,eee,,Open,,,,,No,,No,,English,
+﻿filepath,filename,date last modified,date of the record,description,former reference,closure status,closure start date,closure period,foi exemption code,foi schedule date,is filename closed,alternate filename,is description closed,alternate description,language,translated filename,copyright
+test/unknown.txt,unknown.txt,bbbb,,eee,,Open,,,,,No,,No,,English,,Crown copyright
+test/test1.txt,test1.txt,2024-03-26,,hello,,Closed,2023-01-01,33;54,27(1);27(2),2021-01-01,Yes,title,No,,English,,Crown copyright
+test/test3.txt,test3.txt,2024-03-26,,eee,,Open,,,,,No,,No,,English,,Crown copyright
