@@ -36,7 +36,7 @@ object FOIExemptionDate {
       FOIExemptionDateCheckData(assetId, foiExemptionAssertedDateValue, closureStartDateValue)
     }
 
-    foiExemptionDateChecksData.map(foiChecksData => {
+    foiExemptionDateChecksData.flatMap(foiChecksData => {
 
       val datesSameError =
         if (foiChecksData.foiExemptionDate.nonEmpty && foiChecksData.foiExemptionDate == foiChecksData.closureStartDate)
@@ -48,6 +48,7 @@ object FOIExemptionDate {
         else
           List.empty[ValidationErrors]
 
+      // Using Try instead of try-catch to check if the exemption date is before 2000-01-01
       val invalidExemptionDateError =
         if (foiChecksData.foiExemptionDate.nonEmpty) {
           val formatter = DateTimeFormatter.ISO_LOCAL_DATE
@@ -78,7 +79,7 @@ object FOIExemptionDate {
 
       datesSameError ++ invalidExemptionDateError
     })
-  }.flatten
+  }
 
   private def generateValidationDatesSameErrors(
       foiExemptionDateErrorData: List[FOIExemptionDateCheckData],
