@@ -69,7 +69,8 @@ lazy val tdrDraftMetadataCommon = (project in file("lambdas/tdr-draft-metadata-c
       scalaTest % Test,
       mockitoScala % Test,
       mockitoScalaTest % Test,
-      scalaLogging
+      scalaLogging,
+      schemaConfig
     ),
     assembly / skip := true
   )

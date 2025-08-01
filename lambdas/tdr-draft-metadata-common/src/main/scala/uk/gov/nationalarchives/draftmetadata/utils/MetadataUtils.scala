@@ -1,8 +1,7 @@
 package uk.gov.nationalarchives.draftmetadata.utils
 
-import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
-import graphql.codegen.types.DataType.{Boolean, DateTime}
 import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata}
+import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
 import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.sql.Timestamp
@@ -12,11 +11,14 @@ import java.time.format.DateTimeFormatter
 object MetadataUtils {
 
   val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
+  private val config = ConfigUtils.loadConfiguration
+  private val propertyTypeEvaluator = config.getPropertyType
+  private val dataHeaderMapper = config.propertyToOutputMapper("tdrDataLoadHeader")
+  private val inputToPropertyMapper = config.inputToPropertyMapper("tdrDataLoadHeader")
+  private val protectedProperties = config.getPropertiesByPropertyType("System")
 
   /** Filters out protected metadata fields and converts file rows to bulk file metadata input format.
     *
-    * @param customMetadata
-    *   List of custom metadata fields
     * @param fileRows
     *   List of file rows with their metadata
     * @param filesWithUniqueAssetIdKey
@@ -29,25 +31,24 @@ object MetadataUtils {
     *   List of AddOrUpdateFileMetadata objects ready for database operations
     */
   def filterProtectedFields[F](
-      customMetadata: List[CustomMetadata],
       fileRows: List[FileRow],
       filesWithUniqueAssetIdKey: Map[String, F]
   )(fileIdExtractor: F => java.util.UUID): List[AddOrUpdateFileMetadata] = {
-    val filterProtectedMetadata = customMetadata.filter(!_.editable).map(_.name)
+    val protectedMetadataProperties = protectedProperties.map(p => dataHeaderMapper(p))
     val updatedFileRows = fileRows.map { fileMetadata =>
-      val filteredMetadata = fileMetadata.metadata.filterNot(metadata => filterProtectedMetadata.contains(metadata.name))
+      val filteredMetadata = fileMetadata.metadata.filterNot(metadata => protectedMetadataProperties.contains(metadata.name))
       fileMetadata.copy(metadata = filteredMetadata)
     }
-    convertDataToBulkFileMetadataInput(updatedFileRows, customMetadata, filesWithUniqueAssetIdKey)(fileIdExtractor)
+    convertDataToBulkFileMetadataInput(updatedFileRows, filesWithUniqueAssetIdKey)(fileIdExtractor)
   }
 
   /** Converts file rows data to bulk file metadata input format.
     */
   private def convertDataToBulkFileMetadataInput[F](
       fileRows: List[FileRow],
-      customMetadata: List[CustomMetadata],
       filesWithUniqueAssetIdKey: Map[String, F]
   )(fileIdExtractor: F => java.util.UUID): List[AddOrUpdateFileMetadata] = {
+
     fileRows.map { fileRow =>
       val fileDetail = filesWithUniqueAssetIdKey
         .getOrElse(fileRow.matchIdentifier, throw new RuntimeException("Unexpected state: db identifier unavailable"))
@@ -57,7 +58,8 @@ object MetadataUtils {
         fileId,
         fileRow.metadata.flatMap {
           case m if m.value.nonEmpty =>
-            customMetadata.find(_.name == m.name).map(cm => createAddOrUpdateMetadata(m, cm)).getOrElse(List.empty)
+            val propertyKey = inputToPropertyMapper(m.name)
+            createAddOrUpdateMetadata(m, propertyKey)
           case m => List(AddOrUpdateMetadata(m.name, ""))
         }
       )
@@ -66,14 +68,13 @@ object MetadataUtils {
 
   /** Creates AddOrUpdateMetadata objects from a metadata item and its definition.
     */
-  private def createAddOrUpdateMetadata(metadata: Metadata, customMetadata: CustomMetadata): List[AddOrUpdateMetadata] = {
-    val values = customMetadata.dataType match {
-      case DateTime => Timestamp.valueOf(LocalDate.parse(metadata.value, dateTimeFormatter).atStartOfDay()).toString :: Nil
-      case Boolean =>
-        metadata.value.toLowerCase() match {
-          case "yes" => "true" :: Nil
-          case _     => "false" :: Nil
-        }
+  private def createAddOrUpdateMetadata(metadata: Metadata, propertyKey: String): List[AddOrUpdateMetadata] = {
+    val values = propertyTypeEvaluator(propertyKey) match {
+      case t if t == "date" => Timestamp.valueOf(LocalDate.parse(metadata.value, dateTimeFormatter).atStartOfDay()).toString :: Nil
+      case t if t == "boolean" => metadata.value.toLowerCase() match {
+        case "yes" => "true" :: Nil
+        case _     => "false" :: Nil
+      }
       case _ => metadata.value :: Nil
     }
     values.map(v => AddOrUpdateMetadata(metadata.name, v))
