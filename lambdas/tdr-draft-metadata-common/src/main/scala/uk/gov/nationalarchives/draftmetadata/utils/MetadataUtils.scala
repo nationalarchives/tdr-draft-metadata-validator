@@ -71,10 +71,11 @@ object MetadataUtils {
   private def createAddOrUpdateMetadata(metadata: Metadata, propertyKey: String): List[AddOrUpdateMetadata] = {
     val values = propertyTypeEvaluator(propertyKey) match {
       case t if t == "date" => Timestamp.valueOf(LocalDate.parse(metadata.value, dateTimeFormatter).atStartOfDay()).toString :: Nil
-      case t if t == "boolean" => metadata.value.toLowerCase() match {
-        case "yes" => "true" :: Nil
-        case _     => "false" :: Nil
-      }
+      case t if t == "boolean" =>
+        metadata.value.toLowerCase() match {
+          case "yes" => "true" :: Nil
+          case _     => "false" :: Nil
+        }
       case _ => metadata.value :: Nil
     }
     values.map(v => AddOrUpdateMetadata(metadata.name, v))
