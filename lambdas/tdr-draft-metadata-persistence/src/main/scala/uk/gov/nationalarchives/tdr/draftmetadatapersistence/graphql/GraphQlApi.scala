@@ -5,10 +5,8 @@ import cats.implicits.catsSyntaxOptionId
 import com.typesafe.scalalogging.Logger
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetFilesWithUniqueAssetIdKey.{getFilesWithUniqueAssetIdKey => uaik}
 import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
-import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
 import graphql.codegen.types._
 import sttp.client3._
 import uk.gov.nationalarchives.draftmetadata.config.ApplicationConfig.{clientId, graphqlApiRequestTimeOut}
@@ -22,7 +20,6 @@ import scala.concurrent.Future
 
 class GraphQlApi(
     keycloak: KeycloakUtils,
-    customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
     addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
     getFilesWithUniqueAssetIdKey: GraphQLClient[uaik.Data, uaik.Variables],
     updateConsignmentMetadataSchemaLibraryVersion: GraphQLClient[ucslv.Data, ucslv.Variables]
@@ -33,14 +30,6 @@ class GraphQlApi(
 ) {
 
   private val fileTypeIdentifier: String = "File"
-
-  def getCustomMetadata(consignmentId: UUID, clientSecret: String): IO[List[cm.CustomMetadata]] = for {
-    token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
-    metadata <- customMetadataClient.getResult(token, cm.document, cm.Variables(consignmentId).some).toIO
-    data <- IO.fromOption(metadata.data)(
-      new RuntimeException(metadata.errors.map(_.message).headOption.getOrElse("No custom metadata definitions found"))
-    )
-  } yield data.customMetadata
 
   def addOrUpdateBulkFileMetadata(consignmentId: UUID, clientSecret: String, fileMetadata: List[AddOrUpdateFileMetadata]): IO[List[AddOrUpdateBulkFileMetadata]] =
     for {
@@ -84,7 +73,6 @@ class GraphQlApi(
 object GraphQlApi {
   def apply(
       keycloak: KeycloakUtils,
-      customMetadataClient: GraphQLClient[cm.Data, cm.Variables],
       addOrUpdateBulkFileMetadata: GraphQLClient[afm.Data, afm.Variables],
       getFilesWithUniqueAssetIdKey: GraphQLClient[uaik.Data, uaik.Variables],
       updateConsignmentMetadataSchemaLibraryVersion: GraphQLClient[ucslv.Data, ucslv.Variables]
@@ -95,7 +83,6 @@ object GraphQlApi {
     val logger: Logger = Logger[GraphQlApi]
     new GraphQlApi(
       keycloak,
-      customMetadataClient,
       addOrUpdateBulkFileMetadata,
       getFilesWithUniqueAssetIdKey,
       updateConsignmentMetadataSchemaLibraryVersion
