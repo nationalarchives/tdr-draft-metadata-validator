@@ -1,4 +1,4 @@
-name: TDR checks lambda build release and deploy
+name: TDR metadata checks lambda build release and deploy
 on:
   push:
     branches:
