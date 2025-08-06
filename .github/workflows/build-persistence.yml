@@ -1,4 +1,4 @@
-name: TDR persistence lambda build release and deploy
+name: TDR metadata persistence lambda build release and deploy
 on:
   push:
     branches:
