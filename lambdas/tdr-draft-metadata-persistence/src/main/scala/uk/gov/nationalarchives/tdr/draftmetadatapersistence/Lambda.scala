@@ -6,7 +6,6 @@ import cats.implicits.{catsStdInstancesForList, catsSyntaxParallelTraverse1}
 import com.amazonaws.services.lambda.runtime.Context
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetFilesWithUniqueAssetIdKey.{getFilesWithUniqueAssetIdKey => uaik}
 import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import graphql.codegen.types.AddOrUpdateFileMetadata
@@ -17,7 +16,6 @@ import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.ssm.SsmClient
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest
 import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend, SttpBackendOptions}
-import Lambda.{MetadataPersistorParameters, getFilePath}
 import uk.gov.nationalarchives.aws.utils.s3.S3Clients.s3Async
 import uk.gov.nationalarchives.aws.utils.s3.S3Utils
 import uk.gov.nationalarchives.draftmetadata.config.ApplicationConfig._
@@ -25,6 +23,7 @@ import uk.gov.nationalarchives.draftmetadata.csv.CSVHandler
 import uk.gov.nationalarchives.draftmetadata.s3.S3Files
 import uk.gov.nationalarchives.draftmetadata.utils.MetadataUtils
 import uk.gov.nationalarchives.tdr.GraphQLClient
+import uk.gov.nationalarchives.tdr.draftmetadatapersistence.Lambda.{MetadataPersistorParameters, getFilePath}
 import uk.gov.nationalarchives.tdr.draftmetadatapersistence.grapgql.{FileDetail, GraphQlApi}
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
@@ -43,14 +42,12 @@ class Lambda {
   implicit val metadataConfiguration: ConfigUtils.MetadataConfiguration = ConfigUtils.loadConfiguration
 
   private val keycloakUtils = new KeycloakUtils()
-  private val customMetadataClient = new GraphQLClient[cm.Data, cm.Variables](apiUrl)
   private val addOrUpdateBulkFileMetadataClient = new GraphQLClient[afm.Data, afm.Variables](apiUrl)
   private val updateMetadataSchemaLibraryVersionClient = new GraphQLClient[ucslv.Data, ucslv.Variables](apiUrl)
   private val getFilesWithUniqueAssetIdKey = new GraphQLClient[uaik.Data, uaik.Variables](apiUrl)
 
   private val graphQlApi: GraphQlApi = GraphQlApi(
     keycloakUtils,
-    customMetadataClient,
     addOrUpdateBulkFileMetadataClient,
     getFilesWithUniqueAssetIdKey,
     updateMetadataSchemaLibraryVersionClient
@@ -136,9 +133,8 @@ class Lambda {
   private def persistMetadata(draftMetadata: MetadataPersistorParameters, filesWithUniqueAssetIdKey: Map[String, FileDetail]): IO[List[AddOrUpdateBulkFileMetadata]] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     for {
-      customMetadata <- graphQlApi.getCustomMetadata(draftMetadata.consignmentId, clientSecret)
       fileData <- IO(CSVHandler.loadCSV(getFilePath(draftMetadata), draftMetadata.clientAlternateKey, draftMetadata.persistenceAlternateKey, draftMetadata.uniqueAssetIdKey))
-      addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(customMetadata, fileData, filesWithUniqueAssetIdKey)(_.fileId)
+      addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(fileData, filesWithUniqueAssetIdKey)(_.fileId)
       result <- writeMetadataToDatabase(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
     } yield result
   }
