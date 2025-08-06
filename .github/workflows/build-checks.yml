@@ -29,7 +29,6 @@ jobs:
           java-version: 21
           build-command: |
             sbt "tdrDraftMetadataChecks/assembly"
-        id: build-lambda
         secrets:
           MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
           WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}

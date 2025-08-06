@@ -19,6 +19,7 @@ jobs:
   pre-deploy-persistence:
     runs-on: ubuntu-latest
     steps:
+
       - name: Build lambda
         uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@main
         with:
@@ -29,7 +30,6 @@ jobs:
           java-version: 21
           build-command: |
             sbt "tdrDraftMetadataPersistence/assembly"
-        id: build-lambda
         secrets:
           MANAGEMENT_ACCOUNT: ${{ secrets.MANAGEMENT_ACCOUNT }}
           WORKFLOW_PAT: ${{ secrets.WORKFLOW_PAT }}
