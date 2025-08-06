@@ -13,9 +13,9 @@ object MetadataUtils {
   val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
   private val config = ConfigUtils.loadConfiguration
   private val propertyTypeEvaluator = config.getPropertyType
-  private val dataHeaderMapper = config.propertyToOutputMapper("tdrDataLoadHeader")
-  private val inputToPropertyMapper = config.inputToPropertyMapper("tdrDataLoadHeader")
-  private val protectedProperties = config.getPropertiesByPropertyType("System")
+  private val tdrDataLoadHeaderToPropertyMapper = config.propertyToOutputMapper("tdrDataLoadHeader")
+  private val propertyToTdrDataLoadHeaderMapper = config.inputToPropertyMapper("tdrDataLoadHeader")
+  private val systemProperties = config.getPropertiesByPropertyType("System")
 
   /** Filters out protected metadata fields and converts file rows to bulk file metadata input format.
     *
@@ -34,7 +34,7 @@ object MetadataUtils {
       fileRows: List[FileRow],
       filesWithUniqueAssetIdKey: Map[String, F]
   )(fileIdExtractor: F => java.util.UUID): List[AddOrUpdateFileMetadata] = {
-    val protectedMetadataProperties = protectedProperties.map(p => dataHeaderMapper(p))
+    val protectedMetadataProperties = systemProperties.map(p => tdrDataLoadHeaderToPropertyMapper(p))
     val updatedFileRows = fileRows.map { fileMetadata =>
       val filteredMetadata = fileMetadata.metadata.filterNot(metadata => protectedMetadataProperties.contains(metadata.name))
       fileMetadata.copy(metadata = filteredMetadata)
@@ -58,7 +58,7 @@ object MetadataUtils {
         fileId,
         fileRow.metadata.flatMap {
           case m if m.value.nonEmpty =>
-            val propertyKey = inputToPropertyMapper(m.name)
+            val propertyKey = propertyToTdrDataLoadHeaderMapper(m.name)
             createAddOrUpdateMetadata(m, propertyKey)
           case m => List(AddOrUpdateMetadata(m.name, ""))
         }
