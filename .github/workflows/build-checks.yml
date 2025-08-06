@@ -19,13 +19,6 @@ jobs:
   pre-deploy-checks:
     runs-on: ubuntu-latest
     steps:
-      - name: Wait for other workflows
-        uses: softprops/turnstyle@807f6009e7cee5c2c9faa41ccef03a8bb24b06ab
-        with:
-          poll-interval-seconds: 10
-        env:
-          GITHUB_TOKEN: ${{ secrets.WORKFLOW_PAT }}
-
       - name: Build lambda
         uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@main
         with:
