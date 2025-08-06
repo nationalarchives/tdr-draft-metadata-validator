@@ -26,8 +26,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_PAT }}
 
-      - uses: actions/checkout@v4
-
       - name: Build lambda
         uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@main
         with:
