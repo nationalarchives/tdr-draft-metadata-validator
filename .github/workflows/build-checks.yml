@@ -10,25 +10,13 @@ on:
       - 'project/**'
   workflow_dispatch:
 
-# Adding concurrency group to ensure only one workflow runs at a time
+# Using a shared concurrency group across all workflows
 concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
+  group: 'tdr-draft-metadata-validator-deploy'
   cancel-in-progress: false
 
 jobs:
-  # Check if any other workflows are running and wait for them to complete
-  wait-for-workflows:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Wait for other workflows
-        uses: softprops/turnstyle@807f6009e7cee5c2c9faa41ccef03a8bb24b06ab
-        with:
-          poll-interval-seconds: 10
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   pre-deploy-checks:
-    needs: wait-for-workflows
     uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@main
     with:
       repo-name: tdr-draft-metadata-validator
@@ -47,10 +35,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
-      - run: >
-          gh workflow run deploy-lambda.yml --ref ${{ github.ref_name }} -f environment=intg
-          -f to-deploy=${{ needs.pre-deploy-checks.outputs.next-version }}
-          -f lambda-name=draft-metadata-checks
+      - name: Deploy lambda
+        run: |
+          gh workflow run deploy-lambda.yml --ref ${{ github.ref_name }} \
+          -f environment=intg \
+          -f to-deploy=${{ needs.pre-deploy-checks.outputs.next-version }} \
+          -f lambda-name=draft-metadata-checks \
           -f deployment-package=draft-metadata-checks.jar
         env:
           GITHUB_TOKEN: ${{ secrets.WORKFLOW_PAT }}
