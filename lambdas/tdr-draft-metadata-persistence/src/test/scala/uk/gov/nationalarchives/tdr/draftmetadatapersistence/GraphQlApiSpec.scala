@@ -6,20 +6,17 @@ import com.nimbusds.oauth2.sdk.token.BearerAccessToken
 import com.typesafe.scalalogging.Logger
 import graphql.codegen.AddOrUpdateBulkFileMetadata.addOrUpdateBulkFileMetadata.AddOrUpdateBulkFileMetadata
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
-import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
-import graphql.codegen.GetCustomMetadata.{customMetadata => cm}
 import graphql.codegen.GetFilesWithUniqueAssetIdKey.getFilesWithUniqueAssetIdKey.GetConsignment
 import graphql.codegen.GetFilesWithUniqueAssetIdKey.{getFilesWithUniqueAssetIdKey => uaik}
 import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
 import graphql.codegen.UpdateConsignmentStatus.{updateConsignmentStatus => ucs}
-import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata, DataType}
+import graphql.codegen.types.{AddOrUpdateFileMetadata, AddOrUpdateMetadata}
 import org.mockito.scalatest.MockitoSugar
 import org.scalatest.EitherValues
 import org.scalatest.flatspec.AnyFlatSpec
 import org.scalatest.matchers.should.Matchers
 import sangria.ast.Document
 import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend}
-import uk.gov.nationalarchives.draftmetadata.TestUtils
 import uk.gov.nationalarchives.tdr.GraphQLClient.Extensions
 import uk.gov.nationalarchives.tdr.draftmetadatapersistence.grapgql.{FileDetail, GraphQlApi}
 import uk.gov.nationalarchives.tdr.error.GraphQlError
@@ -41,50 +38,10 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   implicit val tdrKeycloakDeployment: TdrKeycloakDeployment = TdrKeycloakDeployment("authUrl", "realm", 60)
 
   private val consignmentId = UUID.randomUUID()
-  private val customMetadataClient: GraphQLClient[cm.Data, cm.Variables] = mock[GraphQLClient[cm.Data, cm.Variables]]
   private val addOrUpdateBulkFileMetadataClient = mock[GraphQLClient[afm.Data, afm.Variables]]
   private val keycloak = mock[KeycloakUtils]
   private val updateConsignmentMetadataSchemaLibraryVersion = mock[GraphQLClient[ucslv.Data, ucslv.Variables]]
   private val getFilesUniquesAssetIdKey = mock[GraphQLClient[uaik.Data, uaik.Variables]]
-
-  val customMetadata: List[CustomMetadata] = List(
-    TestUtils.createCustomMetadata("ClosureType", "Closure status", 1, DataType.Text),
-    TestUtils.createCustomMetadata("ClosurePeriod", "Closure period", 2, DataType.Integer)
-  )
-
-  "getCustomMetadata" should "throw an exception when no custom metadata are found" in {
-    val api = getGraphQLAPI
-    val graphQlError = GraphQLClient.Error("Unable to get custom metadata", Nil, Nil, Some(Extensions(Some("NOT_AUTHORISED"))))
-
-    doAnswer(() => Future(new BearerAccessToken("token")))
-      .when(keycloak)
-      .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
-
-    doAnswer(() => Future(GraphQlResponse[cm.Data](None, List(GraphQlError(graphQlError)))))
-      .when(customMetadataClient)
-      .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[cm.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
-
-    val exception = intercept[RuntimeException] {
-      api.getCustomMetadata(consignmentId, "secret").unsafeRunSync()
-    }
-    exception.getMessage should equal(s"Unable to get custom metadata")
-  }
-
-  "getCustomMetadata" should "return the custom metadata" in {
-    val api = getGraphQLAPI
-
-    doAnswer(() => Future(new BearerAccessToken("token")))
-      .when(keycloak)
-      .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
-
-    doAnswer(() => Future(GraphQlResponse[cm.Data](Option(cm.Data(customMetadata)), Nil)))
-      .when(customMetadataClient)
-      .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[cm.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
-
-    val response = api.getCustomMetadata(consignmentId, "secret").unsafeRunSync()
-
-    response should equal(customMetadata)
-  }
 
   "getFilesWithUniqueAssetIdKey" should "return the files with unique asset id" in {
     val api = getGraphQLAPI
@@ -183,7 +140,6 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
   private def getGraphQLAPI = {
     new GraphQlApi(
       keycloak,
-      customMetadataClient,
       addOrUpdateBulkFileMetadataClient,
       getFilesUniquesAssetIdKey,
       updateConsignmentMetadataSchemaLibraryVersion
