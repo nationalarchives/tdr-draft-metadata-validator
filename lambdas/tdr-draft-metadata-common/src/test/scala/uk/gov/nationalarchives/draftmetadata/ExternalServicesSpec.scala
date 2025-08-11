@@ -37,12 +37,6 @@ class ExternalServicesSpec extends AnyFlatSpec with BeforeAndAfterEach with Befo
   def graphqlOkJson(saveMetadata: Boolean = false, filesWithUniquesAssetIdKeyResponse: String = ""): Unit = {
     wiremockGraphqlServer.stubFor(
       post(urlEqualTo(graphQlPath))
-        .withRequestBody(containing("customMetadata"))
-        .willReturn(okJson(fromResource(s"json/custom_metadata.json").mkString))
-    )
-
-    wiremockGraphqlServer.stubFor(
-      post(urlEqualTo(graphQlPath))
         .withRequestBody(containing("updateConsignmentStatus"))
         .willReturn(ok("""{"data": {"updateConsignmentStatus": 1}}""".stripMargin))
     )

@@ -1,30 +1,8 @@
 package uk.gov.nationalarchives.draftmetadata
 
-import graphql.codegen.GetCustomMetadata.customMetadata.CustomMetadata
-import graphql.codegen.types.DataType
-import graphql.codegen.types.DataType.Text
-import graphql.codegen.types.PropertyType.Defined
-
 import java.util.UUID
 
 object TestUtils {
-
-  def createCustomMetadata(name: String, fullName: String, exportOrdinal: Int, dataType: DataType = Text, allowExport: Boolean = true, editable: Boolean = true): CustomMetadata =
-    CustomMetadata(
-      name,
-      None,
-      Some(fullName),
-      Defined,
-      Some("MandatoryClosure"),
-      dataType,
-      editable,
-      multiValue = false,
-      Some("Open"),
-      1,
-      Nil,
-      Option(exportOrdinal),
-      allowExport = allowExport
-    )
 
   def filesWithUniquesAssetIdKeyResponse(fileTestData: List[FileTestData]): String = {
     val getFilesData = fileTestData
