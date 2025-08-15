@@ -6,15 +6,15 @@ object Dependencies {
   private val mockitoScalaVersion = "2.0.0"
   private val circeVersion = "0.14.14"
 
-  val metadataSchemaVersion = "0.0.76"
+  val metadataSchemaVersion = "0.0.78"
 
   lazy val scalaCsv = "com.github.tototoshi" %% "scala-csv" % "2.0.0"
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.19"
-  lazy val metadataValidation = "uk.gov.nationalarchives" %% "tdr-metadata-validation" % "0.0.162" exclude ("uk.gov.nationalarchives", "da-metadata-schema")
+  lazy val metadataValidation = "uk.gov.nationalarchives" %% "tdr-metadata-validation" % "0.0.164" exclude ("uk.gov.nationalarchives", "da-metadata-schema")
   lazy val metadataSchema = "uk.gov.nationalarchives" %% "da-metadata-schema" % metadataSchemaVersion
   lazy val generatedGraphql = "uk.gov.nationalarchives" %% "tdr-generated-graphql" % "0.0.426"
-  lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.245"
-  lazy val authUtils = "uk.gov.nationalarchives" %% "tdr-auth-utils" % "0.0.252"
+  lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.246"
+  lazy val authUtils = "uk.gov.nationalarchives" %% "tdr-auth-utils" % "0.0.253"
   lazy val typeSafeConfig = "com.typesafe" % "config" % "1.4.4"
   lazy val awsLambda = "com.amazonaws" % "aws-lambda-java-core" % "1.3.0"
   lazy val awsLambdaJavaEvents = "com.amazonaws" % "aws-lambda-java-events" % "3.16.1"
