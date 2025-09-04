@@ -93,3 +93,8 @@ Unit tests are included to validate the core functionality of the Lambda. You ca
 ```
 sbt test
 ```
+
+## Notes
+The graphql input size has a limit of 8388608 bytes, which is approximately 8MB. Ensure that individual graphql input mutations do not exceed this limit to avoid errors during processing.
+
+If the graphql input mutation is larger than this limit, consider decreasing the `BATCH_SIZE_FOR_METADATA` value.
