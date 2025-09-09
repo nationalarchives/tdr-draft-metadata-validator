@@ -1,4 +1,0 @@
-﻿filename,filepath,date last modified,closure status,closure start date,closure period,foi exemption code,foi schedule date,is filename closed,alternate filename,description,is description closed,alternate description,language,date of the record,translated filename,former reference
-test3.txt,test/test3.txt,12/2/2345,Closed,,,,,No,,hhhhh,No,,English,,Crown copyright,,
-test1.txt,test/test1.txt,2024-03-26,Closed,1990-01-01,12;13;14,78;27(1);27(2),1990-01-01,Yes,asd,hello,No,,English,,,
-test2.txt,test/test2.txt,2024-03-26,Open,,,,,No,,sfsdfd,No,,English,,,
