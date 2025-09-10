@@ -62,8 +62,6 @@ If an error occurs during any validation step, there will be no further validati
 
 ## Deployment
 
-This Lambda function is designed to be deployed as a docker image within the AWS ecosystem. The necessary infrastructure, such as S3 buckets, database connections, and environment configurations, should be pre-configured.
-
 ### Prerequisites
 
 - **AWS S3**: An S3 bucket for storing the consignment's metadata file and any error reports.
