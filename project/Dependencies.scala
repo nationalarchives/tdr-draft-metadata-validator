@@ -17,8 +17,8 @@ object Dependencies {
   lazy val typeSafeConfig = "com.typesafe" % "config" % "1.4.5"
   lazy val awsLambda = "com.amazonaws" % "aws-lambda-java-core" % "1.4.0"
   lazy val awsLambdaJavaEvents = "com.amazonaws" % "aws-lambda-java-events" % "3.16.1"
-  lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % "0.1.299"
-  lazy val awsSsm = "software.amazon.awssdk" % "ssm" % "2.33.9"
+  lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % "0.1.300"
+  lazy val awsSsm = "software.amazon.awssdk" % "ssm" % "2.33.10"
   lazy val log4catsSlf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
   lazy val slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.17"
   lazy val mockitoScala = "org.mockito" %% "mockito-scala" % mockitoScalaVersion
@@ -28,5 +28,5 @@ object Dependencies {
   lazy val circeParser = "io.circe" %% "circe-parser" % circeVersion
   lazy val circeGenericExtras = "io.circe" %% "circe-generic-extras" % "0.14.4"
   lazy val utf8Validator = "uk.gov.nationalarchives" % "utf8-validator" % "1.2"
-  lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
+  lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6"
 }
