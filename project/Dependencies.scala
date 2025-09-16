@@ -28,5 +28,5 @@ object Dependencies {
   lazy val circeParser = "io.circe" %% "circe-parser" % circeVersion
   lazy val circeGenericExtras = "io.circe" %% "circe-generic-extras" % "0.14.4"
   lazy val utf8Validator = "uk.gov.nationalarchives" % "utf8-validator" % "1.2"
-  lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.5"
+  lazy val scalaLogging = "com.typesafe.scala-logging" %% "scala-logging" % "3.9.6"
 }
