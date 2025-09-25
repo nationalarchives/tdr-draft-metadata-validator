@@ -5,7 +5,7 @@ object Dependencies {
   private val log4CatsVersion = "2.7.1"
   private val mockitoScalaVersion = "2.0.0"
   private val circeVersion = "0.14.14"
-  val metadataSchemaVersion = "0.0.91"
+  val metadataSchemaVersion = "0.0.92"
 
   lazy val scalaCsv = "com.github.tototoshi" %% "scala-csv" % "2.0.0"
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.19"
@@ -17,8 +17,8 @@ object Dependencies {
   lazy val typeSafeConfig = "com.typesafe" % "config" % "1.4.5"
   lazy val awsLambda = "com.amazonaws" % "aws-lambda-java-core" % "1.4.0"
   lazy val awsLambdaJavaEvents = "com.amazonaws" % "aws-lambda-java-events" % "3.16.1"
-  lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % "0.1.303"
-  lazy val awsSsm = "software.amazon.awssdk" % "ssm" % "2.34.0"
+  lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % "0.1.304"
+  lazy val awsSsm = "software.amazon.awssdk" % "ssm" % "2.34.3"
   lazy val log4catsSlf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
   lazy val slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.17"
   lazy val mockitoScala = "org.mockito" %% "mockito-scala" % mockitoScalaVersion
