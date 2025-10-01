@@ -4,7 +4,7 @@ object Dependencies {
 
   private val log4CatsVersion = "2.7.1"
   private val mockitoScalaVersion = "2.0.0"
-  private val circeVersion = "0.14.14"
+  private val circeVersion = "0.14.15"
   val metadataSchemaVersion = "0.0.93"
 
   lazy val scalaCsv = "com.github.tototoshi" %% "scala-csv" % "2.0.0"
