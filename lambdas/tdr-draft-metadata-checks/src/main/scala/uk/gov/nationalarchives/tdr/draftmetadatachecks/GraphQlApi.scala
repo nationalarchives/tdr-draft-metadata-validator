@@ -70,7 +70,6 @@ case class FileDetail(fileId: UUID, fileName: Option[String], lastModifiedDate: 
     metadataField match {
       case "file_name"          => fileName.getOrElse("")
       case "date_last_modified" => lastModifiedDate.map(_.format(dateTimeFormatter)).getOrElse("")
-      case "rights_copyright"   => "Crown copyright" // Should always be this whilst set as a System property
     }
   }
 }
