@@ -1,7 +1,7 @@
 import Dependencies.*
 import sbtassembly.AssemblyPlugin
 
-ThisBuild / scalaVersion := "2.13.16"
+ThisBuild / scalaVersion := "2.13.17"
 ThisBuild / version := "0.1.0-SNAPSHOT"
 ThisBuild / organization := "uk.gov.nationalarchives"
 
@@ -21,7 +21,6 @@ val commonMergeStrategy: String => sbtassembly.MergeStrategy = {
   case "reference.conf"                              => MergeStrategy.concat
   case x                                             => MergeStrategy.first
 }
-
 
 // Common assembly merge strategy
 ThisBuild / assembly / assemblyMergeStrategy := {
@@ -74,7 +73,6 @@ lazy val tdrDraftMetadataCommon = (project in file("lambdas/tdr-draft-metadata-c
     assembly / skip := true
   )
 
-
 lazy val tdrDraftMetadataPersistence = (project in file("lambdas/tdr-draft-metadata-persistence"))
   .enablePlugins(AssemblyPlugin)
   .dependsOn(tdrDraftMetadataCommon % "test->test;compile->compile")
@@ -87,9 +85,9 @@ lazy val tdrDraftMetadataPersistence = (project in file("lambdas/tdr-draft-metad
     assembly / skip := false,
     assembly / assemblyJarName := "draft-metadata-persistence.jar",
     assembly / assemblyMergeStrategy := {
-      case PathList("validation-messages", _ @_*)        => MergeStrategy.discard
-      case x                                            => commonMergeStrategy(x)
-   }
+      case PathList("validation-messages", _ @_*) => MergeStrategy.discard
+      case x                                      => commonMergeStrategy(x)
+    }
   )
 
 lazy val tdrDraftMetadataChecks = (project in file("lambdas/tdr-draft-metadata-checks"))
