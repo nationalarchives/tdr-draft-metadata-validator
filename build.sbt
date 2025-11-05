@@ -107,25 +107,10 @@ lazy val tdrDraftMetadataChecks = (project in file("lambdas/tdr-draft-metadata-c
     }.taskValue
   )
 
-
-lazy val tdrDraftMetadataValidator = (project in file("lambdas/tdr-draft-metadata-validator"))
-  .enablePlugins(AssemblyPlugin)
-  .dependsOn(tdrDraftMetadataCommon % "test->test;compile->compile")
-  .settings(
-    name := "tdr-draft-metadata-validator",
-    assembly / skip := false,
-    assembly / assemblyJarName := "tdr-draft-metadata-validator.jar",
-    Compile / resourceGenerators += Def.task {
-      val file = (Compile / resourceManaged).value / "metadata-schema-version.conf"
-      IO.write(file, "metadataSchemaVersion = \"" + metadataSchemaVersion + "\"")
-      Seq(file)
-    }.taskValue
-  )
-
 // Root: disable assembly
 lazy val root = (project in file("."))
   .disablePlugins(AssemblyPlugin)
-  .aggregate(tdrDraftMetadataCommon, tdrDraftMetadataPersistence, tdrDraftMetadataValidator, tdrDraftMetadataChecks)
+  .aggregate(tdrDraftMetadataCommon, tdrDraftMetadataPersistence, tdrDraftMetadataChecks)
   .settings(
     name := "tdr-draft-metadata-validator-root",
     publish / skip := true,

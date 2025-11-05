@@ -1,4 +1,0 @@
-filename,filepath,date last modified,closure status,closure period,Extra column
-file1.jpg,aa/file.jpg,2020-05-29,Closed,10,extra
-file2.jpg,aa/file.jpg,2020-05-29,Open,,extra
-file3.jpg,aa/file.jpg,2020-05-29,Open,,extra
