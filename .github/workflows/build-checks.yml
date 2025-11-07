@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   pre-deploy-checks:
-    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@main
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@1c56dd1e838340ab53c7dc55dbbb974a062a6ae9 # v0.0.6
     with:
       repo-name: tdr-draft-metadata-validator
       lambda-name: draft-metadata-checks
@@ -34,7 +34,7 @@ jobs:
     needs: pre-deploy-checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
       - name: Deploy lambda
         run: |
           gh workflow run deploy-lambda.yml --ref ${{ github.ref_name }} \
