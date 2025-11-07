@@ -5,11 +5,11 @@ object Dependencies {
   private val log4CatsVersion = "2.7.1"
   private val mockitoScalaVersion = "2.0.0"
   private val circeVersion = "0.14.15"
-  val metadataSchemaVersion = "0.0.99"
+  val metadataSchemaVersion = "0.0.100"
 
   lazy val scalaCsv = "com.github.tototoshi" %% "scala-csv" % "2.0.0"
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.19"
-  lazy val metadataValidation = "uk.gov.nationalarchives" %% "tdr-metadata-validation" % "0.0.185" exclude ("uk.gov.nationalarchives", "da-metadata-schema")
+  lazy val metadataValidation = "uk.gov.nationalarchives" %% "tdr-metadata-validation" % "0.0.186" exclude ("uk.gov.nationalarchives", "da-metadata-schema")
   lazy val metadataSchema = "uk.gov.nationalarchives" %% "da-metadata-schema" % metadataSchemaVersion
   lazy val generatedGraphql = "uk.gov.nationalarchives" %% "tdr-generated-graphql" % "0.0.438"
   lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.256"
