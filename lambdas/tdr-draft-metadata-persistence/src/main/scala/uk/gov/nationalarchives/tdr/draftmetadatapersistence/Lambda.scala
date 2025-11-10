@@ -95,7 +95,7 @@ class Lambda {
 
   private def extractMetadataPersistorParameters(input: util.Map[String, Object]): MetadataPersistorParameters = {
     val inputParameters = input match {
-      case stepFunctionInput if stepFunctionInput.containsKey("consignmentId") => stepFunctionInput
+      case stepFunctionInput if stepFunctionInput.containsKey("consignmentId")        => stepFunctionInput
       case apiProxyRequestInput if apiProxyRequestInput.containsKey("pathParameters") =>
         apiProxyRequestInput.get("pathParameters").asInstanceOf[util.Map[String, Object]]
     }

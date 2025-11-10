@@ -115,7 +115,7 @@ class Lambda {
 
     validationProgram.handleError({
       case validationExecutionError: ValidationExecutionError => validationExecutionError.errorFileData
-      case err =>
+      case err                                                =>
         logger.error(s"Error doing validation for consignment:${validationParameters.consignmentId.toString} :${err.getMessage}")
         val singleError = Error("Validation", validationParameters.consignmentId.toString, "UNKNOWN", err.getMessage)
         val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
@@ -150,7 +150,7 @@ class Lambda {
 
   private def validateRequired(csvData: List[FileRow], validationParameters: ValidationParameters): IO[Unit] = {
     validationParameters.requiredSchema match {
-      case None => IO.unit
+      case None         => IO.unit
       case Some(schema) =>
         val validationErrors = schemaValidate(Set(schema), List(csvData.head), validationParameters)
         if (validationErrors.nonEmpty) {
@@ -302,7 +302,7 @@ class Lambda {
 
   private def extractConsignmentId(input: util.Map[String, Object]): String = {
     val inputParameters = input match {
-      case stepFunctionInput if stepFunctionInput.containsKey("consignmentId") => stepFunctionInput
+      case stepFunctionInput if stepFunctionInput.containsKey("consignmentId")        => stepFunctionInput
       case apiProxyRequestInput if apiProxyRequestInput.containsKey("pathParameters") =>
         apiProxyRequestInput.get("pathParameters").asInstanceOf[util.Map[String, Object]]
     }
