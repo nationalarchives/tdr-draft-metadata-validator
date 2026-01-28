@@ -116,7 +116,7 @@ class Lambda {
 
     validationProgram.handleErrorWith({
       case validationExecutionError: ValidationExecutionError => IO.pure(validationExecutionError.errorFileData)
-      case err =>
+      case err                                                =>
         for {
           _ <- logger.error(s"Error doing validation for consignment:${validationParameters.consignmentId.toString} :${err.getMessage}")
         } yield {
