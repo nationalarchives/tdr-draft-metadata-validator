@@ -85,8 +85,9 @@ class Lambda {
 
     resultIO
       .handleErrorWith(error => {
-        logger.error(s"Unexpected metadata validation problem:${error.getMessage}")
-        IO.pure(responseData(extractConsignmentId(input), "failure", SCHEMA_LIBRARY_VERSION_READ_FAILURE_MESSAGE, error.getMessage))
+        for {
+          _ <- logger.error(s"Unexpected metadata validation problem:${error.getMessage}")
+        } yield responseData(extractConsignmentId(input), "failure", SCHEMA_LIBRARY_VERSION_READ_FAILURE_MESSAGE, error.getMessage)
       })
       .unsafeRunSync()(cats.effect.unsafe.implicits.global)
       .asJava
@@ -113,13 +114,16 @@ class Lambda {
       _ <- validateRows(validationParameters, csvData, filesWithUniqueAssetIdKey, validationParameters.checkAgainstUploadedRecords)
     } yield ErrorFileData(validationParameters, FileError.None, List.empty[ValidationErrors])
 
-    validationProgram.handleError({
-      case validationExecutionError: ValidationExecutionError => validationExecutionError.errorFileData
+    validationProgram.handleErrorWith({
+      case validationExecutionError: ValidationExecutionError => IO.pure(validationExecutionError.errorFileData)
       case err                                                =>
-        logger.error(s"Error doing validation for consignment:${validationParameters.consignmentId.toString} :${err.getMessage}")
-        val singleError = Error("Validation", validationParameters.consignmentId.toString, "UNKNOWN", err.getMessage)
-        val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
-        ErrorFileData(validationParameters, FileError.UNKNOWN, List(validationErrors))
+        for {
+          _ <- logger.error(s"Error doing validation for consignment:${validationParameters.consignmentId.toString} :${err.getMessage}")
+        } yield {
+          val singleError = Error("Validation", validationParameters.consignmentId.toString, "UNKNOWN", err.getMessage)
+          val validationErrors = ValidationErrors(validationParameters.consignmentId.toString, Set(singleError))
+          ErrorFileData(validationParameters, FileError.UNKNOWN, List(validationErrors))
+        }
     })
   }
 

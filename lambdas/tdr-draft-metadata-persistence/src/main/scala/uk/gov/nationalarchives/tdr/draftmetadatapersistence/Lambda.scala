@@ -66,8 +66,9 @@ class Lambda {
 
     resultIO
       .handleErrorWith(error => {
-        logger.error(s"Unexpected metadata persistence problem:${error.getMessage}")
-        IO.pure(responseData(extractConsignmentId(input), "failure", error.getMessage))
+        for {
+          _ <- logger.error(s"Unexpected metadata persistence problem:${error.getMessage}")
+        } yield responseData(extractConsignmentId(input), "failure", error.getMessage)
       })
       .unsafeRunSync()(cats.effect.unsafe.implicits.global)
       .asJava
