@@ -24,11 +24,12 @@ on:
         default: 'draft-metadata-persistence.jar'
 
 run-name: Deploying ${{inputs.lambda-name}} ${{inputs.to-deploy}} to ${{inputs.environment}}
-permissions:
-  id-token: write
-  contents: write
+permissions: {}
 jobs:
   deploy:
+    permissions:
+      id-token: write
+      contents: write
     uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml@683912c0ebb8d5d6edd15a222677395e95d12ce0 # v0.0.24
     with:
       lambda-name: ${{ github.event.inputs.lambda-name }}
