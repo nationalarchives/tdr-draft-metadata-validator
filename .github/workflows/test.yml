@@ -5,12 +5,13 @@ on:
     branches-ignore:
       - main
       - release-*
-permissions:
-  id-token: write
-  contents: write
+permissions: {}
 jobs:
   test:
-    uses: nationalarchives/tdr-github-actions/.github/workflows/tdr_test.yml@f52edf22c81f568202369a3b31da0277541b0507 # v0.0.11
+    permissions:
+      id-token: write
+      contents: write
+    uses: nationalarchives/tdr-github-actions/.github/workflows/tdr_test.yml@27efbc03aaaa9696eea85ab7a9363d6f92733471 # v0.0.34
     with:
       repo-name: tdr-draft-metadata-validator
       test-command: |
