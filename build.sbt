@@ -79,7 +79,6 @@ lazy val tdrDraftMetadataPersistence = (project in file("lambdas/tdr-draft-metad
   .settings(
     name := "tdr-draft-metadata-persistence",
     excludeDependencies ++= Seq(
-      ExclusionRule("com.networknt", "json-schema-validator"),
       ExclusionRule("com.networknt", "openapi-parser")
     ),
     assembly / skip := false,
