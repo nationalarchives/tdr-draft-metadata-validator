@@ -20,7 +20,7 @@ permissions: {}
 jobs:
   pre-deploy-persistence:
     permissions: { contents: write, id-token: write }
-    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@27efbc03aaaa9696eea85ab7a9363d6f92733471 # v0.0.34
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@8f8b90556173b43554c22d6b5f192fe9f26ad8ab # v0.0.36
     with:
       repo-name: tdr-draft-metadata-validator
       lambda-name: draft-metadata-persistence
