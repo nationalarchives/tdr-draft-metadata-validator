@@ -132,8 +132,8 @@ class LambdaSpec extends ExternalServicesSpec {
     val filePath = getClass.getResource(s"/$fileName").getFile
     val bytes = Files.readAllBytes(Paths.get(filePath))
     wiremockS3.stubFor(
-      get(urlEqualTo(s"/$consignmentId/sample.csv"))
-        .willReturn(aResponse().withStatus(200).withBody(bytes))
+      get(urlPathEqualTo(s"/$consignmentId/sample.csv"))
+        .willReturn(aResponse().withStatus(200).withHeader("Content-Length", bytes.length.toString).withBody(bytes))
     )
   }
 
