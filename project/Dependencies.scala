@@ -9,7 +9,7 @@ object Dependencies {
 
   lazy val scalaCsv = "com.github.tototoshi" %% "scala-csv" % "2.0.0"
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.20"
-  lazy val metadataValidation = "uk.gov.nationalarchives" %% "tdr-metadata-validation" % "0.0.232" exclude ("uk.gov.nationalarchives", "da-metadata-schema")
+  lazy val metadataValidation = "uk.gov.nationalarchives" %% "tdr-metadata-validation" % "0.0.234" exclude ("uk.gov.nationalarchives", "da-metadata-schema")
   lazy val metadataSchema = "uk.gov.nationalarchives" %% "da-metadata-schema" % metadataSchemaVersion
   lazy val generatedGraphql = "uk.gov.nationalarchives" %% "tdr-generated-graphql" % "0.0.477"
   lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.302"
@@ -17,8 +17,8 @@ object Dependencies {
   lazy val typeSafeConfig = "com.typesafe" % "config" % "1.4.9"
   lazy val awsLambda = "com.amazonaws" % "aws-lambda-java-core" % "1.4.0"
   lazy val awsLambdaJavaEvents = "com.amazonaws" % "aws-lambda-java-events" % "3.16.1"
-  lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % "0.1.334"
-  lazy val awsSsm = "software.amazon.awssdk" % "ssm" % "2.46.10"
+  lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % "0.1.336"
+  lazy val awsSsm = "software.amazon.awssdk" % "ssm" % "2.46.11"
   lazy val log4catsSlf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
   lazy val slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.18"
   lazy val mockitoScala = "org.mockito" %% "mockito-scala" % mockitoScalaVersion
