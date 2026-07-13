@@ -13,6 +13,7 @@ import org.mockito.MockitoSugar.mock
 import org.scalatest.matchers.must.Matchers.{be, convertToAnyMustWrapper, include}
 import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
 import uk.gov.nationalarchives.draftmetadata.{ExternalServicesSpec, FileTestData, TestUtils}
+import uk.gov.nationalarchives.tdr.draftmetadatapersistence.grapgql.GraphqlRequestModel._
 
 import java.text.SimpleDateFormat
 import java.util.UUID
