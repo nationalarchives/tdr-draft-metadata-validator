@@ -13,9 +13,7 @@ import org.mockito.MockitoSugar.mock
 import org.scalatest.matchers.must.Matchers.{be, convertToAnyMustWrapper, include}
 import org.scalatest.matchers.should.Matchers.{convertToAnyShouldWrapper, equal}
 import uk.gov.nationalarchives.draftmetadata.{ExternalServicesSpec, FileTestData, TestUtils}
-import uk.gov.nationalarchives.tdr.draftmetadatapersistence.grapgql.GraphqlRequestModel._
 
-import java.nio.file.{Files, Paths}
 import java.text.SimpleDateFormat
 import java.util.UUID
 import scala.jdk.CollectionConverters.MapHasAsJava
@@ -129,8 +127,7 @@ class LambdaSpec extends ExternalServicesSpec {
   }
 
   def mockS3GetResponse(fileName: String): StubMapping = {
-    val filePath = getClass.getResource(s"/$fileName").getFile
-    val bytes = Files.readAllBytes(Paths.get(filePath))
+    val bytes = getClass.getResourceAsStream(s"/$fileName").readAllBytes()
     wiremockS3.stubFor(
       get(urlPathEqualTo(s"/$consignmentId/sample.csv"))
         .willReturn(aResponse().withStatus(200).withHeader("Content-Length", bytes.length.toString).withBody(bytes))
