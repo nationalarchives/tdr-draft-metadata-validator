@@ -15,6 +15,6 @@ jobs:
     with:
       repo-name: tdr-draft-metadata-validator
       test-command: |
-        sbt scalafmtCheckAll test
+        sbt "scalafmtCheckAll; test"
     secrets:
       SLACK_WEBHOOK: ${{ secrets.SLACK_WEBHOOK }}
