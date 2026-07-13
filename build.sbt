@@ -70,6 +70,7 @@ lazy val tdrDraftMetadataCommon = (project in file("lambdas/tdr-draft-metadata-c
       mockitoScalaTest % Test,
       scalaLogging
     ),
+    dependencyOverrides += "org.bouncycastle" % "bcprov-jdk18on" % "1.84",
     assembly / skip := true
   )
 
