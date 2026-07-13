@@ -32,6 +32,14 @@ ThisBuild / assembly / assemblyMergeStrategy := {
   case _                                         => MergeStrategy.first
 }
 
+// Ensure patched, CVE-free versions of bouncycastle are used across all modules,
+// even where they're pulled in transitively.
+ThisBuild / dependencyOverrides ++= Seq(
+  "org.bouncycastle" % "bcprov-jdk18on" % "1.85",
+  "org.bouncycastle" % "bcpkix-jdk18on" % "1.85",
+  "org.bouncycastle" % "bcutil-jdk18on" % "1.85"
+)
+
 // Common test settings
 ThisBuild / Test / fork := true
 ThisBuild / Test / envVars := Map(
@@ -70,7 +78,6 @@ lazy val tdrDraftMetadataCommon = (project in file("lambdas/tdr-draft-metadata-c
       mockitoScalaTest % Test,
       scalaLogging
     ),
-    dependencyOverrides += "org.bouncycastle" % "bcprov-jdk18on" % "1.84",
     assembly / skip := true
   )
 
