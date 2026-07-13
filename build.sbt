@@ -104,6 +104,8 @@ lazy val tdrDraftMetadataChecks = (project in file("lambdas/tdr-draft-metadata-c
     }.taskValue
   )
 
+ThisBuild / dependencyOverrides += "org.bouncycastle" % "bcprov-jdk18on" % "1.78.1"
+
 // Root: disable assembly
 lazy val root = (project in file("."))
   .disablePlugins(AssemblyPlugin)
