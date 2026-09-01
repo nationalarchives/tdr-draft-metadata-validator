@@ -30,7 +30,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml@f318ce8a5d99c08b1235663f97fdb1b35844674e # v0.0.39
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_deploy.yml@f4d7086babd2c5156dd483d445e4500a603d8dc4 # v0.0.42
     with:
       lambda-name: ${{ github.event.inputs.lambda-name }}
       deployment-package: ${{ github.event.inputs.deployment-package }}
