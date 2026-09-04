@@ -34,4 +34,26 @@ class MetadataUtilsSpec extends AnyFlatSpec with BeforeAndAfterEach {
 
     filterProtectedFields should be(expected)
   }
+
+  "filterProtectedFields" should "override 'held by' value for a retained record" in {
+    val clientFileId = "test/test.docx"
+    val persistenceFileId = "16b2f65c-ec50-494b-824b-f8c08e6b575c"
+    val fileWithUniqueAssetIdKey = Map(clientFileId -> TestFileDetail(UUID.fromString(persistenceFileId), None, None))
+    val fileRows = List(
+      FileRow(clientFileId, List(Metadata("ClosurePeriod", "10"), Metadata("SHA256ClientSideChecksum", "ChecksumValue"), Metadata("ClosureStatus", "Retained")))
+    )
+
+    val filterProtectedFields = MetadataUtils.filterProtectedFields(fileRows, fileWithUniqueAssetIdKey)(_.fileId)
+    val expected: List[AddOrUpdateFileMetadata] = List(
+      AddOrUpdateFileMetadata(
+        UUID.fromString(persistenceFileId),
+        List(
+          AddOrUpdateMetadata("ClosurePeriod", "10"),
+          AddOrUpdateMetadata("ClosureStatus", "Retained"),
+          AddOrUpdateMetadata("HeldBy", "held by value for retained record"))
+      )
+    )
+
+    filterProtectedFields should be(expected)
+  }
 }

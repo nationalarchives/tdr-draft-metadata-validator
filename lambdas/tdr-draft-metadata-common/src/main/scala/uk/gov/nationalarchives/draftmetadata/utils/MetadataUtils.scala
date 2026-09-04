@@ -17,7 +17,7 @@ object MetadataUtils {
   private val propertyToTdrDataLoadHeaderMapper = config.inputToPropertyMapper("tdrDataLoadHeader")
   private val systemProperties = config.getPropertiesByPropertyType("System")
 
-  /** Filters out protected metadata fields and converts file rows to bulk file metadata input format.
+  /** Filters out protected metadata fields, overrides the ''held by'' property and converts file rows to bulk file metadata input format.
     *
     * @param fileRows
     *   List of file rows with their metadata
@@ -37,9 +37,18 @@ object MetadataUtils {
     val protectedMetadataProperties = systemProperties.map(p => tdrDataLoadHeaderToPropertyMapper(p))
     val updatedFileRows = fileRows.map { fileMetadata =>
       val filteredMetadata = fileMetadata.metadata.filterNot(metadata => protectedMetadataProperties.contains(metadata.name))
-      fileMetadata.copy(metadata = filteredMetadata)
+      fileMetadata.copy(metadata = overrideHeldByProperty(filteredMetadata))
     }
     convertDataToBulkFileMetadataInput(updatedFileRows, filesWithUniqueAssetIdKey)(fileIdExtractor)
+  }
+
+  //Held By is set to a default value, if the record is retained then different value should be set for the property
+  private def overrideHeldByProperty(originalMetadata: List[Metadata]): List[Metadata] = {
+    val heldByOverride = originalMetadata.find(m => m.name == "ClosureStatus" && m.value == "Retained") match {
+      case Some(_) => List(Metadata("HeldBy", "held by value for retained record"))
+      case _       => Nil
+    }
+    originalMetadata ++ heldByOverride
   }
 
   /** Converts file rows data to bulk file metadata input format.
