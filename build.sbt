@@ -35,7 +35,7 @@ ThisBuild / assembly / assemblyMergeStrategy := {
 // Ensure patched, CVE-free versions of bouncycastle are used across all modules,
 // even where they're pulled in transitively.
 ThisBuild / dependencyOverrides ++= Seq(
-  "org.bouncycastle" % "bcprov-jdk18on" % "1.85",
+  "org.bouncycastle" % "bcprov-jdk18on" % "1.85.2",
   "org.bouncycastle" % "bcpkix-jdk18on" % "1.85",
   "org.bouncycastle" % "bcutil-jdk18on" % "1.85"
 )
