@@ -143,15 +143,13 @@ class Lambda {
     } yield result
   }
 
-  /**
-   * To allow 'Retained' records to be sent to Discovery by down stream systems, need to set held_by metadata field for any records with a closure type is 'Retained for security'.
-   * to a default value of "Creating government department or its successor, not available at The National Archives"
-   * TDRD-1820
-   */
+  /** To allow 'Retained' records to be sent to Discovery by down stream systems, need to set held_by metadata field for any records with a closure type is 'Retained for security'.
+    * to a default value of "Creating government department or its successor, not available at The National Archives" TDRD-1820
+    */
   private def addOrReplaceRetainedHeldByMetadata(fileData: List[FileRow]): List[FileRow] = {
     fileData.map { fileRow =>
       val closureStatus = fileRow.metadata.find(_.name == MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.closure_type))
-        closureStatus match {
+      closureStatus match {
         case Some(closureStatusValue) if closureStatusValue.value == "Retained for security" =>
           val tdrDataLoaderHeldByKey = MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.held_by)
           val retainedHeldByDefault = "Creating government department or its successor, not available at The National Archives"
