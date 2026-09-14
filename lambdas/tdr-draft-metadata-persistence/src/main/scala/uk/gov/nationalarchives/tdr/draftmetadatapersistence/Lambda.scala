@@ -150,7 +150,7 @@ class Lambda {
     fileData.map { fileRow =>
       val closureStatus = fileRow.metadata.find(_.name == MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.closure_type))
       closureStatus match {
-        case Some(value) if value.value == "Retained for security" =>
+        case Some(closureType) if closureType.value == "Retained for security" =>
           val tdrDataLoaderHeldByKey = MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.held_by)
           val retainedHeldByDefault = "Creating government department or its successor, not available at The National Archives"
           val newMetadata = fileRow.metadata.filterNot(_.name == tdrDataLoaderHeldByKey) :+ Metadata(tdrDataLoaderHeldByKey, retainedHeldByDefault)
