@@ -5,7 +5,21 @@ object Dependencies {
   private val log4CatsVersion = "2.8.0"
   private val mockitoScalaVersion = "2.2.1"
   private val circeVersion = "0.14.16"
-  val metadataSchemaVersion = "0.0.138"
+  val metadataSchemaVersion = "0.0.140"
+  private val nettyVersion = "4.1.137.Final"
+
+  lazy val nettyOverrides: Seq[ModuleID] = Seq(
+    "netty-buffer",
+    "netty-codec",
+    "netty-codec-http",
+    "netty-codec-http2",
+    "netty-common",
+    "netty-handler",
+    "netty-resolver",
+    "netty-transport",
+    "netty-transport-classes-epoll",
+    "netty-transport-native-unix-common"
+  ).map("io.netty" % _ % nettyVersion)
 
   lazy val scalaCsv = "com.github.tototoshi" %% "scala-csv" % "2.0.0"
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.20"

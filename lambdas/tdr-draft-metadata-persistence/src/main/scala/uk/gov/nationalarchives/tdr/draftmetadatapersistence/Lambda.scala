@@ -26,7 +26,9 @@ import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.draftmetadatapersistence.Lambda.{MetadataPersistorParameters, getFilePath}
 import uk.gov.nationalarchives.tdr.draftmetadatapersistence.grapgql.{FileDetail, GraphQlApi}
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
+import uk.gov.nationalarchives.tdr.schema.generated.BaseSchema
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
+import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 
 import java.net.URI
 import java.util
@@ -135,9 +137,27 @@ class Lambda {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     for {
       fileData <- IO(CSVHandler.loadCSV(getFilePath(draftMetadata), draftMetadata.clientAlternateKey, draftMetadata.persistenceAlternateKey, draftMetadata.uniqueAssetIdKey))
-      addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(fileData, filesWithUniqueAssetIdKey)(_.fileId)
+      dataWithRetainedHeldBy = addOrReplaceRetainedHeldByMetadata(fileData)
+      addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(dataWithRetainedHeldBy, filesWithUniqueAssetIdKey)(_.fileId)
       result <- writeMetadataToDatabase(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
     } yield result
+  }
+
+  /** To allow 'Retained' records to be sent to Discovery by down stream systems, need to set held_by metadata field for any records with a closure type is 'Retained for security'.
+    * to a default value of "Creating government department or its successor, not available at The National Archives" TDRD-1820
+    */
+  private def addOrReplaceRetainedHeldByMetadata(fileData: List[FileRow]): List[FileRow] = {
+    fileData.map { fileRow =>
+      val closureStatus = fileRow.metadata.find(_.name == MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.closure_type))
+      closureStatus match {
+        case Some(closureType) if closureType.value == "Retained for security" =>
+          val tdrDataLoaderHeldByKey = MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.held_by)
+          val retainedHeldByDefault = "Creating government department or its successor, not available at The National Archives"
+          val newMetadata = fileRow.metadata.filterNot(_.name == tdrDataLoaderHeldByKey) :+ Metadata(tdrDataLoaderHeldByKey, retainedHeldByDefault)
+          fileRow.copy(metadata = newMetadata)
+        case _ => fileRow
+      }
+    }
   }
 
   private def writeMetadataToDatabase(consignmentId: UUID, clientSecret: String, metadata: List[AddOrUpdateFileMetadata]): IO[List[AddOrUpdateBulkFileMetadata]] = {
