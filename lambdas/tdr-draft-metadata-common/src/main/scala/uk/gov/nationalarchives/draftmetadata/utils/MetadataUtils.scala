@@ -13,7 +13,7 @@ object MetadataUtils {
   val dateTimeFormatter: DateTimeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd")
   private val config = ConfigUtils.loadConfiguration
   private val propertyTypeEvaluator = config.getPropertyType
-  val propertyToTdrDataLoaderHeaderMapper: String => String = config.propertyToOutputMapper("tdrDataLoadHeader")
+  val propertyToTdrDataLoadHeaderMapper: String => String = config.propertyToOutputMapper("tdrDataLoadHeader")
   private val tdrDataLoadHeaderToPropertyMapper = config.inputToPropertyMapper("tdrDataLoadHeader")
   private val systemProperties = config.getPropertiesByPropertyType("System")
 
@@ -34,7 +34,7 @@ object MetadataUtils {
       fileRows: List[FileRow],
       filesWithUniqueAssetIdKey: Map[String, F]
   )(fileIdExtractor: F => java.util.UUID): List[AddOrUpdateFileMetadata] = {
-    val protectedMetadataProperties = systemProperties.map(p => propertyToTdrDataLoaderHeaderMapper(p))
+    val protectedMetadataProperties = systemProperties.map(p => propertyToTdrDataLoadHeaderMapper(p))
     val updatedFileRows = fileRows.map { fileMetadata =>
       val filteredMetadata = fileMetadata.metadata.filterNot(metadata => protectedMetadataProperties.contains(metadata.name))
       fileMetadata.copy(metadata = filteredMetadata)

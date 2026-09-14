@@ -150,10 +150,10 @@ class Lambda {
    */
   private def addOrReplaceRetainedHeldByMetadata(fileData: List[FileRow]): List[FileRow] = {
     fileData.map { fileRow =>
-      val closureStatus = fileRow.metadata.find(_.name == MetadataUtils.propertyToTdrDataLoaderHeaderMapper(BaseSchema.closure_type))
+      val closureStatus = fileRow.metadata.find(_.name == MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.closure_type))
         closureStatus match {
         case Some(closureStatusValue) if closureStatusValue.value == "Retained for security" =>
-          val tdrDataLoaderHeldByKey = MetadataUtils.propertyToTdrDataLoaderHeaderMapper(BaseSchema.held_by)
+          val tdrDataLoaderHeldByKey = MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.held_by)
           val retainedHeldByDefault = "Creating government department or its successor, not available at The National Archives"
           val newMetadata = fileRow.metadata.filterNot(_.name == tdrDataLoaderHeldByKey) :+ Metadata(tdrDataLoaderHeldByKey, retainedHeldByDefault)
           fileRow.copy(metadata = newMetadata)
