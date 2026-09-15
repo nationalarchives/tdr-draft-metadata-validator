@@ -5,7 +5,7 @@ object Dependencies {
   private val log4CatsVersion = "2.8.0"
   private val mockitoScalaVersion = "2.2.1"
   private val circeVersion = "0.14.16"
-  val metadataSchemaVersion = "0.0.140"
+  val metadataSchemaVersion = "0.0.141"
   private val nettyVersion = "4.1.137.Final"
 
   lazy val nettyOverrides: Seq[ModuleID] = Seq(
