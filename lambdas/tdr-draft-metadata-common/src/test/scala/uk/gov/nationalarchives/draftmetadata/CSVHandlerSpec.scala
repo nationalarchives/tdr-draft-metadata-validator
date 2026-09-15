@@ -13,7 +13,7 @@ import java.nio.file.{Files, Path}
 
 class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
 
-  val filePath: String = getClass.getResource("/sample-for-csv-handler.csv").getPath
+  val filePath: String = resourceAsTempFile().toString
   val metadataNames: List[String] = List("Filename", "Filepath", "end_date", "ClosureStatus", "ClosurePeriod")
   implicit val metadataConfiguration: MetadataConfiguration = ConfigUtils.loadConfiguration
 
@@ -61,14 +61,24 @@ class CSVHandlerSpec extends AnyFlatSpec with BeforeAndAfterEach {
       List("file2.jpg", "Open", ""),
       List("file3.jpg", "Open", "")
     )
-    CSVHandler.writeCsv(metadata, getClass.getResource("/").getPath + "updated.csv")
+    val outputFile = Files.createTempFile("csv-handler-spec", "-updated.csv")
+    outputFile.toFile.deleteOnExit()
+    CSVHandler.writeCsv(metadata, outputFile.toString)
 
     val expected =
       """file1.jpg,Open,10
       |file2.jpg,Open,
       |file3.jpg,Open,
       |""".stripMargin
-    val actual = Files.readString(Path.of(getClass.getResource("/updated.csv").toURI)).replace("\r", "")
+    val actual = Files.readString(outputFile).replace("\r", "")
     actual should be(expected)
+  }
+
+  private def resourceAsTempFile(): Path = {
+    val resourceName = "sample-for-csv-handler.csv"
+    val tempFile = Files.createTempFile("csv-handler-spec", s"-$resourceName")
+    tempFile.toFile.deleteOnExit()
+    Files.copy(getClass.getResourceAsStream(s"/$resourceName"), tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING)
+    tempFile
   }
 }

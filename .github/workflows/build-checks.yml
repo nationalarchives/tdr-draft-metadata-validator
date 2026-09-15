@@ -20,7 +20,7 @@ permissions: {}
 jobs:
   pre-deploy-checks:
     permissions: { contents: write, id-token: write }
-    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@27efbc03aaaa9696eea85ab7a9363d6f92733471 # v0.0.34
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@f4d7086babd2c5156dd483d445e4500a603d8dc4 # v0.0.42
     with:
       repo-name: tdr-draft-metadata-validator
       lambda-name: draft-metadata-checks
@@ -38,7 +38,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions: { contents: write, id-token: write }
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Deploy lambda

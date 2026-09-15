@@ -32,6 +32,14 @@ ThisBuild / assembly / assemblyMergeStrategy := {
   case _                                         => MergeStrategy.first
 }
 
+// Ensure patched, CVE-free versions of bouncycastle are used across all modules,
+// even where they're pulled in transitively.
+ThisBuild / dependencyOverrides ++= Seq(
+  "org.bouncycastle" % "bcprov-jdk18on" % "1.85.2",
+  "org.bouncycastle" % "bcpkix-jdk18on" % "1.85",
+  "org.bouncycastle" % "bcutil-jdk18on" % "1.85"
+)
+
 // Common test settings
 ThisBuild / Test / fork := true
 ThisBuild / Test / envVars := Map(
@@ -83,6 +91,9 @@ lazy val tdrDraftMetadataPersistence = (project in file("lambdas/tdr-draft-metad
     ),
     assembly / skip := false,
     assembly / assemblyJarName := "draft-metadata-persistence.jar",
+    assembly / assemblyOutputPath := Def.uncached {
+      baseDirectory.value / "target" / "scala-2.13" / (assembly / assemblyJarName).value
+    },
     assembly / assemblyMergeStrategy := {
       case PathList("validation-messages", _ @_*) => MergeStrategy.discard
       case x                                      => commonMergeStrategy(x)
@@ -96,6 +107,9 @@ lazy val tdrDraftMetadataChecks = (project in file("lambdas/tdr-draft-metadata-c
     name := "tdr-draft-metadata-checks",
     assembly / skip := false,
     assembly / assemblyJarName := "draft-metadata-checks.jar",
+    assembly / assemblyOutputPath := Def.uncached {
+      baseDirectory.value / "target" / "scala-2.13" / (assembly / assemblyJarName).value
+    },
     assembly / assemblyMergeStrategy := commonMergeStrategy,
     Compile / resourceGenerators += Def.task {
       val file = (Compile / resourceManaged).value / "metadata-schema-version.conf"

@@ -12,7 +12,6 @@ import org.scalatest.matchers.must.Matchers.{be, convertToAnyMustWrapper}
 import org.scalatest.matchers.should.Matchers.convertToAnyShouldWrapper
 import uk.gov.nationalarchives.draftmetadata.TestUtils.{fileTestData, filesWithUniquesAssetIdKeyResponse}
 
-import java.nio.file.{Files, Paths}
 import java.text.SimpleDateFormat
 import java.util.Date
 import scala.io.Source
@@ -192,8 +191,7 @@ class LambdaSpec extends ExternalServicesSpec {
   }
 
   def mockS3GetResponse(fileName: String): StubMapping = {
-    val filePath = getClass.getResource(s"/$fileName").getFile
-    val bytes = Files.readAllBytes(Paths.get(filePath))
+    val bytes = getClass.getResourceAsStream(s"/$fileName").readAllBytes()
     wiremockS3.stubFor(
       get(urlPathEqualTo(s"/$consignmentId/sample.csv"))
         .willReturn(aResponse().withStatus(200).withHeader("Content-Length", bytes.length.toString).withBody(bytes))
