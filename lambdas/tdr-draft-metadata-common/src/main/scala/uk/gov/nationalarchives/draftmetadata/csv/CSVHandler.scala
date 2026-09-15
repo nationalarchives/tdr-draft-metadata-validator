@@ -1,8 +1,8 @@
 package uk.gov.nationalarchives.draftmetadata.csv
 
 import com.github.tototoshi.csv.{CSVReader, CSVWriter}
-import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils.MetadataConfiguration
+import uk.gov.nationalarchives.tdr.validation.schema.{FileRow, Metadata}
 
 import java.io.ByteArrayOutputStream
 import java.nio.file.{Files, Paths}

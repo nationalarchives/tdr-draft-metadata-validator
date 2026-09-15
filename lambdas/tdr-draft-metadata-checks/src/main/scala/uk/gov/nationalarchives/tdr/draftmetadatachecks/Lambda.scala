@@ -29,8 +29,7 @@ import uk.gov.nationalarchives.tdr.draftmetadatachecks.validations.FOIExemptionD
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition._
-import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
-import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
+import uk.gov.nationalarchives.tdr.validation.schema.{FileRow, JsonSchemaDefinition, Metadata, MetadataValidationJsonSchema}
 import uk.gov.nationalarchives.utf8.validator.Utf8Validator
 
 import java.io.FileInputStream
