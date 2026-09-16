@@ -28,7 +28,6 @@ import uk.gov.nationalarchives.tdr.draftmetadatapersistence.grapgql.{FileDetail,
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schema.generated.BaseSchema
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
-import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 import uk.gov.nationalarchives.tdr.validation.schema.{FileRow, Metadata}
 
 import java.net.URI
