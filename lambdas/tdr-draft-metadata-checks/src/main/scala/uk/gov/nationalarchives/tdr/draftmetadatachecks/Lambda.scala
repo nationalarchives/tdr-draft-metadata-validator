@@ -62,7 +62,7 @@ class Lambda {
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): java.util.Map[String, Object] = {
     val consignmentId = extractConsignmentId(input)
-    val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, RELATIONSHIP_SCHEMA)
+    val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, CLOSURE_SCHEMA_RETAINED, RELATIONSHIP_SCHEMA)
     val validationParameters: ValidationParameters = ValidationParameters(
       consignmentId = UUID.fromString(consignmentId),
       schemaToValidate = schemaToValidate,
