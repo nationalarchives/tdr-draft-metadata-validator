@@ -3,8 +3,7 @@ package uk.gov.nationalarchives.tdr.draftmetadatachecks.validations
 import uk.gov.nationalarchives.tdr.draftmetadatachecks.Lambda.ValidationParameters
 import uk.gov.nationalarchives.tdr.draftmetadatachecks.{Error, ValidationErrors}
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils.MetadataConfiguration
-import uk.gov.nationalarchives.tdr.validation.schema.ValidationProcess
-import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
+import uk.gov.nationalarchives.tdr.validation.schema.{FileRow, Metadata, ValidationProcess}
 
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter

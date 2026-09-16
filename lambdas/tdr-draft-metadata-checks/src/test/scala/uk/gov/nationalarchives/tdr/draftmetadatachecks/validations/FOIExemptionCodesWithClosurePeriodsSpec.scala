@@ -5,7 +5,7 @@ import org.scalatest.wordspec.AnyWordSpec
 import uk.gov.nationalarchives.tdr.draftmetadatachecks.Lambda.ValidationParameters
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils.ARRAY_SPLIT_CHAR
-import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
+import uk.gov.nationalarchives.tdr.validation.schema.{FileRow, Metadata}
 
 import java.util.{Properties, UUID}
 import scala.util.Random

@@ -186,12 +186,13 @@ class LambdaSpec extends ExternalServicesSpec {
           AddOrUpdateMetadata("TitleAlternate", ""),
           AddOrUpdateMetadata("TitleClosed", "false"),
           AddOrUpdateMetadata("file_name_translation", ""),
-          AddOrUpdateMetadata("ClosureType", "Open"),
+          AddOrUpdateMetadata("ClosureType", "Retained for security"),
           AddOrUpdateMetadata("description", "www"),
           AddOrUpdateMetadata("FoiExemptionAsserted", ""),
           AddOrUpdateMetadata("ClosureStartDate", ""),
           AddOrUpdateMetadata("Language", "English"),
-          AddOrUpdateMetadata("end_date", "")
+          AddOrUpdateMetadata("end_date", ""),
+          AddOrUpdateMetadata("HeldBy", "Creating government department or its successor, not available at The National Archives")
         )
       )
     )

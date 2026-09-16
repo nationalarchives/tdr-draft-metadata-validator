@@ -9,7 +9,7 @@ import io.circe.generic.auto._
 import io.circe.syntax._
 import org.typelevel.log4cats.SelfAwareStructuredLogger
 import org.typelevel.log4cats.slf4j.Slf4jLogger
-import software.amazon.awssdk.http.apache.ApacheHttpClient
+import software.amazon.awssdk.http.apache5.Apache5HttpClient
 import software.amazon.awssdk.regions.Region
 import software.amazon.awssdk.services.ssm.SsmClient
 import software.amazon.awssdk.services.ssm.model.GetParameterRequest
@@ -29,8 +29,7 @@ import uk.gov.nationalarchives.tdr.draftmetadatachecks.validations.FOIExemptionD
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition._
-import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
-import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
+import uk.gov.nationalarchives.tdr.validation.schema.{FileRow, JsonSchemaDefinition, Metadata, MetadataValidationJsonSchema}
 import uk.gov.nationalarchives.utf8.validator.Utf8Validator
 
 import java.io.FileInputStream
@@ -325,7 +324,7 @@ class Lambda {
   }
 
   private def getClientSecret(secretPath: String, endpoint: String): String = {
-    val httpClient = ApacheHttpClient.builder.build
+    val httpClient = Apache5HttpClient.builder.build
     val ssmClient: SsmClient = SsmClient
       .builder()
       .endpointOverride(URI.create(endpoint))
