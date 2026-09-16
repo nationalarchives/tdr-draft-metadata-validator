@@ -28,6 +28,7 @@ import uk.gov.nationalarchives.tdr.draftmetadatapersistence.grapgql.{FileDetail,
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schema.generated.BaseSchema
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
+import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
 import uk.gov.nationalarchives.tdr.validation.schema.{FileRow, Metadata}
 
 import java.net.URI
@@ -151,13 +152,17 @@ class Lambda {
       val closureStatus = fileRow.metadata.find(_.name == MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.closure_type))
       closureStatus match {
         case Some(closureType) if closureType.value == "Retained for security" =>
-          val tdrDataLoaderHeldByKey = MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.held_by)
-          val retainedHeldByDefault = "Creating government department or its successor, not available at The National Archives"
-          val newMetadata = fileRow.metadata.filterNot(_.name == tdrDataLoaderHeldByKey) :+ Metadata(tdrDataLoaderHeldByKey, retainedHeldByDefault)
-          fileRow.copy(metadata = newMetadata)
-        case _ => fileRow
+          updateFileRowMetadata(fileRow, BaseSchema.held_by, "Creating government department or its successor, not available at The National Archives")
+        case _ =>
+          updateFileRowMetadata(fileRow, BaseSchema.held_by, "The National Archives, Kew")
       }
     }
+  }
+
+  private def updateFileRowMetadata(fileRow: FileRow, key:String, value:String): FileRow = {
+    val tdrDataLoaderHeldByKey = MetadataUtils.propertyToTdrDataLoadHeaderMapper(key)
+    val newMetadata = fileRow.metadata.filterNot(_.name == tdrDataLoaderHeldByKey) :+ Metadata(tdrDataLoaderHeldByKey, value)
+    fileRow.copy(metadata = newMetadata)
   }
 
   private def writeMetadataToDatabase(consignmentId: UUID, clientSecret: String, metadata: List[AddOrUpdateFileMetadata]): IO[List[AddOrUpdateBulkFileMetadata]] = {

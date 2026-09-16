@@ -5,7 +5,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
-import graphql.codegen.types._
+import graphql.codegen.types.{AddOrUpdateMetadata, _}
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.parser.decode
@@ -153,7 +153,8 @@ class LambdaSpec extends ExternalServicesSpec {
           AddOrUpdateMetadata("FoiExemptionAsserted", ""),
           AddOrUpdateMetadata("ClosureStartDate", ""),
           AddOrUpdateMetadata("Language", "English"),
-          AddOrUpdateMetadata("end_date", "")
+          AddOrUpdateMetadata("end_date", ""),
+          AddOrUpdateMetadata("HeldBy", "The National Archives, Kew")
         )
       ),
       AddOrUpdateFileMetadata(
@@ -172,7 +173,8 @@ class LambdaSpec extends ExternalServicesSpec {
           AddOrUpdateMetadata("FoiExemptionAsserted", "1990-01-01 00:00:00.0"),
           AddOrUpdateMetadata("ClosureStartDate", "1990-01-01 00:00:00.0"),
           AddOrUpdateMetadata("Language", "English"),
-          AddOrUpdateMetadata("end_date", "1990-01-01 00:00:00.0")
+          AddOrUpdateMetadata("end_date", "1990-01-01 00:00:00.0"),
+          AddOrUpdateMetadata("HeldBy", "The National Archives, Kew")
         )
       ),
       AddOrUpdateFileMetadata(
