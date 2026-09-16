@@ -1,0 +1,48 @@
+{
+  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+  "date" : "2026-09-16",
+  "fileError" : "SCHEMA_VALIDATION",
+  "validationErrors" : [
+    {
+      "assetId" : "test/test2.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_RETAINED",
+          "property" : "closure period",
+          "errorKey" : "type",
+          "message" : "Must be empty for a retained record"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_RETAINED",
+          "property" : "alternate filename",
+          "errorKey" : "type",
+          "message" : "Must not be empty if title is closed"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_RETAINED",
+          "property" : "is description closed",
+          "errorKey" : "const",
+          "message" : "Must be Yes if an alternate is provided"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "alternate filename",
+          "value" : ""
+        },
+        {
+          "name" : "is description closed",
+          "value" : "No"
+        },
+        {
+          "name" : "closure period",
+          "value" : "10"
+        },
+        {
+          "name" : "filepath",
+          "value" : "test/test2.txt"
+        }
+      ]
+    }
+  ]
+}

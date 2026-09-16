@@ -7,16 +7,16 @@
       "assetId" : "test/test1.txt",
       "errors" : [
         {
-          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
-          "property" : "is description closed",
-          "errorKey" : "const",
-          "message" : "Must be Yes if an alternate is provided"
-        },
-        {
           "validationProcess" : "SCHEMA_RELATIONSHIP",
           "property" : "description",
           "errorKey" : "type",
           "message" : "Description must be provided when an alternative description is provided"
+        },
+        {
+          "validationProcess" : "SCHEMA_CLOSURE_CLOSED",
+          "property" : "is description closed",
+          "errorKey" : "const",
+          "message" : "Must be Yes if an alternate is provided"
         }
       ],
       "data" : [
