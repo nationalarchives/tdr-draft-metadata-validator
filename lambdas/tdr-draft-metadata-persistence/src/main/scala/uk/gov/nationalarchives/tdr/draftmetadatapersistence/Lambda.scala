@@ -153,13 +153,13 @@ class Lambda {
       closureStatus match {
         case Some(closureType) if closureType.value == "Retained for security" =>
           updateFileRowMetadata(fileRow, BaseSchema.held_by, "Creating government department or its successor, not available at The National Archives")
-        case _ =>
-          updateFileRowMetadata(fileRow, BaseSchema.held_by, "The National Archives, Kew")
+        case Some(_) => updateFileRowMetadata(fileRow, BaseSchema.held_by, "The National Archives, Kew")
+        case None    => fileRow
       }
     }
   }
 
-  private def updateFileRowMetadata(fileRow: FileRow, key:String, value:String): FileRow = {
+  private def updateFileRowMetadata(fileRow: FileRow, key: String, value: String): FileRow = {
     val tdrDataLoaderHeldByKey = MetadataUtils.propertyToTdrDataLoadHeaderMapper(key)
     val newMetadata = fileRow.metadata.filterNot(_.name == tdrDataLoaderHeldByKey) :+ Metadata(tdrDataLoaderHeldByKey, value)
     fileRow.copy(metadata = newMetadata)
