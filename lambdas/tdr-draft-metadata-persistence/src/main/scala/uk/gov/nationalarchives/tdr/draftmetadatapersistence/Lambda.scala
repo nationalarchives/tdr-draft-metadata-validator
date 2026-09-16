@@ -146,13 +146,17 @@ class Lambda {
   /** To allow 'Retained' records to be sent to Discovery by down stream systems, need to set held_by metadata field for any records with a closure type is 'Retained for security'.
     * to a default value of "Creating government department or its successor, not available at The National Archives" TDRD-1820
     */
+  private val retainedForSecurityClosureType = "Retained for security"
+  private val retainedHeldByMetadataValue = "Creating government department or its successor, not available at The National Archives"
+  private val defaultHeldByMetadataValue = "The National Archives, Kew"
+
   private def addOrReplaceRetainedHeldByMetadata(fileData: List[FileRow]): List[FileRow] = {
     fileData.map { fileRow =>
       val closureStatus = fileRow.metadata.find(_.name == MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.closure_type))
       closureStatus match {
-        case Some(closureType) if closureType.value == "Retained for security" =>
-          updateFileRowMetadata(fileRow, BaseSchema.held_by, "Creating government department or its successor, not available at The National Archives")
-        case Some(_) => updateFileRowMetadata(fileRow, BaseSchema.held_by, "The National Archives, Kew")
+        case Some(closureType) if closureType.value == retainedForSecurityClosureType =>
+          updateFileRowMetadata(fileRow, BaseSchema.held_by, retainedHeldByMetadataValue)
+        case Some(_) => updateFileRowMetadata(fileRow, BaseSchema.held_by, defaultHeldByMetadataValue)
         case None    => fileRow
       }
     }
