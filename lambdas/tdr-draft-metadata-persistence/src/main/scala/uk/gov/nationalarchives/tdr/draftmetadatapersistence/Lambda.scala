@@ -146,18 +146,26 @@ class Lambda {
   /** To allow 'Retained' records to be sent to Discovery by down stream systems, need to set held_by metadata field for any records with a closure type is 'Retained for security'.
     * to a default value of "Creating government department or its successor, not available at The National Archives" TDRD-1820
     */
+  private val retainedForSecurityClosureType = "Retained for security"
+  private val retainedHeldByMetadataValue = "Creating government department or its successor, not available at The National Archives"
+  private val defaultHeldByMetadataValue = "The National Archives, Kew"
+
   private def addOrReplaceRetainedHeldByMetadata(fileData: List[FileRow]): List[FileRow] = {
     fileData.map { fileRow =>
       val closureStatus = fileRow.metadata.find(_.name == MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.closure_type))
       closureStatus match {
-        case Some(closureType) if closureType.value == "Retained for security" =>
-          val tdrDataLoaderHeldByKey = MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.held_by)
-          val retainedHeldByDefault = "Creating government department or its successor, not available at The National Archives"
-          val newMetadata = fileRow.metadata.filterNot(_.name == tdrDataLoaderHeldByKey) :+ Metadata(tdrDataLoaderHeldByKey, retainedHeldByDefault)
-          fileRow.copy(metadata = newMetadata)
-        case _ => fileRow
+        case Some(closureType) if closureType.value == retainedForSecurityClosureType =>
+          updateFileRowMetadata(fileRow, BaseSchema.held_by, retainedHeldByMetadataValue)
+        case Some(_) => updateFileRowMetadata(fileRow, BaseSchema.held_by, defaultHeldByMetadataValue)
+        case None    => fileRow
       }
     }
+  }
+
+  private def updateFileRowMetadata(fileRow: FileRow, key: String, value: String): FileRow = {
+    val tdrDataLoaderHeldByKey = MetadataUtils.propertyToTdrDataLoadHeaderMapper(key)
+    val newMetadata = fileRow.metadata.filterNot(_.name == tdrDataLoaderHeldByKey) :+ Metadata(tdrDataLoaderHeldByKey, value)
+    fileRow.copy(metadata = newMetadata)
   }
 
   private def writeMetadataToDatabase(consignmentId: UUID, clientSecret: String, metadata: List[AddOrUpdateFileMetadata]): IO[List[AddOrUpdateBulkFileMetadata]] = {
