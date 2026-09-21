@@ -5,7 +5,7 @@ object Dependencies {
   private val log4CatsVersion = "2.8.0"
   private val mockitoScalaVersion = "2.2.3"
   private val circeVersion = "0.14.16"
-  val metadataSchemaVersion = "0.0.141"
+  val metadataSchemaVersion = "0.0.143"
   private val nettyVersion = "4.1.137.Final"
 
   lazy val nettyOverrides: Seq[ModuleID] = Seq(
@@ -32,7 +32,7 @@ object Dependencies {
   lazy val awsLambda = "com.amazonaws" % "aws-lambda-java-core" % "1.4.0"
   lazy val awsLambdaJavaEvents = "com.amazonaws" % "aws-lambda-java-events" % "3.16.1"
   lazy val s3Utils = "uk.gov.nationalarchives" %% "s3-utils" % "0.1.339"
-  lazy val awsSsm = "software.amazon.awssdk" % "ssm" % "2.54.18"
+  lazy val awsSsm = "software.amazon.awssdk" % "ssm" % "2.54.19"
   lazy val log4catsSlf4j = "org.typelevel" %% "log4cats-slf4j" % log4CatsVersion
   lazy val slf4jSimple = "org.slf4j" % "slf4j-simple" % "2.0.19"
   lazy val mockitoScala = "org.mockito" %% "mockito-scala" % mockitoScalaVersion
