@@ -29,8 +29,7 @@ import uk.gov.nationalarchives.tdr.draftmetadatachecks.validations.FOIExemptionD
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition._
-import uk.gov.nationalarchives.tdr.validation.schema.{JsonSchemaDefinition, MetadataValidationJsonSchema}
-import uk.gov.nationalarchives.tdr.validation.{FileRow, Metadata}
+import uk.gov.nationalarchives.tdr.validation.schema.{FileRow, JsonSchemaDefinition, Metadata, MetadataValidationJsonSchema}
 import uk.gov.nationalarchives.utf8.validator.Utf8Validator
 
 import java.io.FileInputStream
@@ -63,7 +62,7 @@ class Lambda {
 
   def handleRequest(input: java.util.Map[String, Object], context: Context): java.util.Map[String, Object] = {
     val consignmentId = extractConsignmentId(input)
-    val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, RELATIONSHIP_SCHEMA)
+    val schemaToValidate: Set[JsonSchemaDefinition] = Set(BASE_SCHEMA, CLOSURE_SCHEMA_CLOSED, CLOSURE_SCHEMA_OPEN, CLOSURE_SCHEMA_RETAINED, RELATIONSHIP_SCHEMA)
     val validationParameters: ValidationParameters = ValidationParameters(
       consignmentId = UUID.fromString(consignmentId),
       schemaToValidate = schemaToValidate,
