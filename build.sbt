@@ -35,10 +35,10 @@ ThisBuild / assembly / assemblyMergeStrategy := {
 // Ensure patched, CVE-free versions of bouncycastle and netty are used across all modules,
 // even where they're pulled in transitively.
 ThisBuild / dependencyOverrides ++= Seq(
-  "org.bouncycastle" % "bcprov-jdk18on" % "1.85",
-  "org.bouncycastle" % "bcpkix-jdk18on" % "1.85",
-  "org.bouncycastle" % "bcutil-jdk18on" % "1.85"
-) ++ nettyOverrides
+  "org.bouncycastle" % "bcprov-jdk18on" % "1.86",
+  "org.bouncycastle" % "bcpkix-jdk18on" % "1.86",
+  "org.bouncycastle" % "bcutil-jdk18on" % "1.86"
+)
 
 // Common test settings
 ThisBuild / Test / fork := true
