@@ -38,6 +38,13 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/error-file.json")
   }
 
+  "handleRequest" should "download the draft metadata csv file, validate retained metadata and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
+    mockS3GetResponse("invalid-retained-metadata.csv")
+    checkFileError("json/error-file-retained-metadata.json")
+  }
+
   "handleRequest" should "download the draft metadata csv file, validate protected fields and save error file with errors to s3" in {
     authOkJson()
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
