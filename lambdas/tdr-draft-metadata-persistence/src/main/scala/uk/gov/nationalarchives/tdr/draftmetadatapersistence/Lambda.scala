@@ -24,7 +24,7 @@ import uk.gov.nationalarchives.draftmetadata.s3.S3Files
 import uk.gov.nationalarchives.draftmetadata.utils.MetadataUtils
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.draftmetadatapersistence.Lambda.{MetadataPersistorParameters, getFilePath}
-import uk.gov.nationalarchives.tdr.draftmetadatapersistence.grapgql.{FileDetail, GraphQlApi}
+import uk.gov.nationalarchives.tdr.draftmetadatapersistence.grapgql.{ConsignmentWithFiles, GraphQlApi}
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schema.generated.BaseSchema
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
@@ -60,9 +60,9 @@ class Lambda {
     val resultIO = for {
       s3Files <- IO(S3Files(S3Utils(s3Async(s3Endpoint))))
       metadataPersistorParameters <- IO(extractMetadataPersistorParameters(input))
-      filesWithUniqueAssetIdKey <- graphQlApi.getFilesWithUniqueAssetIdKey(metadataPersistorParameters.consignmentId, getClientSecret(clientSecretPath, endpoint))
+      consignment <- graphQlApi.getFilesWithUniqueAssetIdKey(metadataPersistorParameters.consignmentId, getClientSecret(clientSecretPath, endpoint))
       _ <- s3Files.downloadFile(bucket, metadataPersistorParameters.consignmentId.toString)
-      _ <- persistMetadata(metadataPersistorParameters, filesWithUniqueAssetIdKey)
+      _ <- persistMetadata(metadataPersistorParameters, consignment)
       _ <- updateConsignmentMetadataSchemaLibraryVersion(metadataPersistorParameters.consignmentId, metadataPersistorParameters.metadataSchemaLibraryVersion)
     } yield responseData(metadataPersistorParameters.consignmentId.toString, "success")
 
@@ -133,12 +133,13 @@ class Lambda {
     ssmClient.getParameter(getParameterRequest).parameter().value()
   }
 
-  private def persistMetadata(draftMetadata: MetadataPersistorParameters, filesWithUniqueAssetIdKey: Map[String, FileDetail]): IO[List[AddOrUpdateBulkFileMetadata]] = {
+  private def persistMetadata(draftMetadata: MetadataPersistorParameters, consignment: ConsignmentWithFiles): IO[List[AddOrUpdateBulkFileMetadata]] = {
     val clientSecret = getClientSecret(clientSecretPath, endpoint)
     for {
       fileData <- IO(CSVHandler.loadCSV(getFilePath(draftMetadata), draftMetadata.clientAlternateKey, draftMetadata.persistenceAlternateKey, draftMetadata.uniqueAssetIdKey))
       dataWithRetainedHeldBy = addOrReplaceRetainedHeldByMetadata(fileData)
-      addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(dataWithRetainedHeldBy, filesWithUniqueAssetIdKey)(_.fileId)
+      dataWithCitableRefPrefix = addCitableRefPrefixMetadata(dataWithRetainedHeldBy, consignment.seriesName)
+      addOrUpdateBulkFileMetadata = MetadataUtils.filterProtectedFields(dataWithCitableRefPrefix, consignment.filesWithUniqueAssetIdKey)(_.fileId)
       result <- writeMetadataToDatabase(draftMetadata.consignmentId, clientSecret, addOrUpdateBulkFileMetadata)
     } yield result
   }
@@ -158,6 +159,16 @@ class Lambda {
           updateFileRowMetadata(fileRow, BaseSchema.held_by, retainedHeldByMetadataValue)
         case Some(_) => updateFileRowMetadata(fileRow, BaseSchema.held_by, defaultHeldByMetadataValue)
         case None    => fileRow
+      }
+    }
+  }
+
+  private def addCitableRefPrefixMetadata(fileData: List[FileRow], seriesName: Option[String]): List[FileRow] = {
+    fileData.map { fileRow =>
+      val cataloguePlacement = fileRow.metadata.find(_.name == MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.catalogue_placement))
+      cataloguePlacement match {
+        case Some(metadata) if metadata.value.nonEmpty => updateFileRowMetadata(fileRow, BaseSchema.citable_ref_prefix, metadata.value)
+        case _    => updateFileRowMetadata(fileRow, BaseSchema.citable_ref_prefix, seriesName.getOrElse(""))
       }
     }
   }

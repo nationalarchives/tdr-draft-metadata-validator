@@ -18,7 +18,7 @@ import org.scalatest.matchers.should.Matchers
 import sangria.ast.Document
 import sttp.client3.{HttpURLConnectionBackend, Identity, SttpBackend}
 import uk.gov.nationalarchives.tdr.GraphQLClient.Extensions
-import uk.gov.nationalarchives.tdr.draftmetadatapersistence.grapgql.{FileDetail, GraphQlApi}
+import uk.gov.nationalarchives.tdr.draftmetadatapersistence.grapgql.{ConsignmentWithFiles, FileDetail, GraphQlApi}
 import uk.gov.nationalarchives.tdr.error.GraphQlError
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.{GraphQLClient, GraphQlResponse}
@@ -50,14 +50,15 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
       .when(keycloak)
       .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
 
-    doAnswer(() => Future(GraphQlResponse[uaik.Data](Option(uaik.Data(GetConsignment(List(files)).some)), Nil)))
+    doAnswer(() => Future(GraphQlResponse[uaik.Data](Option(uaik.Data(GetConsignment("series".some, List(files)).some)), Nil)))
       .when(getFilesUniquesAssetIdKey)
       .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[uaik.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
 
     val response = api.getFilesWithUniqueAssetIdKey(consignmentId, "secret").unsafeRunSync()
 
-    val expectedResponse = Map(
-      files.metadata.clientSideOriginalFilePath.get -> FileDetail(files.fileId, files.fileName, files.metadata.clientSideLastModifiedDate)
+    val expectedResponse = ConsignmentWithFiles(
+      "series".some,
+      Map(files.metadata.clientSideOriginalFilePath.get -> FileDetail(files.fileId, files.fileName, files.metadata.clientSideLastModifiedDate))
     )
     response should equal(expectedResponse)
   }

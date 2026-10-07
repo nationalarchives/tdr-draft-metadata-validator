@@ -22,6 +22,7 @@ object TestUtils {
     s"""{
       "data": {
         "getConsignment": {
+          "seriesName": "testSeries",
           "files": [$getFilesData]
         }
       }
