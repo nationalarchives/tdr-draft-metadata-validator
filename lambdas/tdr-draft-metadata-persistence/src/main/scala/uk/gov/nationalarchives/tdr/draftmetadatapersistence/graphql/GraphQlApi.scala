@@ -50,7 +50,12 @@ class GraphQlApi(
         new RuntimeException(fileUniqueAssetIdKey.errors.map(_.message).headOption.getOrElse("Unable to get file unique asset id key"))
       )
     } yield data.getConsignment
-      .map(c => ConsignmentWithFiles(c.seriesName, c.files.map(f => f.metadata.clientSideOriginalFilePath.getOrElse("") -> FileDetail(f.fileId, f.fileName, f.metadata.clientSideLastModifiedDate)).toMap))
+      .map(c =>
+        ConsignmentWithFiles(
+          c.seriesName,
+          c.files.map(f => f.metadata.clientSideOriginalFilePath.getOrElse("") -> FileDetail(f.fileId, f.fileName, f.metadata.clientSideLastModifiedDate)).toMap
+        )
+      )
       .getOrElse(throw new RuntimeException("Unable to get FilesWithUniqueAssetIdKey"))
   }
 

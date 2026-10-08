@@ -168,7 +168,7 @@ class Lambda {
       val cataloguePlacement = fileRow.metadata.find(_.name == MetadataUtils.propertyToTdrDataLoadHeaderMapper(BaseSchema.catalogue_placement))
       cataloguePlacement match {
         case Some(metadata) if metadata.value.nonEmpty => updateFileRowMetadata(fileRow, BaseSchema.citable_ref_prefix, metadata.value)
-        case _    => updateFileRowMetadata(fileRow, BaseSchema.citable_ref_prefix, seriesName.getOrElse(""))
+        case _                                         => updateFileRowMetadata(fileRow, BaseSchema.citable_ref_prefix, seriesName.getOrElse(""))
       }
     }
   }
