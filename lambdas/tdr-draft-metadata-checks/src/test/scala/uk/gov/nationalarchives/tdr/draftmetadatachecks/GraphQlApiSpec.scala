@@ -39,7 +39,7 @@ class GraphQlApiSpec extends AnyFlatSpec with MockitoSugar with Matchers with Ei
       .when(keycloak)
       .serviceAccountToken[Identity](any[String], any[String])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]], any[TdrKeycloakDeployment])
 
-    doAnswer(() => Future(GraphQlResponse[uaik.Data](Option(uaik.Data(GetConsignment(List(files)).some)), Nil)))
+    doAnswer(() => Future(GraphQlResponse[uaik.Data](Option(uaik.Data(GetConsignment(None, List(files)).some)), Nil)))
       .when(getFilesUniquesAssetIdKey)
       .getResult[Identity](any[BearerAccessToken], any[Document], any[Option[uaik.Variables]])(any[SttpBackend[Identity, Any]], any[ClassTag[Identity[_]]])
 
