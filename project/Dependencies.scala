@@ -4,7 +4,7 @@ object Dependencies {
 
   private val log4CatsVersion = "2.8.0"
   private val mockitoScalaVersion = "2.2.3"
-  private val circeVersion = "0.14.16"
+  private val circeVersion = "0.14.17"
   val metadataSchemaVersion = "0.0.147"
   private val nettyVersion = "4.1.137.Final"
 
