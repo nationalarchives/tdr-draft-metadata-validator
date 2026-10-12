@@ -5,7 +5,7 @@ object Dependencies {
   private val log4CatsVersion = "2.8.0"
   private val mockitoScalaVersion = "2.2.3"
   private val circeVersion = "0.14.17"
-  val metadataSchemaVersion = "0.0.148"
+  val metadataSchemaVersion = "0.0.149"
   private val nettyVersion = "4.1.137.Final"
 
   lazy val nettyOverrides: Seq[ModuleID] = Seq(
@@ -23,7 +23,7 @@ object Dependencies {
 
   lazy val scalaCsv = "com.github.tototoshi" %% "scala-csv" % "2.0.0"
   lazy val scalaTest = "org.scalatest" %% "scalatest" % "3.2.20"
-  lazy val metadataValidation = "uk.gov.nationalarchives" %% "tdr-metadata-validation" % "0.0.248" exclude ("uk.gov.nationalarchives", "da-metadata-schema")
+  lazy val metadataValidation = "uk.gov.nationalarchives" %% "tdr-metadata-validation" % "0.0.250" exclude ("uk.gov.nationalarchives", "da-metadata-schema")
   lazy val metadataSchema = "uk.gov.nationalarchives" %% "da-metadata-schema" % metadataSchemaVersion
   lazy val generatedGraphql = "uk.gov.nationalarchives" %% "tdr-generated-graphql" % "0.0.491"
   lazy val graphqlClient = "uk.gov.nationalarchives" %% "tdr-graphql-client" % "0.0.307"
