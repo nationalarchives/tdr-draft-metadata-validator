@@ -10,7 +10,6 @@ import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateCons
 import graphql.codegen.types._
 import sttp.client3._
 import uk.gov.nationalarchives.draftmetadata.config.ApplicationConfig.{clientId, graphqlApiRequestTimeOut}
-import uk.gov.nationalarchives.draftmetadata.utils.MetadataUtils.dateTimeFormatter
 import uk.gov.nationalarchives.tdr.GraphQLClient
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 
@@ -42,7 +41,7 @@ class GraphQlApi(
       )
     } yield data.addOrUpdateBulkFileMetadata
 
-  def getFilesWithUniqueAssetIdKey(consignmentId: UUID, clientSecret: String): IO[Map[String, FileDetail]] = {
+  def getFilesWithUniqueAssetIdKey(consignmentId: UUID, clientSecret: String): IO[ConsignmentWithFiles] = {
     for {
       token <- keycloak.serviceAccountToken(clientId, clientSecret).toIO
       fileFilters = FileFilters(fileTypeIdentifier.some, None, None, None)
@@ -51,7 +50,12 @@ class GraphQlApi(
         new RuntimeException(fileUniqueAssetIdKey.errors.map(_.message).headOption.getOrElse("Unable to get file unique asset id key"))
       )
     } yield data.getConsignment
-      .map(c => c.files.map(f => f.metadata.clientSideOriginalFilePath.getOrElse("") -> FileDetail(f.fileId, f.fileName, f.metadata.clientSideLastModifiedDate)).toMap)
+      .map(c =>
+        ConsignmentWithFiles(
+          c.seriesName,
+          c.files.map(f => f.metadata.clientSideOriginalFilePath.getOrElse("") -> FileDetail(f.fileId, f.fileName, f.metadata.clientSideLastModifiedDate)).toMap
+        )
+      )
       .getOrElse(throw new RuntimeException("Unable to get FilesWithUniqueAssetIdKey"))
   }
 
@@ -94,12 +98,6 @@ object GraphQlApi {
   }
 }
 
-case class FileDetail(fileId: UUID, fileName: Option[String], lastModifiedDate: Option[LocalDateTime]) {
+case class FileDetail(fileId: UUID, fileName: Option[String], lastModifiedDate: Option[LocalDateTime])
 
-  def getValue(metadataField: String): String = {
-    metadataField match {
-      case "file_name"          => fileName.getOrElse("")
-      case "date_last_modified" => lastModifiedDate.map(_.format(dateTimeFormatter)).getOrElse("")
-    }
-  }
-}
+case class ConsignmentWithFiles(seriesName: Option[String], filesWithUniqueAssetIdKey: Map[String, FileDetail])

@@ -5,7 +5,7 @@ import com.github.tomakehurst.wiremock.client.WireMock._
 import com.github.tomakehurst.wiremock.stubbing.StubMapping
 import graphql.codegen.AddOrUpdateBulkFileMetadata.{addOrUpdateBulkFileMetadata => afm}
 import graphql.codegen.UpdateConsignmentMetadataSchemaLibraryVersion.{updateConsignmentMetadataSchemaLibraryVersion => ucslv}
-import graphql.codegen.types.{AddOrUpdateMetadata, _}
+import graphql.codegen.types._
 import io.circe._
 import io.circe.generic.semiauto._
 import io.circe.parser.decode
@@ -142,19 +142,23 @@ class LambdaSpec extends ExternalServicesSpec {
         List(
           AddOrUpdateMetadata("DescriptionClosed", "false"),
           AddOrUpdateMetadata("FoiExemptionCode", ""),
+          AddOrUpdateMetadata("FormerFilepathDepartment", "Test file path"),
           AddOrUpdateMetadata("DescriptionAlternate", ""),
           AddOrUpdateMetadata("former_reference_department", ""),
           AddOrUpdateMetadata("ClosurePeriod", ""),
           AddOrUpdateMetadata("TitleAlternate", ""),
           AddOrUpdateMetadata("TitleClosed", "false"),
           AddOrUpdateMetadata("file_name_translation", ""),
+          AddOrUpdateMetadata("RightsCopyright", "Crown copyright"),
           AddOrUpdateMetadata("ClosureType", "Open"),
           AddOrUpdateMetadata("description", "eee"),
+          AddOrUpdateMetadata("CataloguePlacement", "YHC/CL/JO/3/21/ZAB4D"),
           AddOrUpdateMetadata("FoiExemptionAsserted", ""),
           AddOrUpdateMetadata("ClosureStartDate", ""),
           AddOrUpdateMetadata("Language", "English"),
           AddOrUpdateMetadata("end_date", ""),
-          AddOrUpdateMetadata("HeldBy", "The National Archives, Kew")
+          AddOrUpdateMetadata("HeldBy", "The National Archives, Kew"),
+          AddOrUpdateMetadata("CitableRefPrefix", "YHC/CL/JO/3/21/ZAB4D")
         )
       ),
       AddOrUpdateFileMetadata(
@@ -162,19 +166,23 @@ class LambdaSpec extends ExternalServicesSpec {
         List(
           AddOrUpdateMetadata("DescriptionClosed", "false"),
           AddOrUpdateMetadata("FoiExemptionCode", "27(1);27(2)"),
+          AddOrUpdateMetadata("FormerFilepathDepartment", ""),
           AddOrUpdateMetadata("DescriptionAlternate", ""),
           AddOrUpdateMetadata("former_reference_department", ""),
           AddOrUpdateMetadata("ClosurePeriod", "33;44"),
           AddOrUpdateMetadata("TitleAlternate", "title"),
           AddOrUpdateMetadata("TitleClosed", "true"),
           AddOrUpdateMetadata("file_name_translation", ""),
+          AddOrUpdateMetadata("RightsCopyright", "Crown copyright"),
           AddOrUpdateMetadata("ClosureType", "Closed"),
           AddOrUpdateMetadata("description", "hello"),
-          AddOrUpdateMetadata("FoiExemptionAsserted", "1990-01-01 00:00:00.0"),
-          AddOrUpdateMetadata("ClosureStartDate", "1990-01-01 00:00:00.0"),
+          AddOrUpdateMetadata("CataloguePlacement", ""),
+          AddOrUpdateMetadata("FoiExemptionAsserted", "2022-01-01 00:00:00.0"),
+          AddOrUpdateMetadata("ClosureStartDate", "2006-12-31 00:00:00.0"),
           AddOrUpdateMetadata("Language", "English"),
-          AddOrUpdateMetadata("end_date", "1990-01-01 00:00:00.0"),
-          AddOrUpdateMetadata("HeldBy", "The National Archives, Kew")
+          AddOrUpdateMetadata("end_date", "2023-01-01 00:00:00.0"),
+          AddOrUpdateMetadata("HeldBy", "The National Archives, Kew"),
+          AddOrUpdateMetadata("CitableRefPrefix", "testSeries")
         )
       ),
       AddOrUpdateFileMetadata(
@@ -182,19 +190,23 @@ class LambdaSpec extends ExternalServicesSpec {
         List(
           AddOrUpdateMetadata("DescriptionClosed", "false"),
           AddOrUpdateMetadata("FoiExemptionCode", ""),
+          AddOrUpdateMetadata("FormerFilepathDepartment", ""),
           AddOrUpdateMetadata("DescriptionAlternate", ""),
           AddOrUpdateMetadata("former_reference_department", ""),
           AddOrUpdateMetadata("ClosurePeriod", ""),
-          AddOrUpdateMetadata("TitleAlternate", ""),
-          AddOrUpdateMetadata("TitleClosed", "false"),
+          AddOrUpdateMetadata("TitleAlternate", "hello"),
+          AddOrUpdateMetadata("TitleClosed", "true"),
           AddOrUpdateMetadata("file_name_translation", ""),
+          AddOrUpdateMetadata("RightsCopyright", "Crown copyright"),
           AddOrUpdateMetadata("ClosureType", "Retained for security"),
           AddOrUpdateMetadata("description", "www"),
+          AddOrUpdateMetadata("CataloguePlacement", ""),
           AddOrUpdateMetadata("FoiExemptionAsserted", ""),
           AddOrUpdateMetadata("ClosureStartDate", ""),
           AddOrUpdateMetadata("Language", "English"),
           AddOrUpdateMetadata("end_date", ""),
-          AddOrUpdateMetadata("HeldBy", "Creating government department or its successor, not available at The National Archives")
+          AddOrUpdateMetadata("HeldBy", "Creating government department or its successor, not available at The National Archives"),
+          AddOrUpdateMetadata("CitableRefPrefix", "testSeries")
         )
       )
     )
