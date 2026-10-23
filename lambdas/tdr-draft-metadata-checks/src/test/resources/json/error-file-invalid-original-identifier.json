@@ -10,7 +10,7 @@
           "validationProcess" : "SCHEMA_BASE",
           "property" : "original identifier",
           "errorKey" : "original_identifier.matchFilePath",
-          "message" : "SCHEMA_BASE.original_identifier.matchFilePath"
+          "message" : "Must be the file path of another record within this consignment"
         }
       ],
       "data" : [
@@ -27,7 +27,7 @@
           "validationProcess" : "SCHEMA_BASE",
           "property" : "original identifier",
           "errorKey" : "original_identifier.matchFilePath",
-          "message" : "SCHEMA_BASE.original_identifier.matchFilePath"
+          "message" : "Must be the file path of another record within this consignment"
         }
       ],
       "data" : [
