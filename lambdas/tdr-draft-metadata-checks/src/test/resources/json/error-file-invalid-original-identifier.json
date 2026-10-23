@@ -1,0 +1,41 @@
+{
+  "consignmentId" : "f82af3bf-b742-454c-9771-bfd6c5eae749",
+  "date" : "$today",
+  "fileError" : "SCHEMA_VALIDATION",
+  "validationErrors" : [
+    {
+      "assetId" : "test/test2.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "original identifier",
+          "errorKey" : "original_identifier.matchFilePath",
+          "message" : "Must be the file path of another record within this consignment"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "original identifier",
+          "value" : "none"
+        }
+      ]
+    },
+    {
+      "assetId" : "test/test1.txt",
+      "errors" : [
+        {
+          "validationProcess" : "SCHEMA_BASE",
+          "property" : "original identifier",
+          "errorKey" : "original_identifier.matchFilePath",
+          "message" : "Must be the file path of another record within this consignment"
+        }
+      ],
+      "data" : [
+        {
+          "name" : "original identifier",
+          "value" : "test/test1.txt"
+        }
+      ]
+    }
+  ]
+}
