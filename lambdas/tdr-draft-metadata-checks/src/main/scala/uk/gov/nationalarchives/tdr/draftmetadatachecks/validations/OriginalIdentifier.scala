@@ -28,12 +28,13 @@ object OriginalIdentifier {
       val originalIdentifier = fileRow.metadata.find(_.name == originalIdentifierColumn).map(_.value).getOrElse("")
       val filePath = fileRow.metadata.find(_.name == filePathColumn).map(_.value).getOrElse("")
       val assetId = fileRow.metadata.find(_.name == assetIdColumn).map(_.value).getOrElse("")
+      val originalIdentifierMatchErrorKey = "original_identifier.matchFilePath"
 
       val errorKey = originalIdentifier match {
         case ""                                              => None
         case "No Original Found"                             => None
-        case `filePath`                                      => Some("original_identifier.matchFilePath")
-        case _ if !allFilePaths.contains(originalIdentifier) => Some("original_identifier.matchFilePath")
+        case `filePath`                                      => Some(originalIdentifierMatchErrorKey)
+        case _ if !allFilePaths.contains(originalIdentifier) => Some(originalIdentifierMatchErrorKey)
         case _                                               => None
       }
 

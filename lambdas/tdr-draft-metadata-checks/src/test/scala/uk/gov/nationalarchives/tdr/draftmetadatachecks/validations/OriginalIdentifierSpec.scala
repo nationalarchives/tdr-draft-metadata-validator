@@ -22,7 +22,7 @@ class OriginalIdentifierSpec extends AnyWordSpec {
   private case class CsvRow(filePath: String, originalIdentifier: String)
 
   "OriginalIdentifier.validateOriginalIdentifier" should {
-    "validate with no errors when the original identifier matches the file path of another record" in {
+    "validate with no errors when the original identifier matches the file path of another record in the consignment" in {
       val csvData = List(
         CsvRow(filePath = "data/original.docx", originalIdentifier = ""),
         CsvRow(filePath = "data/redacted.pdf", originalIdentifier = "data/original.docx")
@@ -60,7 +60,7 @@ class OriginalIdentifierSpec extends AnyWordSpec {
       result.head.data shouldBe List(Metadata(name = originalIdentifierCol, value = "data/original.docx"))
     }
 
-    "return an error when the original identifier is not one of the file paths" in {
+    "return an error when the original identifier is not one of the file paths in the consignments" in {
       val csvData = List(
         CsvRow(filePath = "data/original.docx", originalIdentifier = ""),
         CsvRow(filePath = "data/redacted.pdf", originalIdentifier = "data/missing.docx")
