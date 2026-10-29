@@ -171,6 +171,13 @@ class LambdaSpec extends ExternalServicesSpec {
     checkFileError("json/error-file-invalid-description-with-alternate-description.json")
   }
 
+  "handleRequest" should "download the draft metadata csv file, check for original identifier errors and save error file with errors to s3" in {
+    authOkJson()
+    graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))
+    mockS3GetResponse("sample-original-identifier.csv")
+    checkFileError("json/error-file-invalid-original-identifier.json")
+  }
+
   "handleRequest" should "return correct response for a successful validation" in {
     authOkJson()
     graphqlOkJson(filesWithUniquesAssetIdKeyResponse = filesWithUniquesAssetIdKeyResponse(fileTestData))

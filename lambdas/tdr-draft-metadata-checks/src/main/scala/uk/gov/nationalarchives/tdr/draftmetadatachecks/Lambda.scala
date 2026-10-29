@@ -25,7 +25,7 @@ import uk.gov.nationalarchives.tdr.draftmetadatachecks.Lambda.{ValidationExecuti
 import uk.gov.nationalarchives.tdr.draftmetadatachecks.ValidationErrors._
 import uk.gov.nationalarchives.tdr.draftmetadatachecks.utils.DependencyVersionReader
 import uk.gov.nationalarchives.tdr.draftmetadatachecks.validations.FOIClosureCodesAndPeriods.foiCodesPeriodsConsistent
-import uk.gov.nationalarchives.tdr.draftmetadatachecks.validations.FOIExemptionDate
+import uk.gov.nationalarchives.tdr.draftmetadatachecks.validations.{FOIExemptionDate, OriginalIdentifier}
 import uk.gov.nationalarchives.tdr.keycloak.{KeycloakUtils, TdrKeycloakDeployment}
 import uk.gov.nationalarchives.tdr.schemautils.ConfigUtils
 import uk.gov.nationalarchives.tdr.validation.schema.JsonSchemaDefinition._
@@ -219,8 +219,9 @@ class Lambda {
       rowSchemaErrors <- IO(schemaValidate(validationParameters.schemaToValidate, csvData, validationParameters))
       foiCodePeriodMismatches <- IO(foiCodesPeriodsConsistent(csvData, messageProperties, validationParameters, metadataConfiguration))
       foiExemptionDateErrors <- IO(FOIExemptionDate.validateFOIExemptionDate(csvData, messageProperties, validationParameters, metadataConfiguration))
+      originalIdentifierErrors <- IO(OriginalIdentifier.validateOriginalIdentifier(csvData, messageProperties, validationParameters, metadataConfiguration))
       combinedErrors =
-        duplicateRowErrors |+| missingRowErrors |+| unknownRowErrors |+| protectedFieldErrors |+| rowSchemaErrors |+| foiCodePeriodMismatches |+| foiExemptionDateErrors
+        duplicateRowErrors |+| missingRowErrors |+| unknownRowErrors |+| protectedFieldErrors |+| rowSchemaErrors |+| foiCodePeriodMismatches |+| foiExemptionDateErrors |+| originalIdentifierErrors
       result <-
         if (combinedErrors.nonEmpty)
           IO.raiseError(ValidationExecutionError(ErrorFileData(validationParameters, FileError.SCHEMA_VALIDATION, combinedErrors), csvData))
