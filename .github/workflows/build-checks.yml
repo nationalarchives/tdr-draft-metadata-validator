@@ -20,7 +20,7 @@ permissions: {}
 jobs:
   pre-deploy-checks:
     permissions: { contents: write, id-token: write }
-    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@5a96b84cf82bce1371168cc31cb89f88cad86763 # v0.0.53
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@4b2753940019ebbed38030f1aca49f0eb123a45e # v0.0.55
     with:
       repo-name: tdr-draft-metadata-validator
       lambda-name: draft-metadata-checks
