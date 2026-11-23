@@ -11,7 +11,7 @@ jobs:
     permissions:
       id-token: write
       contents: write
-    uses: nationalarchives/tdr-github-actions/.github/workflows/tdr_test.yml@5a96b84cf82bce1371168cc31cb89f88cad86763 # v0.0.53
+    uses: nationalarchives/tdr-github-actions/.github/workflows/tdr_test.yml@4b2753940019ebbed38030f1aca49f0eb123a45e # v0.0.55
     with:
       repo-name: tdr-draft-metadata-validator
       java-version: ${{vars.JAVA_RUNTIME}}
