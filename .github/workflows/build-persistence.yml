@@ -9,6 +9,23 @@ on:
       - 'build.sbt'
       - 'project/**'
   workflow_dispatch:
+    inputs:
+      environment:
+        type: choice
+        description: 'Environment'
+        required: true
+        options:
+          - intg
+          - staging
+          - prod
+          - dev
+          - drdev
+        default: 'drdev'
+      snapshot:
+        description: 'Build a dev snapshot from the current branch instead of the next release version'
+        type: boolean
+        required: false
+        default: false
 
 # Using a shared concurrency group across all workflows
 concurrency:
@@ -20,13 +37,16 @@ permissions: {}
 jobs:
   pre-deploy-persistence:
     permissions: { contents: write, id-token: write }
-    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@5a96b84cf82bce1371168cc31cb89f88cad86763 # v0.0.53
+    uses: nationalarchives/tdr-github-actions/.github/workflows/lambda_build.yml@714115ab533f9f6b0b4fed5a4293e9d57c2b89d8 # v0.0.53
     with:
       repo-name: tdr-draft-metadata-validator
       lambda-name: draft-metadata-persistence
       artifact-name: draft-metadata-persistence
       artifact-path: lambdas/tdr-draft-metadata-persistence/target/scala-2.13
       java-version: ${{vars.JAVA_RUNTIME}}
+      account-regional-code-bucket: true
+      environment: ${{ inputs.environment }}
+      snapshot: ${{ inputs.snapshot }}
       build-command: |
         sbt "tdrDraftMetadataPersistence/assembly"
     secrets:
@@ -44,7 +64,7 @@ jobs:
       - name: Deploy lambda
         run: |
           gh workflow run deploy-lambda.yml --ref "$REF_NAME" \
-          -f environment=intg \
+          -f environment=drdev \
           -f to-deploy="$NEXT_VERSION" \
           -f lambda-name=draft-metadata-persistence \
           -f deployment-package=draft-metadata-persistence.jar
